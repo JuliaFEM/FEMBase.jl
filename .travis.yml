@@ -1,0 +1,12 @@
+language: julia
+os:
+    - linux
+julia:
+    - 0.6
+before_script:
+    - julia --color=yes -e 'Pkg.clone("https://github.com/JuliaFEM/PkgTestSuite.jl.git")'
+    - julia --color=yes -e 'using PkgTestSuite; init()'
+script:
+    - julia --color=yes -e 'using PkgTestSuite; test()'
+after_success:
+    - julia --color=yes -e 'using PkgTestSuite; deploy()'
