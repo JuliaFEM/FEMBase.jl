@@ -138,7 +138,7 @@ function update!(field::DCTI, data)
     field.data = data
 end
 
-""" Interpolate time-invariant field in time direction. """
+# Interpolate time-invariant field in time direction.
 function (field::DCTI)(time::Float64)
     return field.data
 end
@@ -147,9 +147,6 @@ end
 but not in spatial direction, i.e. df/dt = 0 but df/dX != 0. The basic structure
 of data is Vector, and it is implicitly assumed that length of field matches to
 the number of shape functions, so that interpolation in spatial direction works.
-
-Examples
---------
 """
 function DVTI()
     return DVTI([])
@@ -249,10 +246,11 @@ function vec(field::DVTI)
     return [field.data...;]
 end
 
-""" Interpolate time-invariant field in time direction. """
+# """ Interpolate time-invariant field in time direction. """
 function (field::DVTI)(time::Float64)
     return field
 end
+
 
 """ Create a similar DVTI field from vector data. 
 
@@ -316,7 +314,7 @@ function first(field::DCTV)
     return field[1]
 end
 
-""" Interpolate constant time-variant field in time direction. """
+# """ Interpolate constant time-variant field in time direction. """
 function (field::DCTV)(time::Number)
     time < first(field).time && return DCTI(first(field).data)
     time > last(field).time && return DCTI(last(field).data)
@@ -369,7 +367,7 @@ function endof(field::DVTV)
     return endof(field.data)
 end
 
-""" Interpolate discrete, variable, time-variant field in time direction. """
+# """ Interpolate discrete, variable, time-variant field in time direction. """
 function (field::DVTV)(time::Float64)
     time < first(field).time && return DVTI(first(field).data)
     time > last(field).time && return DVTI(last(field).data)
@@ -454,4 +452,3 @@ end
 function (field::CVTV)(xi, time)
     return field.data(xi, time)
 end
-

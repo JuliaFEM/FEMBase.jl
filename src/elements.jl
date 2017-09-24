@@ -101,31 +101,27 @@ function setindex!(element::Element, data, field_name)
     element.fields[field_name] = Field(data)
 end
 
-""" Return a Field object from element.
-
-Examples
---------
->>> element = Element(Seg2, [1, 2])
->>> data = Dict(1 => 1.0, 2 => 2.0)
->>> update!(element, "my field", data)
->>> element("my field")
-
-"""
+#""" Return a Field object from element.
+#Examples
+#--------
+#>>> element = Element(Seg2, [1, 2])
+#>>> data = Dict(1 => 1.0, 2 => 2.0)
+#>>> update!(element, "my field", data)
+#>>> element("my field")
+#"""
 function (element::Element)(field_name::String)
     return element[field_name]
 end
 
-""" Return a Field object from element and interpolate in time direction.
-
-Examples
---------
->>> element = Element(Seg2, [1, 2])
->>> data1 = Dict(1 => 1.0, 2 => 2.0)
->>> data2 = Dict(1 => 2.0, 2 => 3.0)
->>> update!(element, "my field", 0.0 => data1, 1.0 => data2)
->>> element("my field", 0.5)
-
-"""
+#""" Return a Field object from element and interpolate in time direction.
+#Examples
+#--------
+#>>> element = Element(Seg2, [1, 2])
+#>>> data1 = Dict(1 => 1.0, 2 => 2.0)
+#>>> data2 = Dict(1 => 2.0, 2 => 3.0)
+#>>> update!(element, "my field", 0.0 => data1, 1.0 => data2)
+#>>> element("my field", 0.5)
+#"""
 function (element::Element)(field_name::String, time::Float64)
     return element[field_name](time)
 end
@@ -138,21 +134,17 @@ function (element::Element)(ip, time::Float64=0.0)
     return get_basis(element, ip, time)
 end
 
-"""
-Examples
-
-julia> el = Element(Quad4, [1, 2, 3, 4]);
-
-julia> el([0.0, 0.0], 0.0, 1)
-1x4 Array{Float64,2}:
- 0.25  0.25  0.25  0.25
-
-julia> el([0.0, 0.0], 0.0, 2)
-2x8 Array{Float64,2}:
- 0.25  0.0   0.25  0.0   0.25  0.0   0.25  0.0
- 0.0   0.25  0.0   0.25  0.0   0.25  0.0   0.25
-
-"""
+#"""
+#Examples
+#julia> el = Element(Quad4, [1, 2, 3, 4]);
+#julia> el([0.0, 0.0], 0.0, 1)
+#1x4 Array{Float64,2}:
+# 0.25  0.25  0.25  0.25
+#julia> el([0.0, 0.0], 0.0, 2)
+#2x8 Array{Float64,2}:
+# 0.25  0.0   0.25  0.0   0.25  0.0   0.25  0.0
+# 0.0   0.25  0.0   0.25  0.0   0.25  0.0   0.25
+#"""
 function (element::Element)(ip, time::Float64, dim::Int)
     dim == 1 && return get_basis(element, ip, time)
     Ni = vec(get_basis(element, ip, time))

@@ -362,7 +362,7 @@ function getindex(problem::Problem, field_name::AbstractString)
     return problem.fields[field_name]
 end
 
-""" Return field calculated to nodal points for elements in problem p. """
+#""" Return field calculated to nodal points for elements in problem p. """
 function (problem::Problem)(field_name::AbstractString, time::AbstractFloat=0.0)
     #if haskey(problem, field_name)
     #    return problem[field_name](time)
