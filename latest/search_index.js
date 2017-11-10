@@ -49,6 +49,14 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "api.html#FEMBase.Assembly",
+    "page": "API",
+    "title": "FEMBase.Assembly",
+    "category": "Type",
+    "text": "General linearized problem to solve     (K₁+K₂)Δu  +   C1'Δλ = f₁+f₂          C2Δu  +     DΔλ = g\n\n\n\n"
+},
+
+{
     "location": "api.html#FEMBase.Element-Union{Tuple{E}, Tuple{Type{E},Array{Int64,1}}} where E<:FEMBasis.AbstractBasis",
     "page": "API",
     "title": "FEMBase.Element",
@@ -78,14 +86,6 @@ var documenterSearchIndex = {"docs": [
     "title": "FEMBase.Problem",
     "category": "Method",
     "text": "Construct a new boundary problem.\n\nExamples\n\nCreate a Dirichlet boundary problem for a vector-valued (dim=3) elasticity problem.\n\njulia> bc1 = Problem(Dirichlet, \"support\", 3, \"displacement\") solver.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.Assembly",
-    "page": "API",
-    "title": "FEMBase.Assembly",
-    "category": "Type",
-    "text": "General linearized problem to solve     (K₁+K₂)Δu  +   C1'Δλ = f₁+f₂          C2Δu  +     DΔλ = g\n\n\n\n"
 },
 
 {
