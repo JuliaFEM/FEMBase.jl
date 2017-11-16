@@ -6,6 +6,7 @@ using TimerOutputs
 const to = TimerOutput()
 
 test_files = String[]
+push!(test_files, "test_add_elements.jl")
 
 @testset "FEMBase.jl" begin
     for fn in test_files
