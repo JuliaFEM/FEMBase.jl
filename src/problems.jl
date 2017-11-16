@@ -395,6 +395,11 @@ function get_unknown_field_dimension(problem::Problem)
     return problem.dimension
 end
 
+function get_unknown_field_name{P<:AbstractProblem}(::Type{P})
+    warn("The name of unknown field (e.g. displacement, temperature, ...) of the problem type must be given by defining function `get_unknown_field_name`")
+    return "N/A"
+end
+
 """ Return the name of the unknown field of this problem. """
 function get_unknown_field_name{P}(problem::Problem{P})
     return get_unknown_field_name(P)

@@ -44,6 +44,11 @@ function assemble!(problem::Problem, time=0.0; auto_initialize=true)
     return true
 end
 
+function assemble!{P}(assembly::Assembly, problem::Problem{P}, element::Element, time)
+    warn("One must define assemble! function for problem of type $P. Not doing anything.")
+    return nothing
+end
+
 function assemble!(assembly::Assembly, problem::Problem, elements::Vector{Element}, time)
     warn("assemble!() this is default assemble operation, decreased performance can be expected without preallocation of memory!")
     for element in elements
