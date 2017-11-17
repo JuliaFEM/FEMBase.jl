@@ -21,7 +21,7 @@ end
     @test isapprox(full(b), full(b2))
 end
 
-@testset "Failure to add data to sparse vector due dimensino mismatch" begin
+@testset "Failure to add data to sparse vector due dimension mismatch" begin
     b = SparseVectorCOO()
     @test_throws ErrorException add!(b, [1, 2], [1.0, 2.0, 3.0])
 end
@@ -88,8 +88,8 @@ end
     B = sparse(A)
     @test get_nonzero_rows(B) == [1, 3]
     @test get_nonzero_columns(B) == [1, 4]
-    @test size(B) == (3, 4)
-    @test size(B, 1) == 3
+    @test size(A) == (3, 4)
+    @test size(A, 1) == 3
 end
 
 @testset "isapprox" begin
