@@ -14,6 +14,7 @@ push!(test_files, "test_fields.jl")
 push!(test_files, "test_integration_points.jl")
 push!(test_files, "test_integrate.jl")
 push!(test_files, "test_sparse.jl")
+push!(test_files, "test_types.jl")
 
 @testset "FEMBase.jl" begin
     for fn in test_files

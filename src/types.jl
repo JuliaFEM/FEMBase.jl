@@ -72,5 +72,5 @@ end
 
 function IP(id, weight, coords::Vector)
     warn("Consider giving coords as Tuple.")
-    return IP(id, weight, [c for c in coords], Dict(), IntegrationPoint())
+    return IP(id, weight, tuple(coords...), Dict(), IntegrationPoint())
 end
