@@ -4,7 +4,11 @@
 using FEMBase
 using Base.Test
 
+using FEMBase: Field
 using FEMBase: group_by_element_type
+using FEMBase: get_local_coordinates, inside
+using FEMBase: get_basis, get_dbasis, get_integration_order
+using FEMBase: get_reference_element_coordinates, get_reference_coordinates
 
 @testset "add time dependent field to element" begin
     el = Element(Seg2, [1, 2])
@@ -72,4 +76,86 @@ end
     @test length(r) == 2
     @test first(r[Element{Seg2}]) == e1
     @test first(r[Element{Quad4}]) == e2
+end
+
+@testset "inverse isoparametric mapping" begin
+    el = Element(Quad4, [1, 2, 3, 4])
+    X = Dict{Int64, Vector{Float64}}(
+        1 => [0.0, 0.0],
+        2 => [1.0, 0.0],
+        3 => [1.0, 1.0],
+        4 => [0.0, 1.0])
+    update!(el, "geometry", X)
+    time = 0.0
+    X1 = el("geometry", [0.1, 0.2], time)
+    xi = get_local_coordinates(el, X1, time)
+    X2 = el("geometry", xi, time)
+    info("X1 = $X1, X2 = $X2")
+    @test isapprox(X1, X2)
+end
+
+@testset "inside of linear element" begin
+    el = Element(Quad4, [1, 2, 3, 4])
+    X = Dict{Int64, Vector{Float64}}(
+        1 => [0.0, 0.0],
+        2 => [1.0, 0.0],
+        3 => [1.0, 1.0],
+        4 => [0.0, 1.0])
+    update!(el, "geometry", X)
+    time = 0.0
+    @test inside(el, [0.5, 0.5], time) == true
+    @test inside(el, [1.0, 0.5], time) == true
+    @test inside(el, [1.0, 1.0], time) == true
+    @test inside(el, [1.01, 1.0], time) == false
+    @test inside(el, [1.0, 1.01], time) == false
+end
+
+@testset "inside of quadratic element" begin
+    el = Element(Tri6, [1, 2, 3, 4, 5, 6])
+    X = Dict{Int64, Vector{Float64}}(
+        1 => [0.0, 0.0],
+        2 => [1.0, 0.0],
+        3 => [0.0, 1.0],
+        4 => [0.5, 0.2],
+        5 => [0.8, 0.6],
+        6 => [-0.2, 0.5])
+    update!(el, "geometry", X)
+    p = [0.94, 0.3] # visually checked to be inside
+    @test inside(el, p, 0.0) == true
+    p = [-0.2, 0.8] # visually checked to be outside
+    @test inside(el, p, 0.0) == false
+end
+
+@testset "dict field" begin
+    el = Element(Seg2, [1, 2])
+    X = Dict{Int64, Vector{Float64}}(1 => [0.0, 0.0], 2 => [1.0, 0.0], 3 => [0.5, 0.5])
+    f = Field(X)
+    debug("field = $f")
+    #update!(el, "geometry", X)
+    el["geometry"] = f
+    @test isapprox(el("geometry")[1], [0.0, 0.0])
+    @test isapprox(el("geometry", 0.0)[1], [0.0, 0.0])
+    @test isapprox(el("geometry", 0.0)[3], [0.5, 0.5])
+    @test isapprox(el("geometry", [0.0], 0.0), [0.5, 0.0])
+end
+
+@testset "test nodal element" begin
+    el = Element(Poi1, [1])
+    @test get_basis(el, [0.0], 1.0) == [1]
+    @test get_dbasis(el, [0.0], 1.0) == [0]
+    @test isapprox(el([0.0], 0.0, Val{:detJ}), 1.0)
+    @test get_integration_order(el.properties) == 1
+    ips = get_integration_points(el.properties, 1)
+    @test length(ips) == 1
+    @test length(ips[1]) == 2
+    @test size(el) == (0, 1)
+    @test length(el) == 1
+    @test get_reference_element_coordinates(Poi1) == Vector{Float64}[[0.0]]
+end
+
+@testset "get reference coordinates" begin
+    el = Element(Seg2, [1, 2])
+    X = get_reference_coordinates(el)
+    @test isapprox(X[1][1], -1.0)
+    @test isapprox(X[2][1],  1.0)
 end

@@ -9,7 +9,6 @@ test_files = String[]
 push!(test_files, "test_add_elements.jl")
 push!(test_files, "test_common_failures.jl")
 push!(test_files, "test_elements.jl")
-push!(test_files, "test_elements_2.jl")
 push!(test_files, "test_fields.jl")
 push!(test_files, "test_integrate.jl")
 push!(test_files, "test_sparse.jl")
