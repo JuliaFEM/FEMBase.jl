@@ -10,5 +10,8 @@ using Base.Test
     ips2 = get_integration_points(element, 1)
     @test length(ips1) == 1
     @test length(ips2) == 2
+    element = Element(Poi1, [1])
+    ips3 = get_integration_points(element)
+    @test length(ips3) == 1
 end
 
