@@ -9,6 +9,7 @@ using FEMBase: group_by_element_type
 using FEMBase: get_local_coordinates, inside
 using FEMBase: get_basis, get_dbasis, get_integration_order
 using FEMBase: get_reference_element_coordinates, get_reference_coordinates
+using FEMBase: get_element_type, is_element_type, get_element_id, filter_by_element_type
 
 @testset "add time dependent field to element" begin
     el = Element(Seg2, [1, 2])
@@ -80,7 +81,7 @@ end
     e1.id = 1
     @test get_element_id(e1) == 1
     @test is_element_type(e1, Seg2)
-    @test length(filter_by_element_type(elements, Seg2)) == 1
+    seg2_elements = filter_by_element_type(elements, Seg2)
 end
 
 @testset "inverse isoparametric mapping" begin
@@ -178,5 +179,5 @@ end
     e1 = Element(Seg2, [1, 2])
     update!(e1, "f", 0.0 => 1.0)
     update!(e1, "f", 1.0 => 2.0)
-    @test isapprox(last(e1, "f"), 2.0)
+    @test isapprox(last(e1, "f").data, 2.0)
 end
