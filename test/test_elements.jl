@@ -76,6 +76,11 @@ end
     @test length(r) == 2
     @test first(r[Element{Seg2}]) == e1
     @test first(r[Element{Quad4}]) == e2
+    @test get_element_type(e1) == Seg2
+    e1.id = 1
+    @test get_element_id(e1) == 1
+    @test is_element_type(e1, Seg2)
+    @test length(filter_by_element_type(elements, Seg2)) == 1
 end
 
 @testset "inverse isoparametric mapping" begin
@@ -158,4 +163,20 @@ end
     X = get_reference_coordinates(el)
     @test isapprox(X[1][1], -1.0)
     @test isapprox(X[2][1],  1.0)
+end
+
+@testset "function field" begin
+    function f(element, xi, time)
+        return xi[1]*time
+    end
+    e1 = Element(Seg2, [1, 2])
+    e1["f"] = f
+    @test isapprox(e1("f", [1.0], 1.0), 1.0)
+end
+
+@testset "index" begin
+    e1 = Element(Seg2, [1, 2])
+    update!(e1, "f", 0.0 => 1.0)
+    update!(e1, "f", 1.0 => 2.0)
+    @test isapprox(last(e1, "f"), 2.0)
 end
