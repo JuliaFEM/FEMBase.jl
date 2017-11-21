@@ -181,3 +181,46 @@ end
     update!(e1, "f", 1.0 => 2.0)
     @test isapprox(last(e1, "f").data, 2.0)
 end
+
+@testset "gradient, jacobian and determinant of jacobian" begin
+    X = Dict(
+             1 => [0.0, 0.0],
+             2 => [2.0, 0.0],
+             3 => [2.0, 2.0],
+             4 => [0.0, 2.0])
+    element = Element(Quad4, [1, 2, 3, 4])
+    element.fields["geometry"] = Field(X)
+    J = element([0.0, 0.0], 0.0, Val{:Jacobian})
+    detJ = element([0.0, 0.0], 0.0, Val{:detJ})
+    @test isapprox(det(J), detJ)
+    @test isapprox(detJ, 1.0)
+    element2 = Element(Seg2, [1, 2])
+    update!(element2, "geometry", X)
+    detJ = element2([0.0], 0.0, Val{:detJ})
+    @test isapprox(detJ, 1.0)
+    X = Dict(
+             1 => [0.0, 0.0, 0.0],
+             2 => [2.0, 0.0, 0.0],
+             3 => [2.0, 2.0, 0.0],
+             4 => [0.0, 2.0, 0.0])
+    element3 = Element(Quad4, [1, 2, 3, 4])
+    update!(element3, "geometry", X)
+    detJ = element3([0.0, 0.0], 0.0, Val{:detJ})
+    @test isapprox(detJ, 1.0)
+    grad = element([0.0, 0.0], 0.0, Val{:Grad})
+    @test isapprox(grad, 1/4*[-1.0 1.0 1.0 -1.0; -1.0 -1.0 1.0 1.0])
+    update!(element3, "youngs modulus", 1.0)
+    @test isapprox(element3("youngs modulus", [0.0], 0.0), 1.0)
+    update!(element3, "test", [1.0, 2.0, 3.0])
+    test_val = element3("test", [0.0], 1.0)
+end
+
+@testset "update data to element" begin
+    element = Element(Seg2, [1, 2])
+    X = Dict(1 => 1.0)
+    @test_throws KeyError update!(element, "fail", X)
+    @test_throws KeyError update!(element, "fail2", 0.0 => X)
+    update!(element, "success", 0.0 => [1.0, 2.0])
+    update!(element, "success2", 0.0 => [1, 2])
+    update!(element, "success3", 0.0 => Vector{Float64}[[1.0], [2.0]])
+end
