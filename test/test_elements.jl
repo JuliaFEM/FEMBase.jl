@@ -224,3 +224,26 @@ end
     update!(element, "success2", 0.0 => [1, 2])
     update!(element, "success3", 0.0 => Vector{Float64}[[1.0], [2.0]])
 end
+
+@testset "calculate displacement gradient" begin
+    X = Dict(
+             1 => [0.0, 0.0],
+             2 => [1.0, 0.0],
+             3 => [1.0, 1.0],
+             4 => [0.0, 1.0])
+    u = Dict(
+             1 => [0.0, 0.0],
+             2 => [1.0, -1.0],
+             3 => [2.0, 3.0],
+             4 => [0.0, 0.0])
+    element = Element(Quad4, [1, 2, 3, 4])
+    update!(element, "geometry", X)
+    update!(element, "displacement", 0.0 => u)
+    gradu = element("displacement", (0.0, 0.0), 0.0, Val{:Grad})
+    gradu_expected = [1.5 0.5; 1.0 2.0]
+    @test isapprox(gradu, gradu_expected)
+
+    update!(element, "test", 0.0 => 0.0)
+    update!(element, "test", 1.0 => 1.0)
+    @test isapprox(element("test", (0.0, 0.0), 0.5), 0.5)
+end
