@@ -217,12 +217,99 @@ end
 
 @testset "update data to element" begin
     element = Element(Seg2, [1, 2])
+    elements = Element[element]
+
+    # constant fields (not changing on element area)
+
+    # time intependent
+
+    # scalar + updating scalar
+    update!(elements, "scalar 1", 0.0)
+    @test isapprox(element("scalar 1", (0.0), 0.0), 0.0)
+    update!(elements, "scalar 1", 1.0)
+    @test isapprox(element("scalar 1", (0.0), 0.0), 1.0)
+    
+    # vector + updating vector
+    update!(elements, "vector 1", [1.0, 2.0])
+    @test isapprox(element("vector 1", (0.0), 0.0), [1.0, 2.0])
+    update!(elements, "vector 1", [2.0, 1.0])
+    @test isapprox(element("vector 1", (0.0), 0.0), [2.0, 1.0])
+
+    # tensor + updating tensor
+    update!(elements, "tensor 1", [1.0 2.0; 3.0 4.0])
+    @test isapprox(element("tensor 1", [1.0 2.0; 3.0 4.0]))
+    update!(elements, "tensor 1", [4.0 3.0; 2.0 1.0])
+    @test isapprox(element("tensor 1", [4.0 3.0; 2.0 1.0]))
+
+    # time dependent
+
+    # scalar + interpolate
+    update!(elements, "scalar 2", 0.0 => 0.0)
+    @test isapprox(elements("scalar 2", (0.0), 0.5), 0.0)
+    update!(elements, "scalar 2", 0.0 => 1.0)
+    @test isapprox(elements("scalar 2", (0.0), 0.5), 1.0)
+    update!(elements, "scalar 2", 1.0 => 0.0)
+    @test isapprox(elements("scalar 2", (0.0), 0.5), 0.5)
+
+    # vector + interpolate
+    update!(elements, "vector 2", 0.0 => [0.0, 0.0])
+    @test isapprox(elements("vector 2", (0.0), 0.5), [0.0, 0.0])
+    update!(elements, "vector 2", 0.0 => [0.0, 1.0])
+    @test isapprox(elements("vector 2", (0.0), 0.5), [0.0, 1.0])
+    update!(elements, "vector 2", 1.0 => [1.0, 0.0])
+    @test isapprox(elements("vector 2", (0.0), 0.5), [0.5, 0.5])
+
+    # tensor + interpolate
+    update!(elements, "tensor 2", 0.0 => [0.0 0.0; 0.0 0.0])
+    @test isapprox(elements("tensor 2", (0.0), 0.5), [0.0 0.0; 0.0 0.0])
+    update!(elements, "tensor 2", 0.0 => [1.0 1.0; 1.0 1.0])
+    @test isapprox(elements("tensor 2", (0.0), 0.5), [1.0 1.0; 1.0 1.0])
+    update!(elements, "tensor 2", 1.0 => [2.0 2.0; 2.0 2.0])
+    @test isapprox(elements("tensor 2", (0.0), 0.5), [1.5 1.5; 1.5 1.5])
+
+    # variable fields (changing on element area, needs interpolating)
+
+    # time intependent
+
+    # scalar changing on element area
+    update!(elements, "scalar 3", (1.0, 2.0))
+    @test isapprox(element("scalar 3", (0.0), 0.0), 1.5)
+    update!(elements, "scalar 3", (2.0, 3.0))
+    @test isapprox(element("scalar 3", (0.0), 0.0), 2.5)
+
+    # vector changing on element area
+    update!(elements, "vector 3", ([1.0, 2.0], [2.0, 3.0]))
+    @test isapprox(element("vector 3", (0.0), 0.0), [1.5, 2.5])
+    update!(elements, "vector 3", ([2.0, 3.0], [3.0, 4.0]))
+    @test isapprox(element("vector 3", (0.0), 0.0), [2.5, 3.5])
+
+    # tensor changing on element area
+    update!(elements, "tensor 3", ([0.0 0.0; 0.0 0.0], [1.0 1.0; 1.0 1.0]))
+    @test isapprox(element("tensor 3", (0.0), 0.0), [0.5 0.5; 0.5 0.5])
+    update!(elements, "tensor 3", ([1.0 1.0; 1.0 1.0], [2.0 2.0; 2.0 2.0]))
+    @test isapprox(element("tensor 3", (0.0), 0.0), [1.5 1.5; 1.5 1.5])
+
+    # time dependent
+
+    # scalar changing on element area over time
+    update!(elements, "scalar 4", 0.0 => (1.0, 3.0))
+    update!(elements, "scalar 4", 1.0 => (3.0, 5.0))
+    @test isapprox(element("scalar 4", (0.0), 0.5), 3.0)
+
+    # vector changing on element area over time
+    update!(elements, "vector 4", 0.0 => ([1.0, 1.0], [3.0, 3.0]))
+    update!(elements, "vector 4", 1.0 => ([3.0, 3.0], [5.0, 5.0]))
+    @test isapprox(element("scalar 4", (0.0), 0.5), [3.0, 3.0])
+
+    # tensor changing on element area over time
+    update!(elements, "tensor 4", 0.0 => ([1.0 1.0; 1.0 1.0], [3.0 3.0; 3.0 3.0]))
+    update!(elements, "tensor 4", 1.0 => ([3.0 3.0; 3.0 3.0], [5.0 5.0; 5.0 5.0]))
+    @test isapprox(element("tensor 4", (0.0), 0.5), [3.0 3.0; 3.0 3.0])
+
     X = Dict(1 => 1.0)
-    @test_throws KeyError update!(element, "fail", X)
-    @test_throws KeyError update!(element, "fail2", 0.0 => X)
-    update!(element, "success", 0.0 => [1.0, 2.0])
-    update!(element, "success2", 0.0 => [1, 2])
-    update!(element, "success3", 0.0 => Vector{Float64}[[1.0], [2.0]])
+    @test_throws KeyError update!(elements, "fail", X)
+    @test_throws KeyError update!(elements, "fail2", 0.0 => X)
+
 end
 
 @testset "calculate displacement gradient" begin
