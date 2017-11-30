@@ -7,6 +7,32 @@ using Base.Test
 
 type Dummy <: FieldProblem end
 
+@testset "test tet4 mass matrix" begin
+    X = Dict(
+             1 => [2.0, 3.0, 4.0],
+             2 => [6.0, 3.0, 2.0],
+             3 => [2.0, 5.0, 1.0],
+             4 => [4.0, 3.0, 6.0])
+
+    element = Element(Tet4, [1, 2, 3, 4])
+    update!(element, "geometry", X)
+    update!(element, "density", 5.0)
+
+    p = Problem(Dummy, "test", 1)
+    add_elements!(p, [element])
+    assemble_mass_matrix!(p, 0.0)
+    M = full(p.assembly.M)
+
+    M_expected = [
+                  2 1 1 1
+                  1 2 1 1
+                  1 1 2 1
+                  1 1 1 2
+                 ]
+    info(M)
+    @test isapprox(M, M_expected)
+end
+
 @testset "test tet10 mass matrix" begin
     X = Dict(
              1 => [2.0, 3.0, 4.0],
