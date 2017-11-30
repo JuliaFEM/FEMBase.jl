@@ -219,6 +219,7 @@ end
     element = Element(Seg2, [1, 2])
     elements = Element[element]
 
+#=
     # constant fields (not changing on element area)
 
     # time intependent
@@ -305,7 +306,7 @@ end
     update!(elements, "tensor 4", 0.0 => ([1.0 1.0; 1.0 1.0], [3.0 3.0; 3.0 3.0]))
     update!(elements, "tensor 4", 1.0 => ([3.0 3.0; 3.0 3.0], [5.0 5.0; 5.0 5.0]))
     @test isapprox(element("tensor 4", (0.0), 0.5), [3.0 3.0; 3.0 3.0])
-
+=#
     X = Dict(1 => 1.0)
     @test_throws KeyError update!(elements, "fail", X)
     @test_throws KeyError update!(elements, "fail2", 0.0 => X)
