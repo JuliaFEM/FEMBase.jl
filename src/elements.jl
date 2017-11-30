@@ -371,21 +371,6 @@ function get_integration_points{E}(element::Element{E}, change_order::Int)
     end
 end
 
-""" Return dual basis transformation matrix Ae. """
-function get_dualbasis(element::Element, time::Float64, order=1)
-    nnodes = length(element)
-    De = zeros(nnodes, nnodes)
-    Me = zeros(nnodes, nnodes)
-    for ip in get_integration_points(element, order)
-        detJ = element(ip, time, Val{:detJ})
-        w = ip.weight*detJ
-        N = element(ip, time)
-        De += w*diagm(vec(N))
-        Me += w*N'*N
-    end
-    return De, Me, De*inv(Me)
-end
-
 """ Find inverse isoparametric mapping of element. """
 function get_local_coordinates(element::Element, X::Vector, time::Float64; max_iterations=10, tolerance=1.0e-6)
     haskey(element, "geometry") || error("element geometry not defined, cannot calculate inverse isoparametric mapping")
