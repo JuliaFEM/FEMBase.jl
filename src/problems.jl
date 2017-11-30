@@ -150,10 +150,6 @@ function get_unknown_field_name{P<:BoundaryProblem}(::Type{P})
     return "lambda"
 end
 
-function get_assembly(problem)
-    return problem.assembly
-end
-
 # one-liner helpers to identify problem types
 
 is_field_problem(problem) = false
@@ -411,10 +407,6 @@ function get_parent_field_name{P<:BoundaryProblem}(problem::Problem{P})
 end
 
 function push!(problem::Problem, elements...)
-    push!(problem.elements, elements...)
-end
-
-function push!(problem::Problem, elements::Vector)
     push!(problem.elements, elements...)
 end
 
