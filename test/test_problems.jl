@@ -2,12 +2,13 @@
 # License is MIT: see https://github.com/JuliaFEM/FEMBase.jl/blob/master/LICENSE
 
 using FEMBase
-using FEMBase: is_field_problem, is_boundary_problem, get_formulation_type
+using FEMBase: is_field_problem, is_boundary_problem
 using FEMBase: get_parent_field_name, get_global_solution
 using FEMBase: get_assembly
 using Base.Test
 
 import FEMBase: get_unknown_field_dimension, get_unknown_field_name
+import FEMBase: get_formulation_type
 
 type P1 <: FieldProblem
     A :: Bool
@@ -17,16 +18,21 @@ function P1()
     return P1(true)
 end
 
-type P2 <: BoundaryProblem end
+type P2 <: BoundaryProblem
+    formulation :: Symbol
+end
+
+function P2()
+    return P2(:incremental)
+end
 
 get_unknown_field_name(p::P1) = "P1"
-get_unknown_field_dimension(p::P1) = 1
 get_unknown_field_name(p::P2) = "P2"
-get_unknown_field_dimension(p::P2) = 2
+get_formulation_type(p::Problem{P2}) = p.properties.formulation
 
 @testset "test creating new problems" begin
     p1 = Problem(P1, "P1", 1)
-    p2 = Problem(P2, "P2", 1, "p")
+    p2 = Problem(P2, "P2", 2, "p")
     @test get_formulation_type(p1) == :incremental
     @test get_unknown_field_name(p2) == "lambda"
     @test isempty(get_assembly(p1))
@@ -42,14 +48,38 @@ get_unknown_field_dimension(p::P2) = 2
     initialize!(p2, el, 0.0)
     #@test haskey(el, "P1")
     #@test haskey(el, "P2")
+
     A = Assembly()
+    A2 = Assembly()
     u = ones(2)
     la = ones(2)
     update!(p1, A, u, la)
     @test length(A.u) == length(u)
     @test length(A.la) == length(la)
     @test size(get_global_solution(p1, A)[1]) == (2,)
-    @test size(get_global_solution(p2, A)[1]) == (2,)
+
+    update!(p2, A2, ones(4), ones(4))
+    u, la = get_global_solution(p2, A2)
+    o = Vector{Float64}[ones(2), ones(2)]
+    @test isapprox(u, o)
+    @test isapprox(la, o)
+    update!(p2, A2, ones(4), ones(4))
+    u, la = get_global_solution(p2, A2)
+    @test isapprox(u, 2*o)
+    @test isapprox(la, o)
+    p2.properties.formulation = :forwarddiff
+    update!(p2, A2, ones(4), ones(4))
+    u, la = get_global_solution(p2, A2)
+    @test isapprox(u, 3*o)
+    @test isapprox(la, 2*o)
+    p2.properties.formulation = :total
+    update!(p2, A2, ones(4), ones(4))
+    u, la = get_global_solution(p2, A2)
+    @test isapprox(u, o)
+    @test isapprox(la, o)
+    p2.properties.formulation = :nottell
+    @test_throws Exception update!(p2, A2, ones(4), ones(4))
+
     add_elements!(p1, Element[el])
     @test length(p1) == 1
     update!(p1, "geometry", Dict(1 => [0.0, 0.0], 2 => [1.0, 0.0]))
