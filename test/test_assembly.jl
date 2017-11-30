@@ -73,7 +73,7 @@ end
 
     X[5] += 0.1
     update!(element, "geometry", X)
-    empty!(p.assembly)
+    empty!(p.assembly.M)
     assemble_mass_matrix!(p, 0.0)
     M = full(p.assembly.M)
 end
