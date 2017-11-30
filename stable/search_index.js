@@ -57,6 +57,38 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "api.html#FEMBase.DCTI-Tuple{}",
+    "page": "API",
+    "title": "FEMBase.DCTI",
+    "category": "Method",
+    "text": "Discrete, constant, time-invariant field. This is constant in both spatial direction and time direction, i.e. df/dX = 0 and df/dt = 0.\n\nThis is the most basic type of field having no anything special functionality.\n\nExamples\n\njulia> f = DCTI() julia> update!(f, 1.0)\n\nMultiplying by constant works:\n\njulia> 2*f 2.0\n\nInterpolation in time direction gives the same constant:\n\njulia> f(1.0) 1.0\n\nBy default, when calling Field with scalar, DCTI is assumed, i.e.\n\njulia> Field(0.0) == DCTI(0.0) true\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBase.DCTV-Tuple{Vararg{Pair,N} where N}",
+    "page": "API",
+    "title": "FEMBase.DCTV",
+    "category": "Method",
+    "text": "Discrete, constant, time variant field. This is constant in spatial direction but non-constant in time direction, i.e. df/dX = 0 but df/dt != 0.\n\nExamples\n\njulia> t0 = 0.0; t1=1.0; y0 = 0.0; y1 = 1.0 julia> f = DCTV(t0 => y0, t1 => y1)\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBase.DVTI-Tuple{}",
+    "page": "API",
+    "title": "FEMBase.DVTI",
+    "category": "Method",
+    "text": "Discrete, variable, time-invariant field. This is constant in time direction, but not in spatial direction, i.e. df/dt = 0 but df/dX != 0. The basic structure of data is Vector, and it is implicitly assumed that length of field matches to the number of shape functions, so that interpolation in spatial direction works.\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBase.DVTV-Tuple{}",
+    "page": "API",
+    "title": "FEMBase.DVTV",
+    "category": "Method",
+    "text": "Discrete, variable, time variant fields. \n\n\n\n"
+},
+
+{
     "location": "api.html#FEMBase.Element-Union{Tuple{E}, Tuple{Type{E},Array{Int64,1}}} where E<:FEMBasis.AbstractBasis",
     "page": "API",
     "title": "FEMBase.Element",
@@ -217,38 +249,6 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "api.html#FEMBase.DCTI-Tuple{}",
-    "page": "API",
-    "title": "FEMBase.DCTI",
-    "category": "Method",
-    "text": "Discrete, constant, time-invariant field. This is constant in both spatial direction and time direction, i.e. df/dX = 0 and df/dt = 0.\n\nThis is the most basic type of field having no anything special functionality.\n\nExamples\n\njulia> f = DCTI() julia> update!(f, 1.0)\n\nMultiplying by constant works:\n\njulia> 2*f 2.0\n\nInterpolation in time direction gives the same constant:\n\njulia> f(1.0) 1.0\n\nBy default, when calling Field with scalar, DCTI is assumed, i.e.\n\njulia> Field(0.0) == DCTI(0.0) true\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.DCTV-Tuple{Vararg{Pair,N} where N}",
-    "page": "API",
-    "title": "FEMBase.DCTV",
-    "category": "Method",
-    "text": "Discrete, constant, time variant field. This is constant in spatial direction but non-constant in time direction, i.e. df/dX = 0 but df/dt != 0.\n\nExamples\n\njulia> t0 = 0.0; t1=1.0; y0 = 0.0; y1 = 1.0 julia> f = DCTV(t0 => y0, t1 => y1)\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.DVTI-Tuple{}",
-    "page": "API",
-    "title": "FEMBase.DVTI",
-    "category": "Method",
-    "text": "Discrete, variable, time-invariant field. This is constant in time direction, but not in spatial direction, i.e. df/dt = 0 but df/dX != 0. The basic structure of data is Vector, and it is implicitly assumed that length of field matches to the number of shape functions, so that interpolation in spatial direction works.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.DVTV-Tuple{}",
-    "page": "API",
-    "title": "FEMBase.DVTV",
-    "category": "Method",
-    "text": "Discrete, variable, time variant fields. \n\n\n\n"
-},
-
-{
     "location": "api.html#FEMBase.Field-Tuple{Array{T,1} where T}",
     "page": "API",
     "title": "FEMBase.Field",
@@ -366,14 +366,6 @@ var documenterSearchIndex = {"docs": [
     "title": "FEMBase.assemble_mass_matrix!",
     "category": "Method",
     "text": "assemble_mass_matrix!(problem, elements::Vector{Element{Tet10}}, time)\n\nAssemble Tet10 mass matrices using special method. If Tet10 has constant metric if can be integrated analytically to gain performance.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.get_dualbasis",
-    "page": "API",
-    "title": "FEMBase.get_dualbasis",
-    "category": "Function",
-    "text": "Return dual basis transformation matrix Ae. \n\n\n\n"
 },
 
 {
