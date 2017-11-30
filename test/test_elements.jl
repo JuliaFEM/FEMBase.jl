@@ -335,3 +335,38 @@ end
     update!(element, "test", 1.0 => 1.0)
     @test isapprox(element("test", (0.0, 0.0), 0.5), 0.5)
 end
+
+@testset "interpolation failure" begin
+    el = Element(Seg2, [1, 2])
+    el.fields["g"] = DVTI([1.0, 2.0, 3.0])
+    @test_throws Exception el("g", [0.0], 0.0)
+end
+
+@testset "update fields to element" begin
+    el = Element(Seg2, [1, 2])
+    d = ["A", 1]
+    update!(el, "f1", 0.0 => d)
+    update!(el, "f1", 0.0 => d)
+    @test el.fields["f1"](0.0).data == d
+    update!(el, "f2", 0.0 => [1, 2])
+    update!(el, "f2", 0.0 => [2, 1])
+    @test el.fields["f2"](0.0).data == [2, 1]
+    update!(el, "f3", [1, 2, 3])
+    update!(el, "f3", [2, 3, 4])
+    @test el.fields["f3"].data == [2, 3, 4]
+    update!(el, "E" => 1.0, "E" => 2.0)
+    @test isapprox(el("E", [0.0], 0.0), 2.0)
+end
+
+@testset "get integration points for Quad4" begin
+    el = Element(Quad4, [1, 2, 3, 4])
+    ips = get_integration_points(el)
+    @test length(ips) == 4
+end
+
+@testset "test nonconverging inverse isoparametric mapping" begin
+    X = Dict(1 => [0.0, 0.0], 2 => [1.0, 0.0], 3 => [1.0, 1.0], 4 => [0.0, 1.0])
+    el = Element(Quad4, [1, 2, 3, 4])
+    update!(el, "geometry", X)
+    @test_throws Exception get_local_coordinates(el, [0.1, 0.1], 0.0; max_iterations=0)
+end
