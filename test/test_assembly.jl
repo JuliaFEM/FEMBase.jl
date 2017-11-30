@@ -71,7 +71,7 @@ end
 
     @test isapprox(M, M_expected)
 
-    X[5][1] += 0.1
+    X[5] += 0.1
     update!(element, "geometry", X)
     empty!(p.assembly)
     assemble_mass_matrix!(p, 0.0)
@@ -88,4 +88,24 @@ end
     @test !isempty(A)
     empty!(A)
     @test isempty(A)
+end
+
+function FEMBase.assemble_prehook!(problem::Problem{Dummy}, time::Float64)
+    add!(problem.assembly.K, [1, 2], [1, 2], [1.0 -1.0; -1.0 1.0])
+end
+
+function FEMBase.assemble_posthook!(problem::Problem{Dummy}, time::Float64)
+    add!(problem.assembly.K, [2, 3], [2, 3], [1.0 -1.0; -1.0 1.0])
+end
+
+@testset "pre and posthooks, warnings" begin
+    p = Problem(Dummy, "test", 1)
+    assemble!(p, 0.0)
+    k = [1.0 -1.0; -1.0 1.0]
+    K_expected = zeros(3,3)
+    K_expected[1:2,1:2] += k
+    K_expected[2:3,2:3] += k
+    @test isapprox(full(p.assembly.K), K_expected)
+    assemble!(p, 0.0)
+    @test isapprox(full(p.assembly.K), 2.0*K_expected)
 end
