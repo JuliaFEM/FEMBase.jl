@@ -29,7 +29,9 @@ type Dummy <: FieldProblem end
                   1 1 2 1
                   1 1 1 2
                  ]
-    info(M)
+    @test isapprox(M, M_expected)
+    assemble_mass_matrix!(p, 0.0)
+    M = full(p.assembly.M)
     @test isapprox(M, M_expected)
 end
 
@@ -68,12 +70,21 @@ end
        -6  -6  -4  -4   8  16  16  16  16  32]
 
     @test isapprox(M, M_expected)
+
+    X[5][1] += 0.1
+    update!(element, "geometry", X)
+    empty!(p.assembly)
+    assemble_mass_matrix!(p, 0.0)
+    M = full(p.assembly.M)
 end
 
-@testset "add and empty assembly" begin
+@testset "add, empty and compare assembly" begin
     A = Assembly()
+    B = Assembly()
     @test isempty(A)
     add!(A.K, [1,2,3,4], [1,2,3,4], [1.0 2.0; 3.0 4.0])
+    add!(B.K, [1,2,3,4], [1,2,3,4], [1.0 2.0; 3.0 4.0])
+    @test isapprox(A, B)
     @test !isempty(A)
     empty!(A)
     @test isempty(A)
