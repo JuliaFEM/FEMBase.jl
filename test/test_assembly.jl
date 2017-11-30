@@ -69,3 +69,12 @@ end
 
     @test isapprox(M, M_expected)
 end
+
+@testset "add and empty assembly" begin
+    A = Assembly()
+    @test isempty(A)
+    add!(A.K, [1,2,3,4], [1,2,3,4], [1.0 2.0; 3.0 4.0])
+    @test !isempty(A)
+    empty!(A)
+    @test isempty(A)
+end
