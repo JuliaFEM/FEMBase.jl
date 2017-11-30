@@ -36,5 +36,6 @@ export Poi1, Seg2, Seg3, Tri3, Tri6, Tri7, Quad4, Quad8, Quad9,
 export update!, add_elements!, add!, get_gdofs, group_by_element_type,
        get_unknown_field_name, get_unknown_field_dimension,
        get_integration_points, initialize!, assemble!
+export DCTI, DVTI, DCTV, DVTV, CCTI, CVTI, CCTV, CVTV
 
 end
