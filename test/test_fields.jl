@@ -16,13 +16,13 @@ using Base.Test
     @test a == 2
 
     # vector field
-    b = DCTI([1, 2])
-    @test interpolate(b, 0.0) == [1, 2]
-    @test b[1] == [1, 2]
-    @test length(b) == length([1, 2])
-    @test size(b) == size([1, 2])
-    update!(b, [2, 3])
-    @test b == [2, 3]
+    b = DCTI([1,2])
+    @test interpolate(b, 0.0) == [1,2]
+    @test b[1] == [1,2]
+    @test length(b) == length([1,2])
+    @test size(b) == size([1,2])
+    update!(b, [2,3])
+    @test b == [2,3]
 
     # tensor field
     c = DCTI([1 2; 3 4])
@@ -42,7 +42,25 @@ end
     @test a[1] == 1
     @test a[2] == 2
     @test interpolate(a, 0.0) == (1, 2)
-    @test interpolate(a, 0.0, [1, 1]) == 3
-    update!(a, (2, 3))
-    @test a == (2, 3)
+    @test interpolate(a, 0.0, [1,1]) == 3
+    update!(a, (2,3))
+    @test a == (2,3)
+
+    # vector field
+    b = DVTI(([1,2], [2,3]))
+    @test b[1] == [1,2]
+    @test b[2] == [2,3]
+    @test interpolate(b, 0.0) == ([1,2], [2,3])
+    @test interpolate(b, 0.0, [1,1]) == [3,5]
+    update!(b, ([2,3], [4,5]))
+    @test b == ([2,3], [4,5])
+
+    # tensor field
+    c = DVTI(([1 2; 3 4], [2 3; 4 5]))
+    @test c[1] == [1 2; 3 4]
+    @test c[2] == [2 3; 4 5]
+    @test interpolate(c, 0.0) == ([1 2; 3 4], [2 3; 4 5])
+    @test interpolate(c, 0.0, [1,1]) == [3 5; 7 9]
+    update!(c, ([2 3; 4 5], [5 6; 7 8]))
+    @test c == ([2 3; 4 5], [5 6; 7 8])
 end
