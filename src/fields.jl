@@ -112,7 +112,7 @@ type DCTV{T} <: AbstractField
 end
 
 """
-    update!(f::DCTV, data)
+    update!(f::DCTV, time => data)
 
 Update new value to field.
 """
@@ -158,6 +158,60 @@ function interpolate(field::DCTV, time)
     end
 end
 
+## DISCRETE, VARIABLE, TIME VARIANT
+
+type DVTV{N,T} <: AbstractField
+    data :: Vector{Pair{Float64,NTuple{N,T}}}
+end
+
+"""
+    update!(f::DVTV, time => data)
+
+Update new value to field.
+"""
+function update!{N,T}(f::DVTV, data::Pair{Float64, NTuple{N,T}})
+    if isapprox(last(f.data).first, data.first)
+        f.data[end] = data
+    else
+        push!(f.data, data)
+    end
+end
+
+function DVTV{N,T}(a::Pair{Float64,NTuple{N,T}}, b::Pair{Float64,NTuple{N,T}})
+    return DVTV([a, b])
+end
+
+"""
+    interpolate(f::DVTV, time, basis)
+
+Interpolate variable, time variant DVTV field in both time and spatial direction.
+
+# Notes
+First check that is outside of range -> extrapolate
+Secondly check is "exact match" in time
+At last, find the correct bin and use linear interpolation
+
+"""
+function interpolate{N,T}(field::DVTV{N,T}, time, basis)
+    time < first(field.data).first && return first(field.data).second
+    time > last(field.data).first && return last(field.data).second
+    for i=reverse(1:length(field))
+        isapprox(field.data[i].first, time) && return field.data[i].second
+    end
+    for i=length(field.data):-1:2
+        t0 = field.data[i-1].first
+        t1 = field.data[i].first
+        if t0 < time < t1
+            y0 = field.data[i-1].second
+            y1 = field.data[i].second
+            dt = t1-t0
+            Y0 = sum(y0[i]*basis[i] for i=1:N)
+            Y1 = sum(y1[i]*basis[i] for i=1:N)
+            new_data = Y0*(1-(time-t0)/dt) + Y1*(1-(t1-time)/dt)
+            return new_data
+        end
+    end
+end
 ###
 
 abstract type Discrete<:AbstractField end
@@ -176,15 +230,10 @@ end
 
 ### Different field combinations and other typealiases
 
-const DVTV{T} = Field{Discrete, Variable, TimeVariant, T}
 const CCTI{T} = Field{Continuous, Constant, TimeInvariant, T}
 const CVTI{T} = Field{Continuous, Variable, TimeInvariant, T}
 const CCTV{T} = Field{Continuous, Constant, TimeVariant, T}
 const CVTV{T} = Field{Continuous, Variable, TimeVariant, T}
-
-function DVTV{T}(a::T)
-    return DVTV{T}(a)
-end
 
 function CCTI{T}(a::T)
     return CCTI{T}(a)

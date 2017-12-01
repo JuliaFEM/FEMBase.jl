@@ -86,3 +86,11 @@ end
     c = DCTV(0.0 => [1.0 2.0; 3.0 4.0], 1.0 => [2.0 3.0; 4.0 5.0])
     @test isapprox(interpolate(c, 0.5), [1.5 2.5; 3.5 4.5])
 end
+
+@testset "DVTV field" begin
+    # scalar field
+    a = DVTV(0.0 => (0.0, 1.0), 1.0 => (1.0, 0.0))
+    @test isapprox(interpolate(a, 0.5, [1, 1]), 1.0)
+    update!(a, 2.0 => (2.0, 0.0))
+    @test isapprox(interpolate(a, 1.5, [1, 1]), 1.5)
+end
