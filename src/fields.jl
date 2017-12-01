@@ -3,7 +3,7 @@
 
 abstract type AbstractField end
 
-# Discrete fields
+# DISCRETE, CONSTANT, TIME INVARIANT
 
 """
     DCTI(T)
@@ -55,6 +55,66 @@ function getindex(f::DCTI, i::Int64)
     return f.data
 end
 
+## DISCRETE, VARIABLE, TIME INVARIANT
+
+""" Discrete, variable, time-invariant field. This is constant in time direction,
+but not in spatial direction, i.e. df/dt = 0 but df/dX != 0. The basic structure
+of data is Vector, and it is implicitly assumed that length of field matches to
+the number of shape functions, so that interpolation in spatial direction works.
+"""
+type DVTI{N,T} <: AbstractField
+    data :: NTuple{N,T}
+end
+
+function length(f::DVTI)
+    return length(f.data)
+end
+
+function size(f::DVTI)
+    return size(f.data)
+end
+
+function ==(f::DVTI, y)
+    return ==(f.data, y)
+end
+
+"""
+    update!(f::DVTI, data)
+
+Update new value to field.
+"""
+function update!(f::DVTI, data)
+    f.data = data
+end
+
+"""
+    interpolate(f::DVTI, t)
+
+Interpolate variable, time-invariant DVTI field in time direction.
+"""
+function interpolate{N,T}(f::DVTI{N,T}, t)
+    return f.data
+end
+
+"""
+    interpolate(f::DVTI, t, B)
+
+Interpolate variable, time-invariant DVTI field in time and spatial direction.
+"""
+function interpolate{N,T}(f::DVTI{N,T}, t, B)
+    return sum(f.data[i]*B[i] for i=1:N)
+end
+
+"""
+    getindex(f::DVTI, i::Int64)
+
+"""
+function getindex(f::DVTI, i::Int64)
+    return f.data[i]
+end
+
+###
+
 abstract type Discrete<:AbstractField end
 abstract type Continuous<:AbstractField end
 abstract type Constant<:AbstractField end
@@ -71,19 +131,12 @@ end
 
 ### Different field combinations and other typealiases
 
-const DVTI{T} = Field{Discrete, Variable, TimeInvariant, T}
 const DCTV{T} = Field{Discrete, Constant, TimeVariant, T}
 const DVTV{T} = Field{Discrete, Variable, TimeVariant, T}
 const CCTI{T} = Field{Continuous, Constant, TimeInvariant, T}
 const CVTI{T} = Field{Continuous, Variable, TimeInvariant, T}
 const CCTV{T} = Field{Continuous, Constant, TimeVariant, T}
 const CVTV{T} = Field{Continuous, Variable, TimeVariant, T}
-
-
-
-function DVTI{T}(a::T)
-    return DVTI{T}(a)
-end
 
 function DCTV{T}(a::T)
     return DCTV{T}(a)
@@ -117,15 +170,6 @@ function Field{T}(data::T)
     return DCTI{T}(data)
 end
 
-""" Discrete, variable, time-invariant field. This is constant in time direction,
-but not in spatial direction, i.e. df/dt = 0 but df/dX != 0. The basic structure
-of data is Vector, and it is implicitly assumed that length of field matches to
-the number of shape functions, so that interpolation in spatial direction works.
-"""
-function DVTI()
-    return DVTI([])
-end
-
 """ For vector data, DVTI is automatically created.
 
 julia> DVTI([1.0, 2.0]) == Field([1.0, 2.0])
@@ -145,10 +189,6 @@ julia> Field(X) == DVTI(X)
 """
 function Field(data::Dict)
     return DVTI(data)
-end
-
-function ==(x::DVTI, y::DVTI)
-    return ==(x.data, y.data)
 end
 
 function isapprox(x::DVTI, y)

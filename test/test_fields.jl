@@ -34,3 +34,15 @@ using Base.Test
     @test c == [2 3; 4 5]
 
 end
+
+@testset "DVTI field" begin
+
+    # scalar field
+    a = DVTI((1, 2))
+    @test a[1] == 1
+    @test a[2] == 2
+    @test interpolate(a, 0.0) == (1, 2)
+    @test interpolate(a, 0.0, [1, 1]) == 3
+    update!(a, (2, 3))
+    @test a == (2, 3)
+end
