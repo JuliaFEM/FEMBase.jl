@@ -64,3 +64,18 @@ end
     update!(c, ([2 3; 4 5], [5 6; 7 8]))
     @test c == ([2 3; 4 5], [5 6; 7 8])
 end
+
+@testset "DCTV field" begin
+
+    # scalar field
+    a = DCTV(0.0 => 0.0, 1.0 => 1.0)
+    @test isapprox(interpolate(a, -1.0), 0.0)
+    @test isapprox(interpolate(a, 0.0), 0.0)
+    @test isapprox(interpolate(a, 0.5), 0.5)
+    @test isapprox(interpolate(a, 1.0), 1.0)
+    update!(a, 1.0 => 2.0)
+    @test isapprox(interpolate(a, 0.5), 1.0)
+    update!(a, 2.0 => 1.0)
+    @test isapprox(interpolate(a, 1.5), 1.5)
+
+end
