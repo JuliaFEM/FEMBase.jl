@@ -3,6 +3,58 @@
 
 abstract type AbstractField end
 
+# Discrete fields
+
+"""
+    DCTI(T)
+
+Discrete, constant, time-invariant field.
+This field is constant in both spatial direction and time direction,
+i.e. df/dX = 0 and df/dt = 0.
+"""
+type DCTI{T} <: AbstractField
+    data :: T
+end
+
+function length(f::DCTI)
+    return length(f.data)
+end
+
+function size(f::DCTI)
+    return size(f.data)
+end
+
+function ==(f::DCTI, y)
+    return ==(f.data, y)
+end
+
+"""
+    update!(f::DCTI, data)
+
+Update new value to field.
+"""
+function update!(f::DCTI, data)
+    f.data = data
+end
+
+"""
+    interpolate(f::DCTI, args...)
+
+Interpolate constant, time-invariant DCTI field in time direction. That is
+trivially only the data itself.
+"""
+function interpolate(f::DCTI, args...)
+    return f.data
+end
+
+"""
+    getindex(f::DCTI, i::Int64)
+
+"""
+function getindex(f::DCTI, i::Int64)
+    return f.data
+end
+
 abstract type Discrete<:AbstractField end
 abstract type Continuous<:AbstractField end
 abstract type Constant<:AbstractField end
@@ -17,11 +69,8 @@ type Field{A<:Union{Discrete, Continuous},
     data :: T
 end
 
-const FieldSet = Dict{String, Field}
-
 ### Different field combinations and other typealiases
 
-const DCTI{T} = Field{Discrete, Constant, TimeInvariant, T}
 const DVTI{T} = Field{Discrete, Variable, TimeInvariant, T}
 const DCTV{T} = Field{Discrete, Constant, TimeVariant, T}
 const DVTV{T} = Field{Discrete, Variable, TimeVariant, T}
@@ -30,43 +79,7 @@ const CVTI{T} = Field{Continuous, Variable, TimeInvariant, T}
 const CCTV{T} = Field{Continuous, Constant, TimeVariant, T}
 const CVTV{T} = Field{Continuous, Variable, TimeVariant, T}
 
-# Discrete fields
 
-
-""" Discrete, constant, time-invariant field. This is constant in both spatial
-direction and time direction, i.e. df/dX = 0 and df/dt = 0.
-
-This is the most basic type of field having no anything special functionality.
-
-Examples
---------
-
-julia> f = DCTI()
-julia> update!(f, 1.0)
-
-Multiplying by constant works:
-
-julia> 2*f
-2.0
-
-Interpolation in time direction gives the same constant:
-
-julia> f(1.0)
-1.0
-
-By default, when calling Field with scalar, DCTI is assumed, i.e.
-
-julia> Field(0.0) == DCTI(0.0)
-true
-
-"""
-function DCTI()
-    return DCTI(nothing)
-end
-
-function DCTI{T}(a::T)
-    return DCTI{T}(a)
-end
 
 function DVTI{T}(a::T)
     return DVTI{T}(a)
@@ -102,45 +115,6 @@ end
 
 function Field{T}(data::T)
     return DCTI{T}(data)
-end
-
-function ==(x::DCTI, y::DCTI)
-    return ==(x.data, y.data)
-end
-
-function ==(x::DCTI, y)
-    return ==(x.data, y)
-end
-
-function isapprox(x::DCTI, y::DCTI)
-    isapprox(x.data, y.data)
-end
-
-function isapprox(x::DCTI, y)
-    isapprox(x.data, y)
-end
-
-function length(f::DCTI)
-    return 1
-end
-
-function *(c::Number, f::DCTI)
-    return c*f.data
-end
-
-""" Kind of spatial interpolation of DCTI. """
-function *(N::Matrix, f::DCTI)
-    @assert length(N) == 1
-    return N[1]*f.data
-end
-
-function update!(field::DCTI, data)
-    field.data = data
-end
-
-# Interpolate time-invariant field in time direction.
-function (field::DCTI)(time::Float64)
-    return field.data
 end
 
 """ Discrete, variable, time-invariant field. This is constant in time direction,
