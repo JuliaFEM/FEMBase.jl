@@ -78,4 +78,11 @@ end
     update!(a, 2.0 => 1.0)
     @test isapprox(interpolate(a, 1.5), 1.5)
 
+    # vector field
+    b = DCTV(0.0 => [1.0, 2.0], 1.0 => [2.0, 3.0])
+    @test isapprox(interpolate(b, 0.5), [1.5, 2.5])
+
+    # tensor field
+    c = DCTV(0.0 => [1.0 2.0; 3.0 4.0], 1.0 => [2.0 3.0; 4.0 5.0])
+    @test isapprox(interpolate(c, 0.5), [1.5 2.5; 3.5 4.5])
 end
