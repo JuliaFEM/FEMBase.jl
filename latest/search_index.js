@@ -17,19 +17,115 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "theory.html#",
-    "page": "Theory",
-    "title": "Theory",
+    "location": "fields.html#",
+    "page": "Fields",
+    "title": "Fields",
+    "category": "page",
+    "text": "using FEMBaseFrom the beginning a clear concept: \"everything is a field\". We think that constant is just a special case of field which does not vary in temporal and spatial direction. Fields can vary in spatial direction (constant or variable) and in temporal direction (time variant and in-variant).From here we can deduct for types of (discrete) fields:discrete, constant, time invariant (DCTI)\ndiscrete, variable, time invariant (DVTI)\ndiscrete, constant, time variant (DCTV)\ndiscrete, variable, time variant (DVTV)Field itself can be anything. However, usually either scalar, vector or tensor (matrix)."
+},
+
+{
+    "location": "fields.html#Creating-fields-1",
+    "page": "Fields",
+    "title": "Creating fields",
+    "category": "section",
+    "text": "For discrete fields that are varying in spatial direction, value for each discrete point is defined using NTuple. The order of points is implicitly assumed to be same than node ordering in ABAQUS. Usual use case for variable field is that the field is interpolated to the element volume using interpolation polynomials, i.e. u(xi) = u_i N_i(xi), where N_i is the basis function for that node and u_i is the discrete value.For example, (1, 2, 3, 4) is a scalar field having length of 4 and ([1,2],[2,3],[3,4],[4,5]) is a vector field having length of 4.For fields that are varying in temporal direction, time => value syntax is used. The first item in pair is time and second item is value attached to that time. For example, 0.0 => 1.0 is a time-dependent scalar field having value 1.0 at time 0.0.The most simple field is a field that is constant in both time and spatial direction. Discrete, constant, time invariant (DCTI):a = DCTI(1.0)FEMBase.DCTI{Float64}(1.0)Then we have discrete, variable, time invariant fields (DVTI). Note the use of NTuple when defining field.b = DVTI( (1.0, 2.0) )FEMBase.DVTI{2,Float64}((1.0, 2.0))Discrete, constant, time variant field (DCTV) is constant in spatial direction but can vary in temporal direction. Here, => syntax is used. New values can be added to field using update!. If there already exists value for that particular time, it will be overridden. It is assumed that content of field in time direction is monotonically increasing, i.e. t_i-1  t_i  t_i+1. For the sake of clarity let's also mention that update! works for time invariant fields as well if content needs to be updated.c = DCTV(0.0 => 1.0, 1.0 => 2.0)\nupdate!(c, 2.0 => 3.0)\ncFEMBase.DCTV{Float64}(Pair{Float64,Float64}[0.0=>1.0, 1.0=>2.0, 2.0=>3.0])Discrete, variable, time variant (DVTV) field is the most general one, allowing values of field to vary in both spatial and time direction.d = DVTV(0.0 => (1.0, 2.0), 1.0 => (2.0, 3.0))\nupdate!(d, 2.0 => (3.0, 4.0))3-element Array{Pair{Float64,Tuple{Float64,Float64}},1}:\n 0.0=>(1.0, 2.0)\n 1.0=>(2.0, 3.0)\n 2.0=>(3.0, 4.0)In examples above, all fields was scalar fields. Defining vector or tensor fields goes in the same spirit. Only difference is that now we define vectors and tensors, not a single scalar value. They can vary in spatial and time direction in the same way than scalar fields. Here is example of defining the abovementioned vector fields:a = DCTI([1.0, 2.0])\nb = DVTI(([1.0, 2.0], [2.0, 3.0]))\nc = DCTV(0.0 => [1.0, 2.0], 1.0 => [2.0, 3.0])\nd = DVTV(0.0 => ([1.0, 2.0], [2.0, 3.0]), 1.0 => ([2.0, 3.0], [3.0, 4.0]))FEMBase.DVTV{2,Array{Float64,1}}(Pair{Float64,Tuple{Array{Float64,1},Array{Float64,1}}}[0.0=>([1.0, 2.0], [2.0, 3.0]), 1.0=>([2.0, 3.0], [3.0, 4.0])])"
+},
+
+{
+    "location": "fields.html#Accessing-fields-1",
+    "page": "Fields",
+    "title": "Accessing fields",
+    "category": "section",
+    "text": "Accessing fields is done using a single command: interpolate. For time varying fields, one can interpolate in time direction. For example, if we have (constant) 12 at time t=00 and 34 at time t=10, linear interpolation yieldsc = DCTV(0.0 => [1.0,2.0], 1.0 => [3.0,4.0])\ninterpolate(c, 0.5)2-element Array{Float64,1}:\n 2.0\n 3.0If field is spatially varying, a Tuple will be returned, typically having one value for each \"node\". This can then be interpolated in spatial direction, typically using basis functions defined on element, e.g. u = N_i u_i:d = DVTV(0.0 => (1.0,2.0), 1.0 => (3.0,4.0))\ninterpolate(d, 0.5)(2.0, 3.0)Although the two fields above looks quite same, the key difference is that in DCTV field we have a constant vectorial value (defined using square brackets []) and in latter DVTV field we have a scalar value (defined using round brackets) changing in spatial direction from 1.0 to 2.0 at time t=00 and changing from 3.0 to 4.0 at time t=10.One should be always able to interpolate in time direction, even if field is time invariant, to get trivial solution:interpolate(a, 0.5), interpolate(b, 0.5),\ninterpolate(c, 0.5), interpolate(d, 0.5)([1.0, 2.0], ([1.0, 2.0], [2.0, 3.0]), [2.0, 3.0], (2.0, 3.0))For spatially varying fields, one can access to ith element using getindex:getindex(a, 1), getindex(b, 1), getindex(b, 2)([1.0, 2.0], [1.0, 2.0], [2.0, 3.0])First time interpolation, then spatial lookup, i.e.getindex(interpolate(d, 0.5), 1)2.0By passing already evaluated basis functions to interpolate, field is intepolated in both temporal and spatial direction.d = DVTV(0.0 => (1.0,2.0), 1.0 => (3.0,4.0))\nxi = 0.0\nN = [1/2*(1-xi) 1/2*(1+xi)] # evaluated basis functions, linear interpolation\nt = 1.0 # time\ninterpolate(d, t, N)3.5Internally, each field is a subtype of AbstractField. Internally each field has a data which be accessed directly for hacking.d.data2-element Array{Pair{Float64,Tuple{Float64,Float64}},1}:\n 0.0=>(1.0, 2.0)\n 1.0=>(3.0, 4.0)"
+},
+
+{
+    "location": "fields.html#Continuous-fields-1",
+    "page": "Fields",
+    "title": "Continuous fields",
+    "category": "section",
+    "text": "Then we have continuous fields which may be useful when defining analytical boundary conditions. For that we have CVTV, where \"C\" stands for continuous.f(xi,t) = xi[1]*xi[2]*t\ng = CVTV(f)\ng([1.0,2.0],3.0)6.0"
+},
+
+{
+    "location": "fields.html#Dictionary-fields-1",
+    "page": "Fields",
+    "title": "Dictionary fields",
+    "category": "section",
+    "text": "Usually it is assumed that discrete field has values number of nodes or degrees of freedom in element, typically something small like 1-30. There might be cases where it is more practical to define field in a sense that indexing is not continuous or starting from 1. For example, we might want to define field common for a set of elements. In that case it's natural to think that each index in field corresponds to the certain id-number of node. For example, if we have triangle element connecting nodes 1, 1000 and 100000, we still want to access to that field naturally using getindex, e.g. f[1], f[1000] and f[100000]. In that case, more appropriate internal structure for field is based on dictionary.It only makes sense to define dictionary fields for spatially varying fields. Two new fields are introduced: DVTId and DVTVd, where last \"d\" stands for \"dictionary\".Keep on mind, that this type of field has one restriction. If and when this field is typically defined on nodes of several elements, field must be continuous between elements. That is, if field value in node 1000 is for example 1.0, then it's 1.0 in all elements connecting to that node. To define jumps on field, one must define field element-wise. # Define eg. \"geometry\" for nodes 1,2,3,4.\nX = Dict(1=>[0.0,0.0], 1000=>[1.0,0.0], 100000=>[1.0,1.0])\nG = DVTId(X)\nG[1], G[1000], G[100000]([0.0, 0.0], [1.0, 0.0], [1.0, 1.0])Y = Dict(1=>[1.0,1.0], 1000=>[2.0,1.0], 100000=>[2.0,2.0])\nF = DVTVd(0.0 => X, 1.0 => Y)\ninterpolate(F,0.5)[100000]2-element Array{Float64,1}:\n 1.5\n 1.5"
+},
+
+{
+    "location": "fields.html#Using-common-constructor-field-1",
+    "page": "Fields",
+    "title": "Using common constructor field",
+    "category": "section",
+    "text": "Now we have introduced total of 7 fields: DCTI, DCTV, DVTI, DVTV, CVTV, DVTId, DVTVd. A good question arises that how to remember all this stuff and is it even necessary? Luckily not, because one can use a single constructor called field to create all kind of fields. Type of field is inspected from data type. You really don't have to know about this technical stuff, just declare new field using intuition and field command.f1 = field(1.0)\ntypeof(f1)FEMBase.DCTI{Float64}f2 = field((1.0, 2.0))\ntypeof(f2)FEMBase.DVTI{2,Float64}f3 = field(0.0 => 1.0)\ntypeof(f3)FEMBase.DCTV{Float64}f4 = field(0.0 => (1.0, 2.0), 1.0 => (2.0, 3.0))\ntypeof(f4)FEMBase.DVTV{2,Float64}f5 = field((xi,t) -> xi[1]*t)\ntypeof(f5)FEMBase.CVTVf6 = field(1 => 1.0, 2 => 2.0)\ntypeof(f6)FEMBase.DVTId{Float64}f7 = field(0.0 => (1=>1.0,10=>2.0), 1.0 => (1=>2.0,10=>3.0))\ntypeof(f7)FEMBase.DVTVd{Float64}"
+},
+
+{
+    "location": "fields.html#Developing-new-fields-1",
+    "page": "Fields",
+    "title": "Developing new fields",
+    "category": "section",
+    "text": "If the default ones are not enough, it's always possible to define new ones. Minimum requirements is that field is a subtype of AbstractField and interpolate has been defined to it."
+},
+
+{
+    "location": "developing.html#",
+    "page": "Developing",
+    "title": "Developing",
     "category": "page",
     "text": ""
 },
 
 {
-    "location": "theory.html#Theory-1",
-    "page": "Theory",
-    "title": "Theory",
+    "location": "developing.html#Developing-new-input/output-interfaces-1",
+    "page": "Developing",
+    "title": "Developing new input/output interfaces",
     "category": "section",
-    "text": ""
+    "text": "E.g. mesh reader or results writer.type MeshReader <: AbstractMeshReader\nend\n\n\"\"\"\n    read_mesh(mesh::MeshReader, data)\n\nReads mesh from disk/memory/cloud/sql/etc. and returns Mesh object\n\"\"\"\nfunction read_mesh(mesh::MeshReader, filename::String)\n    # do something ...\nendtype ResultsWriter <: AbstractResultsWriter\nend\n\n\"\"\"\n    write_results!(results::ResultsWriter, data)\n\nGiven data, write calculation results back to disk/memory/cloud/sql/etc.\n\"\"\"\nfunction write_results!(results::ResultsWriter, data)\n    # write results ...\nend"
+},
+
+{
+    "location": "developing.html#Developing-new-physical-models-1",
+    "page": "Developing",
+    "title": "Developing new physical models",
+    "category": "section",
+    "text": "Starting point is a weak formulation, which is then discretized to elements.type Heat <: AbstractProblem\nend\n\n\"\"\"\n    assemble!(settings::Heat, problem::Problem, assembly::Assembly, elements::Vector{Element}, time::Float64)\n\nGiven `problem` spesification, assemble `elements` to global stiffness matrix and force\nvector defined in `assembly` for some given `time`.\n\"\"\"\nfunction assemble!(settings::Heat, problem::Problem, assembly::Assembly,\n                   elements::Vector{Element}, time::Float64)\n    # integrate local matrices and add them to assembly\nend"
+},
+
+{
+    "location": "developing.html#Developing-new-material-model-1",
+    "page": "Developing",
+    "title": "Developing new material model",
+    "category": "section",
+    "text": "Aim is to define material response given data.type LinearIsotropic <: AbstractMaterial\nend\n\n\"\"\"\n    calculate_material_response!(material::LinearIsotropic, data)\n\nGiven strain tensor and some other quantities, calculate material response\n\"\"\"\nfunction calculate_response!(material::LinearIsotropic, data)\n    # given strain tensor and some other quantities, calculate stress\nend"
+},
+
+{
+    "location": "developing.html#Developing-new-interpolation-functions-1",
+    "page": "Developing",
+    "title": "Developing new interpolation functions",
+    "category": "section",
+    "text": "E.g. basis functionstype LinQuad4Basis <: AbstractBasis\nend\n\n\"\"\"\n    evaluate_basis!(basis::LinQuad4Basis, element::Element, xi, time, N::Matrix{Float64})\n\nEvaluate basis functions at some point $\\xi$ and store results to `N`.\n\"\"\"\nfunction evaluate_basis!(basis::LinQuad4Basis, element::Element, xi, time, N::Matrix{Float64})\n    # populate N with new basis\nend"
+},
+
+{
+    "location": "developing.html#Developing-new-integration-rules-1",
+    "page": "Developing",
+    "title": "Developing new integration rules",
+    "category": "section",
+    "text": "type Quad4PointGaussLegendre <: AbstractIntegrationRule\nend\n\n\"\"\"\n    get_integration_points(q::Quad4PointQaussLegendre)\n\nReturn integration point locations and weights.\n\"\"\"\nfunction get_integration_points(q::Quad4PointGaussLegendre)\n    # return integration points\nend"
+},
+
+{
+    "location": "developing.html#Developing-new-solver-1",
+    "page": "Developing",
+    "title": "Developing new solver",
+    "category": "section",
+    "text": "type ImplicitTimeSolver <: AbstractSolver\nend\n\n\"\"\"\n    solve!(settings::ImplicitTimeSolver, solver::Solver, time)\n\nAssemble problems, solve problem, update problems, write results and so on.\n\"\"\"\nfunction solve!(settings::ImplicitTimeSolver, solver::Solver, time)\n    # do solution\nend"
 },
 
 {
@@ -57,35 +153,43 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "api.html#FEMBase.DCTI-Tuple{}",
+    "location": "api.html#FEMBase.CVTV",
+    "page": "API",
+    "title": "FEMBase.CVTV",
+    "category": "Type",
+    "text": "CVTV(f)\n\nContinuous, variable, time variant field.\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBase.DCTI",
     "page": "API",
     "title": "FEMBase.DCTI",
-    "category": "Method",
-    "text": "Discrete, constant, time-invariant field. This is constant in both spatial direction and time direction, i.e. df/dX = 0 and df/dt = 0.\n\nThis is the most basic type of field having no anything special functionality.\n\nExamples\n\njulia> f = DCTI() julia> update!(f, 1.0)\n\nMultiplying by constant works:\n\njulia> 2*f 2.0\n\nInterpolation in time direction gives the same constant:\n\njulia> f(1.0) 1.0\n\nBy default, when calling Field with scalar, DCTI is assumed, i.e.\n\njulia> Field(0.0) == DCTI(0.0) true\n\n\n\n"
+    "category": "Type",
+    "text": "DCTI(T)\n\nDiscrete, constant, time-invariant field. This field is constant in both spatial direction and time direction, i.e. df/dX = 0 and df/dt = 0.\n\n\n\n"
 },
 
 {
-    "location": "api.html#FEMBase.DCTV-Tuple{Vararg{Pair,N} where N}",
-    "page": "API",
-    "title": "FEMBase.DCTV",
-    "category": "Method",
-    "text": "Discrete, constant, time variant field. This is constant in spatial direction but non-constant in time direction, i.e. df/dX = 0 but df/dt != 0.\n\nExamples\n\njulia> t0 = 0.0; t1=1.0; y0 = 0.0; y1 = 1.0 julia> f = DCTV(t0 => y0, t1 => y1)\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.DVTI-Tuple{}",
+    "location": "api.html#FEMBase.DVTI",
     "page": "API",
     "title": "FEMBase.DVTI",
-    "category": "Method",
+    "category": "Type",
     "text": "Discrete, variable, time-invariant field. This is constant in time direction, but not in spatial direction, i.e. df/dt = 0 but df/dX != 0. The basic structure of data is Vector, and it is implicitly assumed that length of field matches to the number of shape functions, so that interpolation in spatial direction works.\n\n\n\n"
 },
 
 {
-    "location": "api.html#FEMBase.DVTV-Tuple{}",
+    "location": "api.html#FEMBase.DVTId",
     "page": "API",
-    "title": "FEMBase.DVTV",
-    "category": "Method",
-    "text": "Discrete, variable, time variant fields. \n\n\n\n"
+    "title": "FEMBase.DVTId",
+    "category": "Type",
+    "text": "DVTId(X::Dict)\n\nDiscrete, variable, time invariant dictionary field.\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBase.DVTVd",
+    "page": "API",
+    "title": "FEMBase.DVTVd",
+    "category": "Type",
+    "text": "DVTVd(time => data::Dict)\n\nDiscrete, variable, time variant dictionary field.\n\n\n\n"
 },
 
 {
@@ -161,6 +265,78 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "api.html#FEMBase.field-Tuple{Any}",
+    "page": "API",
+    "title": "FEMBase.field",
+    "category": "Method",
+    "text": "field(x)\n\nCreate new discrete, constant, time invariant field from value x.\n\nExample\n\nf = field(1.0)\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBase.field-Tuple{Function}",
+    "page": "API",
+    "title": "FEMBase.field",
+    "category": "Method",
+    "text": "field(x::Function)\n\nCreate new, continuous, variable, time variant field from function x.\n\nExample\n\nf = field( (xi,t) -> xi[1]*t )\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBase.field-Union{Tuple{Dict{Int64,T}}, Tuple{T}} where T",
+    "page": "API",
+    "title": "FEMBase.field",
+    "category": "Method",
+    "text": "field(x::Dict)\n\nCreate new discrete, variable, time invariant dictionary field from dictionary x.\n\nExample\n\nX = Dict(1 => [0.0,0.0], 2 => [1.0,0.0])\nf = field(X)\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBase.field-Union{Tuple{N}, Tuple{Tuple{Vararg{T,N}}}, Tuple{T}} where T where N",
+    "page": "API",
+    "title": "FEMBase.field",
+    "category": "Method",
+    "text": "field(x::NTuple{N,T})\n\nCreate new discrete, variable, time invariant field from tuple x.\n\nExample\n\nf = field( (1.0, 2.0) )\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBase.field-Union{Tuple{N}, Tuple{T}, Tuple{Vararg{Pair{Float64,Tuple{Vararg{Pair{Int64,T},N}}},N} where N}} where T where N",
+    "page": "API",
+    "title": "FEMBase.field",
+    "category": "Method",
+    "text": "field(x::Pair{Float64, NTuple{N, Pair{Int64, T}}})\n\nCreate new discrete, variable, time variant dictionary field from x.\n\nExample\n\nX1 = (1 => 1.0, 2 => 2.0)\nX2 = (1 => 2.0, 2 => 3.0)\nf = field(0.0 => X1, 1.0 => X2)\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBase.field-Union{Tuple{N}, Tuple{T}, Tuple{Vararg{Pair{Float64,Tuple{Vararg{T,N}}},N} where N}} where T where N",
+    "page": "API",
+    "title": "FEMBase.field",
+    "category": "Method",
+    "text": "field(x::Pair{Float64,NTuple{N,T})\n\nCreate new discrete, variable, time variant field from pair x.\n\nExample\n\nf = field(1.0=>(1.0,2.0), 2.0=>(2.0,3.0))\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBase.field-Union{Tuple{T}, Tuple{Vararg{Pair{Float64,Dict{Int64,T}},N} where N}} where T",
+    "page": "API",
+    "title": "FEMBase.field",
+    "category": "Method",
+    "text": "field(t::Float64 => x::Dict, ...)\n\nCreate new discrete, variable, time variant dictionary field from pair of time and dictionary.\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBase.field-Union{Tuple{T}, Tuple{Vararg{Pair{Float64,T},N} where N}} where T",
+    "page": "API",
+    "title": "FEMBase.field",
+    "category": "Method",
+    "text": "field(x::Pair{Float64,T})\n\nCreate new discrete, constant, time variant field from pair x.\n\nExample\n\nf = field(1.0=>1.0, 2.0=>2.0)\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBase.field-Union{Tuple{T}, Tuple{Vararg{Pair{Int64,T},N} where N}} where T",
+    "page": "API",
+    "title": "FEMBase.field",
+    "category": "Method",
+    "text": "field(x::Pair{Int64,T})\n\nCreate new discrete, variable, time invariant dictionary field from x.\n\nExample\n\nf = field(1 => 1.0, 2 => 2.0)\n\n\n\n"
+},
+
+{
     "location": "api.html#FEMBase.get_gdofs-Tuple{FEMBase.Problem,FEMBase.Element}",
     "page": "API",
     "title": "FEMBase.get_gdofs",
@@ -209,6 +385,86 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "api.html#FEMBase.interpolate-Tuple{FEMBase.DCTI,Vararg{Any,N} where N}",
+    "page": "API",
+    "title": "FEMBase.interpolate",
+    "category": "Method",
+    "text": "interpolate(f::DCTI, args...)\n\nInterpolate constant, time-invariant DCTI field in time direction. That is trivially only the data itself.\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBase.interpolate-Tuple{FEMBase.DCTV,Any}",
+    "page": "API",
+    "title": "FEMBase.interpolate",
+    "category": "Method",
+    "text": "interpolate(f::DCTV, time)\n\nInterpolate constant time variant DCTV field in time direction.\n\nNotes\n\nFirst check that is outside of range -> extrapolate Secondly check is \"exact match\" in time At last, find the correct bin and use linear interpolation\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBase.interpolate-Tuple{FEMBase.DVTId,Any}",
+    "page": "API",
+    "title": "FEMBase.interpolate",
+    "category": "Method",
+    "text": "interpolate(f::DVTId, time)\n\nInterpolate DVTId, returns trivially the content as this is time invariant field.\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBase.interpolate-Union{Tuple{FEMBase.DVTI{N,T},Any,Any}, Tuple{N}, Tuple{T}} where T where N",
+    "page": "API",
+    "title": "FEMBase.interpolate",
+    "category": "Method",
+    "text": "interpolate(f::DVTI, t, B)\n\nInterpolate variable, time-invariant DVTI field in time and spatial direction.\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBase.interpolate-Union{Tuple{FEMBase.DVTI{N,T},Any}, Tuple{N}, Tuple{T}} where T where N",
+    "page": "API",
+    "title": "FEMBase.interpolate",
+    "category": "Method",
+    "text": "interpolate(f::DVTI, t)\n\nInterpolate variable, time-invariant DVTI field in time direction.\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBase.interpolate-Union{Tuple{FEMBase.DVTVd{T},Any}, Tuple{T}} where T",
+    "page": "API",
+    "title": "FEMBase.interpolate",
+    "category": "Method",
+    "text": "interpolate(f::DVTVd, time)\n\nInterpolate variable, time variant DVTVd dictionary field in time direction.\n\nNotes\n\nFirst check that is outside of range -> extrapolate Secondly check is \"exact match\" in time At last, find the correct bin and use linear interpolation\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBase.interpolate-Union{Tuple{FEMBase.DVTV{N,T},Any,Any}, Tuple{N}, Tuple{T}} where T where N",
+    "page": "API",
+    "title": "FEMBase.interpolate",
+    "category": "Method",
+    "text": "interpolate(f::DVTV, time, basis)\n\nInterpolate variable, time variant DVTV field in both time and spatial direction.\n\nNotes\n\nFirst check that is outside of range -> extrapolate Secondly check is \"exact match\" in time At last, find the correct bin and use linear interpolation\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBase.interpolate-Union{Tuple{FEMBase.DVTV{N,T},Any}, Tuple{N}, Tuple{T}} where T where N",
+    "page": "API",
+    "title": "FEMBase.interpolate",
+    "category": "Method",
+    "text": "interpolate(f::DVTV, time)\n\nInterpolate variable, time variant DVTV field in time direction.\n\nNotes\n\nFirst check that is outside of range -> extrapolate Secondly check is \"exact match\" in time At last, find the correct bin and use linear interpolation\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBase.update!-Tuple{FEMBase.DCTI,Any}",
+    "page": "API",
+    "title": "FEMBase.update!",
+    "category": "Method",
+    "text": "update!(f::DCTI, data)\n\nUpdate new value to field.\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBase.update!-Tuple{FEMBase.DVTI,Any}",
+    "page": "API",
+    "title": "FEMBase.update!",
+    "category": "Method",
+    "text": "update!(f::DVTI, data)\n\nUpdate new value to field.\n\n\n\n"
+},
+
+{
     "location": "api.html#FEMBase.update!-Tuple{FEMBase.Problem,FEMBase.Assembly,Array{T,1} where T,Array{T,1} where T}",
     "page": "API",
     "title": "FEMBase.update!",
@@ -217,11 +473,27 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "api.html#FEMBase.update!-Union{Tuple{E}, Tuple{FEMBase.Element{E},AbstractString,Dict}} where E",
+    "location": "api.html#FEMBase.update!-Union{Tuple{FEMBase.DCTV,Pair{Float64,T}}, Tuple{T}} where T",
     "page": "API",
     "title": "FEMBase.update!",
     "category": "Method",
-    "text": "Update element field based on a dictionary of nodal data and connectivity information.\n\nExamples\n\njulia> data = Dict(1 => [0.0, 0.0], 2 => [1.0, 2.0]) julia> element = Seg2([1, 2]) julia> update!(element, \"geometry\", data)\n\nAs a result element now have time invariant (variable) vector field \"geometry\" with data ([0.0, 0.0], [1.0, 2.0]).\n\n\n\n"
+    "text": "update!(f::DCTV, time => data)\n\nUpdate new value to field.\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBase.update!-Union{Tuple{FEMBase.DVTId{T},Dict{Int64,T}}, Tuple{T}} where T",
+    "page": "API",
+    "title": "FEMBase.update!",
+    "category": "Method",
+    "text": "update!(field::DVTId, data::Dict)\n\nUpdate data to field.\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBase.update!-Union{Tuple{FEMBase.DVTV,Pair{Float64,Tuple{Vararg{T,N}}}}, Tuple{N}, Tuple{T}} where T where N",
+    "page": "API",
+    "title": "FEMBase.update!",
+    "category": "Method",
+    "text": "update!(f::DVTV, time => data)\n\nUpdate new value to field.\n\n\n\n"
 },
 
 {
@@ -241,70 +513,6 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "api.html#FEMBase.update!-Union{Tuple{T}, Tuple{Union{FEMBase.Field{FEMBase.Discrete,FEMBase.Constant,FEMBase.TimeVariant,T} where T, FEMBase.Field{FEMBase.Discrete,FEMBase.Variable,FEMBase.TimeVariant,T} where T},Pair{Float64,T}}} where T",
-    "page": "API",
-    "title": "FEMBase.update!",
-    "category": "Method",
-    "text": "Update time-dependent fields with new values.\n\nExamples\n\njulia> f = Field(0.0 => 1.0) julia> update!(f, 1.0 => 2.0)\n\nNow field has two (time, value) pairs: (0.0, 1.0) and (1.0, 2.0)\n\nNotes\n\nTime vector is assumed to be ordered t_i-1 < t_i < t_i+1. If updating field with already existing time the old value is replaced with new one.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.Field-Tuple{Array{T,1} where T}",
-    "page": "API",
-    "title": "FEMBase.Field",
-    "category": "Method",
-    "text": "For vector data, DVTI is automatically created.\n\njulia> DVTI([1.0, 2.0]) == Field([1.0, 2.0]) true\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.Field-Tuple{Dict}",
-    "page": "API",
-    "title": "FEMBase.Field",
-    "category": "Method",
-    "text": "For dictionary data, DVTI is automatically created.\n\nDefine e.g. nodal coordinates in dictionary julia> X = Dict(1 => [1.0, 2.0], 2 => [3.0, 4.0]) julia> Field(X) == DVTI(X)\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.Increment",
-    "page": "API",
-    "title": "FEMBase.Increment",
-    "category": "Type",
-    "text": "Simple time frame / increment to contain both time and data. \n\n\n\n"
-},
-
-{
-    "location": "api.html#Base.:*-Tuple{Array{T,2} where T,FEMBase.Field{FEMBase.Discrete,FEMBase.Constant,FEMBase.TimeInvariant,T} where T}",
-    "page": "API",
-    "title": "Base.:*",
-    "category": "Method",
-    "text": "Kind of spatial interpolation of DCTI. \n\n\n\n"
-},
-
-{
-    "location": "api.html#Base.:*-Tuple{Array{T,2} where T,FEMBase.Field{FEMBase.Discrete,FEMBase.Variable,FEMBase.TimeInvariant,T} where T}",
-    "page": "API",
-    "title": "Base.:*",
-    "category": "Method",
-    "text": "Take outer product of DVTI field and matrix T. \n\n\n\n"
-},
-
-{
-    "location": "api.html#Base.:*-Tuple{Number,FEMBase.Field{FEMBase.Discrete,FEMBase.Variable,FEMBase.TimeInvariant,T} where T}",
-    "page": "API",
-    "title": "Base.:*",
-    "category": "Method",
-    "text": "Take scalar product of DVTI and constant T. \n\n\n\n"
-},
-
-{
-    "location": "api.html#Base.:*-Tuple{Union{Array{T,1} where T, RowVector},FEMBase.Field{FEMBase.Discrete,FEMBase.Variable,FEMBase.TimeInvariant,T} where T}",
-    "page": "API",
-    "title": "Base.:*",
-    "category": "Method",
-    "text": "Take dot product of DVTI field and vector T. Vector length must match to the field length and this can be used mainly for interpolation purposes, i.e., u = ∑ Nᵢuᵢ.\n\n\n\n"
-},
-
-{
     "location": "api.html#Base.SparseArrays.sparse-Tuple{FEMBase.SparseMatrixCOO}",
     "page": "API",
     "title": "Base.SparseArrays.sparse",
@@ -313,23 +521,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "api.html#Base.getindex-Tuple{FEMBase.Field{FEMBase.Discrete,FEMBase.Variable,FEMBase.TimeInvariant,T} where T,Array{Int64,1}}",
-    "page": "API",
-    "title": "Base.getindex",
-    "category": "Method",
-    "text": "Multi-slicing of field.\n\njulia> f = DVTI([1.0, 2.0, 3.0]) julia> f[[1, 3]] [1.0, 3.0]\n\n\n\n"
-},
-
-{
-    "location": "api.html#Base.getindex-Tuple{FEMBase.Field{FEMBase.Discrete,FEMBase.Variable,FEMBase.TimeInvariant,T} where T,Int64}",
-    "page": "API",
-    "title": "Base.getindex",
-    "category": "Method",
-    "text": "Default slicing of field.\n\njulia> f = DVTI([1.0, 2.0]) julia> f[1] 1.0\n\n\n\n"
-},
-
-{
-    "location": "api.html#Base.haskey-Tuple{FEMBase.Element,String}",
+    "location": "api.html#Base.haskey-Tuple{FEMBase.Element,Any}",
     "page": "API",
     "title": "Base.haskey",
     "category": "Method",
@@ -350,14 +542,6 @@ var documenterSearchIndex = {"docs": [
     "title": "Base.length",
     "category": "Method",
     "text": "length(element::Element)\n\nReturn the number of nodes in element.\n\n\n\n"
-},
-
-{
-    "location": "api.html#Base.similar-Tuple{FEMBase.Field{FEMBase.Discrete,FEMBase.Variable,FEMBase.TimeInvariant,T} where T,Array{T,1} where T}",
-    "page": "API",
-    "title": "Base.similar",
-    "category": "Method",
-    "text": "Create a similar DVTI field from vector data. \n\njulia> f1 = DVTI(Vector[[1.0, 2.0], [3.0, 4.0]]) julia> f2 = similar(f1, [2.0, 3.0, 4.0, 5.0]) julia> f2 == DVTI(Vector[[2.0, 3.0], [4.0, 5.0]]) true\n\n\n\n"
 },
 
 {
