@@ -9,12 +9,12 @@ type Point{P<:AbstractPoint}
     id :: Int
     weight :: Float64
     coords :: Tuple{Vararg{Float64}}
-    fields :: Dict{AbstractString, Field}
+    fields :: Dict{String, AbstractField}
     properties :: P
 end
 
 function setindex!{T}(point::Point, val::Pair{Float64, T}, field_name)
-    point.fields[field_name] = Field(val)
+    point.fields[field_name] = field(val)
 end
 
 function getindex(point::Point, field_name)
@@ -29,8 +29,8 @@ function haskey(point::Point, field_name)
     return haskey(point.fields, field_name)
 end
 
-function (point::Point)(field_name, time=0.0)
-    point.fields[field_name](time).data
+function (point::Point)(field_name, time)
+    interpolate(point.fields[field_name], time)
 end
 
 function start(point::Point)

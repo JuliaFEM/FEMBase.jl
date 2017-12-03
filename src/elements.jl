@@ -5,7 +5,7 @@ type Element{E<:AbstractBasis}
     id :: Int
     connectivity :: Vector{Int}
     integration_points :: Vector{IP}
-    fields :: Dict{String, Field}
+    fields :: Dict{String, AbstractField}
     properties :: E
 end
 
@@ -46,7 +46,7 @@ function getindex(element::Element, field_name::AbstractString)
     return element.fields[field_name]
 end
 
-function setindex!(element::Element, data::Field, field_name)
+function setindex!{T<:AbstractField}(element::Element, data::T, field_name)
     element.fields[field_name] = data
 end
 
@@ -63,7 +63,7 @@ function is_element_type{E}(element::Element{E}, element_type)
 end
 
 function filter_by_element_type(element_type, elements)
-    return filter(element -> is_element_type(element, element_type), elements)
+    return Iterators.filter(element -> is_element_type(element, element_type), elements)
 end
 
 """
@@ -87,18 +87,14 @@ end
 function setindex!(element::Element, data::Function, field_name)
     if method_exists(data, Tuple{Element, Vector, Float64})
         # create enclosure to pass element as argument
-        function wrapper_(ip, time)
-            return data(element, ip, time)
-        end
-        field = Field(wrapper_)
+        element.fields[field_name] = field((ip,time) -> data(element,ip,time))
     else
-        field = Field(data)
+        element.fields[field_name] = field(data)
     end
-    element.fields[field_name] = field
 end
 
 function setindex!(element::Element, data, field_name)
-    element.fields[field_name] = Field(data)
+    element.fields[field_name] = field(data)
 end
 
 #""" Return a Field object from element.
@@ -123,7 +119,13 @@ end
 #>>> element("my field", 0.5)
 #"""
 function (element::Element)(field_name::String, time::Float64)
-    return element[field_name](time)
+    field = element[field_name]
+    result = interpolate(field, time)
+    if isa(result, Dict)
+        return tuple((field[i] for i in get_connectivity(element))...)
+    else
+        return result
+    end
 end
 
 function last(element::Element, field_name::String)
@@ -156,10 +158,10 @@ function (element::Element)(ip, time::Float64, dim::Int)
 end
 
 function (element::Element)(ip, time::Float64, ::Type{Val{:Jacobian}})
-    X = element("geometry", time)
+    X = interpolate(element["geometry"], time)
     dN = get_dbasis(element, ip, time)
     nbasis = length(element)
-    if isa(X.data, Vector)
+    if isa(X, Tuple)
         J = sum([kron(dN[:,i], X[i]') for i=1:nbasis])
     else
         c = get_connectivity(element)
@@ -188,7 +190,10 @@ function (element::Element)(ip, time::Float64, ::Type{Val{:Grad}})
 end
 
 function (element::Element)(field_name::String, ip, time::Float64, ::Type{Val{:Grad}})
-    return element(ip, time, Val{:Grad})*element[field_name](time)
+    X = interpolate(element["geometry"], time)
+    u = interpolate(element[field_name], time)
+    return grad(element.properties, u, X, ip)
+    #return element(ip, time, Val{:Grad})*element[field_name](time)
 end
 
 function (element::Element)(field_name::String, ip, time::Float64)
@@ -201,26 +206,26 @@ function (element::Element)(field::DCTI, ip, time::Float64)
 end
 
 function (element::Element)(field::DCTV, ip, time::Float64)
-    return field(time).data
+    return interpolate(field, time)
 end
 
 function (element::Element)(field::CVTV, ip, time::Float64)
     return field(ip, time)
 end
 
-function (element::Element)(field::Field, ip, time::Float64)
-    field_ = field(time)
+function (element::Element){F<:AbstractField}(field::F, ip, time::Float64)
+    field_ = interpolate(field, time)
     basis = element(ip, time)
     n = length(element)
-    if isa(field_.data, Vector)
+    if isa(field_, Tuple)
         m = length(field_)
         if n != m
             error("Error when trying to interpolate field $field at coords $ip and time $time: element length is $n and field length is $m, f = Nᵢfᵢ makes no sense!")
         end
-        return sum([field_[i]*basis[i] for i=1:n])
+        return sum(field_[i]*basis[i] for i=1:n)
     else
         c = get_connectivity(element)
-        return sum([field_[c[i]]*basis[i] for i=1:n])
+        return sum(field_[c[i]]*basis[i] for i=1:n)
     end
 end
 
@@ -228,6 +233,7 @@ function size(element::Element, dim)
     return size(element)[dim]
 end
 
+#=
 """ Update element field based on a dictionary of nodal data and connectivity information.
 
 Examples
@@ -327,19 +333,32 @@ function update!(element::Element, field_name::String, data::Function)
     element[field_name] = data
 end
 
-function update!(element::Element, field_name::String, field::Field)
+function update!{F<:AbstractField}(element::Element, field_name::String, field::F)
     element[field_name] = field
 end
 
-function update!(elements::Vector, field_name::String, data)
+function update!{F<:AbstractField}(element::Element, field_name::String, data...)
+    update!(element.fields[field_name], data...)
+end
+=#
+
+function update!(element::Element, field_name, data)
+    if haskey(element.fields, field_name)
+        update!(element.fields[field_name], data)
+    else
+        element.fields[field_name] = field(data)
+    end
+end
+
+function update!(elements::Vector, field_name, data)
     for element in elements
         update!(element, field_name, data)
     end
 end
 
 """ Check existence of field. """
-function haskey(element::Element, field_name::String)
-    haskey(element.fields, field_name)
+function haskey(element::Element, field_name)
+    return haskey(element.fields, field_name)
 end
 
 function get_connectivity(element::Element)

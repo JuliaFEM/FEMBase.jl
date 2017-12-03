@@ -102,7 +102,7 @@ type Problem{P<:AbstractProblem}
     elements :: Vector{Element}
     dofmap :: Dict{Element, Vector{Int64}} # connects the element local dofs to the global dofs
     assembly :: Assembly
-    fields :: Dict{AbstractString, Field}
+    fields :: Dict{String, AbstractField}
     postprocess_fields :: Vector{String}
     properties :: P
 end
@@ -354,12 +354,12 @@ function haskey(problem::Problem, field_name::AbstractString)
     return haskey(problem.fields, field_name)
 end
 
-function getindex(problem::Problem, field_name::AbstractString)
+function getindex(problem::Problem, field_name::String)
     return problem.fields[field_name]
 end
 
 #""" Return field calculated to nodal points for elements in problem p. """
-function (problem::Problem)(field_name::AbstractString, time::AbstractFloat=0.0)
+function (problem::Problem)(field_name::String, time::Float64)
     #if haskey(problem, field_name)
     #    return problem[field_name](time)
     #end

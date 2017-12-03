@@ -11,8 +11,6 @@ using Base.Test
     strain = [1.0 2.0; 3.0 4.0]
     update!(ip, "strain", 0.0 => strain)
     @test isapprox(ip("strain", 0.0), strain)
-    @test isapprox(ip("strain"), strain)
-    @test ip["strain"](0.0) == strain
     @test isapprox(ip[1], -a)
     for p in ip
         @test isapprox(abs.(p), a)

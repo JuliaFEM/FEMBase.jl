@@ -151,9 +151,8 @@ function interpolate(field::DCTV, time)
         if t0 < time < t1
             y0 = field.data[i-1].second
             y1 = field.data[i].second
-            dt = t1-t0
-            new_data = y0*(1-(time-t0)/dt) + y1*(1-(t1-time)/dt)
-            return new_data
+            f = (time-t0)/(t1-t0)
+            return f*y0 + (1-f)*y1
         end
     end
 end
@@ -182,9 +181,9 @@ function DVTV{N,T}(a::Pair{Float64,NTuple{N,T}}, b::Pair{Float64,NTuple{N,T}})
 end
 
 """
-    interpolate(f::DVTV, time, basis)
+    interpolate(f::DVTV, time)
 
-Interpolate variable, time variant DVTV field in both time and spatial direction.
+Interpolate variable, time variant DVTV field in time direction.
 
 # Notes
 First check that is outside of range -> extrapolate
@@ -192,7 +191,7 @@ Secondly check is "exact match" in time
 At last, find the correct bin and use linear interpolation
 
 """
-function interpolate{N,T}(field::DVTV{N,T}, time, basis)
+function interpolate{N,T}(field::DVTV{N,T}, time)
     time < first(field.data).first && return first(field.data).second
     time > last(field.data).first && return last(field.data).second
     for i=reverse(1:length(field))
@@ -204,193 +203,244 @@ function interpolate{N,T}(field::DVTV{N,T}, time, basis)
         if t0 < time < t1
             y0 = field.data[i-1].second
             y1 = field.data[i].second
-            dt = t1-t0
-            Y0 = sum(y0[i]*basis[i] for i=1:N)
-            Y1 = sum(y1[i]*basis[i] for i=1:N)
-            new_data = Y0*(1-(time-t0)/dt) + Y1*(1-(t1-time)/dt)
+            f = (time-t0)/(t1-t0)
+            new_data = tuple((f*y0[i] + (1-f)*y1[i] for i=1:N)...)
             return new_data
         end
     end
 end
-###
-
-abstract type Discrete<:AbstractField end
-abstract type Continuous<:AbstractField end
-abstract type Constant<:AbstractField end
-abstract type Variable<:AbstractField end
-abstract type TimeVariant<:AbstractField end
-abstract type TimeInvariant<:AbstractField end
-
-type Field{A<:Union{Discrete, Continuous},
-           B<:Union{Constant, Variable},
-           C<:Union{TimeVariant, TimeInvariant},
-          T}
-    data :: T
-end
-
-### Different field combinations and other typealiases
-
-const CCTI{T} = Field{Continuous, Constant, TimeInvariant, T}
-const CVTI{T} = Field{Continuous, Variable, TimeInvariant, T}
-const CCTV{T} = Field{Continuous, Constant, TimeVariant, T}
-const CVTV{T} = Field{Continuous, Variable, TimeVariant, T}
-
-function CCTI{T}(a::T)
-    return CCTI{T}(a)
-end
-
-function CVTI{T}(a::T)
-    return CVTI{T}(a)
-end
-
-function CCTV{T}(a::T)
-    return CCTV{T}(a)
-end
-
-function CVTV{T}(a::T)
-    return CVTV{T}(a)
-end
-
-function Field()
-    return DCTI()
-end
-
-function Field{T}(data::T)
-    return DCTI{T}(data)
-end
-
-""" For vector data, DVTI is automatically created.
-
-julia> DVTI([1.0, 2.0]) == Field([1.0, 2.0])
-true
 
 """
-function Field(data::Vector)
-    return DVTI(data)
-end
+    interpolate(f::DVTV, time, basis)
 
-""" For dictionary data, DVTI is automatically created.
+Interpolate variable, time variant DVTV field in both time and spatial direction.
 
-Define e.g. nodal coordinates in dictionary
-julia> X = Dict(1 => [1.0, 2.0], 2 => [3.0, 4.0])
-julia> Field(X) == DVTI(X)
-
-"""
-function Field(data::Dict)
-    return DVTI(data)
-end
-
-""" Multi-slicing of field.
-
-julia> f = DVTI([1.0, 2.0, 3.0])
-julia> f[[1, 3]]
-[1.0, 3.0]
+# Notes
+First check that is outside of range -> extrapolate
+Secondly check is "exact match" in time
+At last, find the correct bin and use linear interpolation
 
 """
-function getindex(field::DVTI, I::Array{Int64, 1})
-    return [field.data[i] for i in I]
+function interpolate{N,T}(field::DVTV{N,T}, time, basis)
+    data = interpolate(field, time)
+    return sum(data[i]*basis[i] for i=1:N)
 end
 
-function length(field::DVTI)
-    return length(field.data)
-end
-
-function start(field::DVTI)
-    return 1
-end
-
-function +(f1::DVTI, f2::DVTI)
-    return DVTI(f1.data + f2.data)
-end
-
-function -(f1::DVTI, f2::DVTI)
-    return DVTI(f1.data - f2.data)
-end
-
-function update!(field::DVTI, data::Union{Vector, Dict})
-    field.data = data
-end
-
-""" Take scalar product of DVTI and constant T. """
-function *(T::Number, field::DVTI)
-    return DVTI(T*field.data)
-end
-
-""" Take dot product of DVTI field and vector T. Vector length must match to the
-field length and this can be used mainly for interpolation purposes, i.e., u = ∑ Nᵢuᵢ.
 """
-function *(T::Union{Vector, RowVector}, f::DVTI)
-    @assert length(T) <= length(f)
-    return sum([T[i]*f[i] for i=1:length(T)])
+    CVTV(f)
+
+Continuous, variable, time variant field.
+"""
+type CVTV <: AbstractField
+    data :: Function
 end
 
-""" Take outer product of DVTI field and matrix T. """
-function *(T::Matrix, f::DVTI)
-    n, m = size(T)
-    return sum([kron(T[:,i], f[i]') for i=1:m])'
+function (f::CVTV)(xi, time)
+    return f.data(xi, time)
 end
 
-function vec(field::DVTI)
-    return [field.data...;]
+"""
+    DVTId(X::Dict)
+
+Discrete, variable, time invariant dictionary field.
+"""
+type DVTId{T} <: AbstractField
+    data :: Dict{Int64, T}
 end
 
-# """ Interpolate discrete, variable, time-variant field in time direction. """
-function (field::DVTV)(time::Float64)
-    time < first(field).time && return DVTI(first(field).data)
-    time > last(field).time && return DVTI(last(field).data)
+"""
+    interpolate(f::DVTId, time)
+
+Interpolate DVTId, returns trivially the content as this is time invariant field.
+"""
+function interpolate(f::DVTId, time)
+    return f.data
+end
+
+"""
+    update!(field::DVTId, data::Dict)
+
+Update data to field.
+"""
+function update!{T}(field::DVTId{T}, data::Dict{Int64, T})
+    merge!(field.data, data)
+end
+
+"""
+    DVTVd(time => data::Dict)
+
+Discrete, variable, time variant dictionary field.
+"""
+type DVTVd{T} <: AbstractField
+    data :: Vector{Pair{Float64,Dict{Int64,T}}}
+end
+
+function DVTVd{T}(a::Pair{Float64,Dict{Int64,T}}, b::Pair{Float64,Dict{Int64,T}})
+    return DVTVd([a, b])
+end
+
+"""
+    interpolate(f::DVTVd, time)
+
+Interpolate variable, time variant DVTVd dictionary field in time direction.
+
+# Notes
+First check that is outside of range -> extrapolate
+Secondly check is "exact match" in time
+At last, find the correct bin and use linear interpolation
+
+"""
+function interpolate{T}(field::DVTVd{T}, time)
+    time < first(field.data).first && return first(field.data).second
+    time > last(field.data).first && return last(field.data).second
     for i=reverse(1:length(field))
-        isapprox(field[i].time, time) && return DVTI(field[i].data)
+        isapprox(field.data[i].first, time) && return field.data[i].second
     end
-    for i=reverse(2:length(field))
-        t0 = field[i-1].time
-        t1 = field[i].time
+    for i=length(field.data):-1:2
+        t0 = field.data[i-1].first
+        t1 = field.data[i].first
         if t0 < time < t1
-            y0 = field[i-1].data
-            y1 = field[i].data
-            dt = t1-t0
-            new_data = y0*(1-(time-t0)/dt) + y1*(1-(t1-time)/dt)
-            return DVTI(new_data)
+            y0 = field.data[i-1].second
+            y1 = field.data[i].second
+            f = (time-t0)/(t1-t0)
+            new_data = similar(y0)
+            for i in keys(y0)
+                new_data[i] = f*y0[i] + (1-f)*y1[i]
+            end
+            return new_data
         end
     end
 end
 
-### Basic data structure for continuous field
+"""
+    field(x)
 
-type Basis
-    basis :: Function
-    dbasis :: Function
+Create new discrete, constant, time invariant field from value `x`.
+
+# Example
+
+```julia
+f = field(1.0)
+```
+"""
+function field(x)
+    return DCTI(x)
 end
 
-### Convenient functions to create fields
+"""
+    field(x::NTuple{N,T})
 
-function Field(func::Function)
-    if method_exists(func, Tuple{})
-        return CCTI(func)
-    elseif method_exists(func, Tuple{Float64})
-        return CCTV(func)
-    elseif method_exists(func, Tuple{Vector})
-        return CVTI(func)
-    elseif method_exists(func, Tuple{Vector, Float64})
-        return CVTV(func)
-    else
-        error("no proper definition found for function: check methods.")
-    end
+Create new discrete, variable, time invariant field from tuple `x`.
+
+# Example
+
+```julia
+f = field( (1.0, 2.0) )
+```
+"""
+function field{N,T}(data::NTuple{N,T})
+    return DVTI(data)
 end
 
-### Accessing continuous fields
+"""
+    field(x::Pair{Float64,T})
 
-function (field::CCTI)(xi::Vector, time::Number)
-    return field.data()
+Create new discrete, constant, time variant field from pair `x`.
+
+# Example
+
+```julia
+f = field(1.0=>1.0, 2.0=>2.0)
+```
+"""
+function field{T}(data::Pair{Float64,T}...)
+    return DCTV(collect(data))
 end
 
-function (field::CVTI)(xi::Vector, time::Number)
-    return field.data(xi)
+"""
+    field(x::Pair{Float64,NTuple{N,T})
+
+Create new discrete, variable, time variant field from pair `x`.
+
+# Example
+
+```julia
+f = field(1.0=>(1.0,2.0), 2.0=>(2.0,3.0))
+```
+"""
+function field{N,T}(data::Pair{Float64,NTuple{N,T}}...)
+    return DVTV(collect(data))
 end
 
-function (field::CCTV)(xi::Vector, time::Number)
-    return field.data(time)
+"""
+    field(x::Function)
+
+Create new, continuous, variable, time variant field from function `x`.
+
+# Example
+
+```julia
+f = field( (xi,t) -> xi[1]*t )
+```
+"""
+function field(data::Function)
+    return CVTV(data)
 end
 
-function (field::CVTV)(xi, time)
-    return field.data(xi, time)
+"""
+    field(x::Pair{Int64,T})
+
+Create new discrete, variable, time invariant dictionary field from `x`.
+
+# Example
+
+```julia
+f = field(1 => 1.0, 2 => 2.0)
+```
+"""
+function field{T}(data::Pair{Int64, T}...)
+    return DVTId(Dict(data))
+end
+
+"""
+    field(x::Pair{Float64, NTuple{N, Pair{Int64, T}}})
+
+Create new discrete, variable, time variant dictionary field from `x`.
+
+# Example
+
+```julia
+X1 = (1 => 1.0, 2 => 2.0)
+X2 = (1 => 2.0, 2 => 3.0)
+f = field(0.0 => X1, 1.0 => X2)
+```
+"""
+function field{N,T}(data::Pair{Float64, NTuple{N, Pair{Int64, T}}}...)
+    return DVTVd(collect(t => Dict(d) for (t, d) in data))
+end
+
+"""
+    field(x::Dict)
+
+Create new discrete, variable, time invariant dictionary field from dictionary `x`.
+
+# Example
+
+```julia
+X = Dict(1 => [0.0,0.0], 2 => [1.0,0.0])
+f = field(X)
+```
+"""
+function field{T}(data::Dict{Int64,T})
+    return DVTId(data)
+end
+
+"""
+    field(t::Float64 => x::Dict, ...)
+
+Create new discrete, variable, time variant dictionary field from pair of time
+and dictionary.
+"""
+function field{T}(data::Pair{Float64, Dict{Int64, T}}...)
+    return DVTVd(collect(data))
 end

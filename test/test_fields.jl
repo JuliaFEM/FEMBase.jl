@@ -93,4 +93,38 @@ end
     @test isapprox(interpolate(a, 0.5, [1, 1]), 1.0)
     update!(a, 2.0 => (2.0, 0.0))
     @test isapprox(interpolate(a, 1.5, [1, 1]), 1.5)
+    r = interpolate(a, 0.5)
+    @test isapprox(r[1], 0.5)
+    @test isapprox(r[2], 0.5)
+end
+
+@testset "CVTV field" begin
+    f = CVTV((xi,t) -> xi[1]*xi[2]*t)
+    @test isapprox(f([1.0,2.0],3.0), 6.0)
+end
+
+@testset "Dictionary fields" begin
+    X = Dict(1=>[0.0,0.0], 1000=>[1.0,0.0], 100000=>[1.0,1.0])
+    G = DVTId(X)
+    @test isapprox(G[1], X[1])
+    @test isapprox(G[1000], X[1000])
+    @test isapprox(G[100000], X[100000])
+    Y = Dict(1=>[2.0,2.0], 1000=>[3.0,2.0], 100000=>[3.0,3.0])
+    F = DVTVd(0.0 => X, 1.0 => Y)
+    @test isapprox(interpolate(F, 0.5)[100000], [2.0,2.0])
+end
+
+@testset "use of common constructor field" begin
+    @test isa(field(1.0), DCTI)
+    @test isa(field(1.0 => 1.0), DCTV)
+    @test isa(field((1.0,2.0)), DVTI)
+    @test isa(field(1.0 => (1.0,2.0)), DVTV)
+    @test isa(field((xi,t) -> xi[1]*t), CVTV)
+    @test isa(field(1 => [1.0, 2.0], 10 => [2.0, 3.0]), DVTId)
+    @test isa(field(0.0 => (1=>1.0,10=>2.0), 1.0 => (1=>2.0,10=>3.0)), DVTVd)
+    X = Dict(1 => [0.0,0.0], 2 => [1.0,0.0])
+    X1 = field(X)
+    X2 = field(0.0 => X)
+    @test isa(X1, DVTId)
+    @test isa(X2, DVTVd)
 end

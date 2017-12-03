@@ -80,7 +80,7 @@ function assemble_mass_matrix!{Basis}(problem::Problem, elements::Vector{Element
         fill!(M, 0.0)
         for ip in get_integration_points(element, 2)
             detJ = element(ip, time, Val{:detJ})
-            rho = element("density", time)
+            rho = element("density", ip, time)
             w = ip.weight*rho*detJ
             eval_basis!(Basis, N, ip)
             N = element(ip, time)
