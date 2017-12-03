@@ -325,6 +325,18 @@ end
     gradu_expected = [1.5 0.5; 1.0 2.0]
     @test isapprox(gradu, gradu_expected)
 
+    element = Element(Quad4, [1, 2, 3, 4])
+    X = ([0.0,0.0], [1.0,0.0], [1.0,1.0], [0.0,1.0])
+    u = ([0.0,0.0], [1.0,-1.0], [2.0,3.0], [0.0,0.0])
+    element["geometry"] = X
+    element["displacement"] = u
+    gradu = element("displacement", (0.0, 0.0), 0.0, Val{:Grad})
+    gradu_expected = [1.5 0.5; 1.0 2.0]
+    @test isapprox(gradu, gradu_expected)
+end
+
+@testset "interpolate field" begin
+    element = Element(Quad4, [1,2,3,4])
     update!(element, "test", 0.0 => 0.0)
     update!(element, "test", 1.0 => 1.0)
     @test isapprox(element("test", (0.0, 0.0), 0.5), 0.5)

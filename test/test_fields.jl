@@ -96,6 +96,8 @@ end
     r = interpolate(a, 0.5)
     @test isapprox(r[1], 0.5)
     @test isapprox(r[2], 0.5)
+    update!(a, 2.0 => (4.0, 0.0))
+    @test isapprox(interpolate(a, 2.0, [1, 1]), 4.0)
 end
 
 @testset "CVTV field" begin

@@ -19,18 +19,6 @@ function getindex{F<:AbstractField}(f::F, i::Int64)
     return getindex(f.data, i)
 end
 
-function first{F<:AbstractField}(f::F)
-    return first(f.data)
-end
-
-function last{F<:AbstractField}(f::F)
-    return last(f.data)
-end
-
-function endof{F<:AbstractField}(f::F)
-    return endof(f.data)
-end
-
 # DISCRETE, CONSTANT, TIME INVARIANT
 
 """

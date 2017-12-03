@@ -128,10 +128,6 @@ function (element::Element)(field_name::String, time::Float64)
     end
 end
 
-function last(element::Element, field_name::String)
-    return last(element[field_name])
-end
-
 function (element::Element)(ip, time::Float64=0.0)
     return get_basis(element, ip, time)
 end
