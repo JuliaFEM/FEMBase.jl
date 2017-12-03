@@ -17,7 +17,7 @@ makedocs(modules=[FEMBase],
          pages = [
                   "Introduction" => "index.md",
                   "Fields" => "fields.md",
-                  "Mass matrices" => "mass_matrix.md",
+#                 "Mass matrices" => "mass_matrix.md",
                   "Developing" => "developing.md",
                   "API" => "api.md"
                  ])
