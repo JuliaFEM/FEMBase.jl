@@ -333,6 +333,7 @@ end
     gradu = element("displacement", (0.0, 0.0), 0.0, Val{:Grad})
     gradu_expected = [1.5 0.5; 1.0 2.0]
     @test isapprox(gradu, gradu_expected)
+    @test isapprox(element("geometry", (0.0,0.0), 0.0), [0.5,0.5])
 end
 
 @testset "interpolate field" begin

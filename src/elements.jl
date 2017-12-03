@@ -153,16 +153,9 @@ function (element::Element)(ip, time::Float64, dim::Int)
     return N
 end
 
-function (element::Element)(ip, time::Float64, ::Type{Val{:Jacobian}})
-    X = interpolate(element["geometry"], time)
-    dN = get_dbasis(element, ip, time)
-    nbasis = length(element)
-    if isa(X, Tuple)
-        J = sum([kron(dN[:,i], X[i]') for i=1:nbasis])
-    else
-        c = get_connectivity(element)
-        J = sum([kron(dN[:,i], X[c[i]]') for i=1:nbasis])
-    end
+function (element::Element)(ip, time, ::Type{Val{:Jacobian}})
+    X = element("geometry", time)
+    J = FEMBasis.jacobian(element.properties, X, ip)
     return J
 end
 
@@ -189,7 +182,6 @@ function (element::Element)(field_name::String, ip, time::Float64, ::Type{Val{:G
     X = interpolate(element["geometry"], time)
     u = interpolate(element[field_name], time)
     return grad(element.properties, u, X, ip)
-    #return element(ip, time, Val{:Grad})*element[field_name](time)
 end
 
 function (element::Element)(field_name::String, ip, time::Float64)
