@@ -2,201 +2,131 @@
 # License is MIT: see https://github.com/JuliaFEM/FEMBase.jl/blob/master/LICENSE
 
 using FEMBase
-using FEMBase: Field
 using Base.Test
 
-@testset "discrete, constant, time invariant field" begin
-    @test DCTI(0.0).data == 0.0
-    @test isa(Field(0.0), DCTI)
-    f = DCTI(0.0)
-    update!(f, 1.0)
-    @test isapprox(f, DCTI(1.0))
-    @test isapprox(f, 1.0)
-    @test 2*f == 2.0 # multiply by constant
-    @test f(1.0) == 1.0 # time interpolation
-    @test isapprox(reshape([2.0],1,1)*f, 2.0) # wanted behavior?
-end
+@testset "DCTI field" begin
 
-@testset "discrete, variable, time invariant field" begin
-    @test DVTI([1.0, 2.0]).data == [1.0, 2.0]
-    @test isa(Field([1.0, 2.0]), DVTI)
-    
-    f = DVTI(zeros(2))
-    update!(f, [2.0, 3.0])
-    @test isapprox(f.data, [2.0, 3.0])
-    @test length(f) == 2
+    # scalar field
+    a = DCTI(1)
+    @test interpolate(a, 0.0) == 1
+    @test a[1] == 1
+    @test length(a) == length(1)
+    @test size(a) == size(1)
+    update!(a, 2)
+    @test a == 2
 
-    # slicing
-    @test isapprox(f[1], 2.0)
-    @test isapprox(f[[1, 2]], [2.0, 3.0])
+    # vector field
+    b = DCTI([1,2])
+    @test interpolate(b, 0.0) == [1,2]
+    @test b[1] == [1,2]
+    @test length(b) == length([1,2])
+    @test size(b) == size([1,2])
+    update!(b, [2,3])
+    @test b == [2,3]
 
-    # boolean comparison and multiplying by a constant
-    @test f == DVTI([2.0, 3.0])
-    @test isapprox(2*f, [4.0, 6.0])
-
-    f3 = 2*f
-    @test isa(f3, DVTI)
-    @test f3+f == 3*f
-    @test f3-f == f
-
-    # spatial interpolation
-    N = [1.0, 2.0]
-    @test isapprox(N*f, 8.0)
-
-    # time interpolation
-    @test isapprox(f(1.0), [2.0, 3.0])
-
-    # spatial interpolation of vector valued variable field
-    f2 = DVTI(Vector[[1.0, 2.0], [3.0, 4.0]])
-    @test isapprox(f2[1], [1.0, 2.0])
-    @test isapprox(f2[2], [3.0, 4.0])
-    @test length(f2) == 2
-    @test isapprox(N*f2, [1.0, 2.0] + [6.0, 8.0])
-
-    # iteration of DVTI field
-    s = zeros(2)
-    for j in f2
-        s += j
-    end
-    @test isapprox(s, [4.0, 6.0])
-
-    @test vec(f2) == [1.0, 2.0, 3.0, 4.0]
-    @test isapprox([1.0 2.0]*f, [8.0]'')
-
-    new_data = [2.0, 3.0, 4.0, 5.0]
-    f4 = similar(f2, new_data)
-    @test isa(f4, DVTI)
-    @test isapprox(f4.data[1], [2.0, 3.0])
-    @test isapprox(f4.data[2], [4.0, 5.0])
-end
-
-@testset "discrete, constant, time-variant field" begin
-    f = Field(0.0 => 1.0)
-    @test isa(f, DCTV)
-    @test last(f).time == 0.0
-    @test last(f).data == 1.0
-    update!(f, 0.0 => 2.0)
-    @test last(f).time == 0.0
-    @test last(f).data == 2.0
-    @test length(f) == 1
-    update!(f, 1.0 => 3.0)
-    @test last(f).time == 1.0
-    @test last(f).data == 3.0
-    @test length(f) == 2
-
-    @testset "interpolation in time direction" begin
-        @test isa(f(0.0), DCTI) # converts to time-invariant after time interpolation
-        @test isapprox(f(-1.0), 2.0)
-        @test isapprox(f(0.0), 2.0)
-        @test isapprox(f(0.5), 2.5)
-        @test isapprox(f(1.0), 3.0)
-        @test isapprox(f(2.0), 3.0)
-    end
-
-    # create several time steps at once
-    f = DCTV(0.0 => 1.0, 1.0 => 2.0)
-    @test isapprox(f(0.5), 1.5)
+    # tensor field
+    c = DCTI([1 2; 3 4])
+    @test interpolate(c, 0.0) == [1 2; 3 4]
+    @test c[1] == [1 2; 3 4]
+    @test length(c) == length([1 2; 3 4])
+    @test size(c) == size([1 2; 3 4])
+    update!(c, [2 3; 4 5])
+    @test c == [2 3; 4 5]
 
 end
 
-@testset "discrete, variable, time-variant field" begin
-    f = Field(0.0 => [1.0, 2.0])
-    @test isa(f, DVTV)
-    @test last(f).time == 0.0
-    @test last(f).data == [1.0, 2.0]
-    update!(f, 0.0 => [2.0, 3.0])
-    @test last(f).time == 0.0
-    @test last(f).data == [2.0, 3.0]
-    @test length(f) == 1
-    update!(f, 1.0 => [3.0, 4.0])
-    @test last(f).time == 1.0
-    @test last(f).data == [3.0, 4.0]
-    @test length(f) == 2
-    
-    @testset "interpolation in time direction" begin
-        @test isa(f(0.0), DVTI) # converts to time-invariant after time interpolation
-        @test isapprox(f(-1.0), [2.0, 3.0])
-        @test isapprox(f(0.0), [2.0, 3.0])
-        @test isapprox(f(0.5), [2.5, 3.5])
-        @test isapprox(f(1.0), [3.0, 4.0])
-        @test isapprox(f(2.0), [3.0, 4.0])
-    end
+@testset "DVTI field" begin
 
-    # create several time steps at once
-    f = DVTV(0.0 => [1.0, 2.0], 1.0 => [2.0, 3.0])
-    @test isapprox(f(0.5), [1.5, 2.5])
+    # scalar field
+    a = DVTI((1, 2))
+    @test a[1] == 1
+    @test a[2] == 2
+    @test interpolate(a, 0.0) == (1, 2)
+    @test interpolate(a, 0.0, [1,1]) == 3
+    update!(a, (2,3))
+    @test a == (2,3)
+
+    # vector field
+    b = DVTI(([1,2], [2,3]))
+    @test b[1] == [1,2]
+    @test b[2] == [2,3]
+    @test interpolate(b, 0.0) == ([1,2], [2,3])
+    @test interpolate(b, 0.0, [1,1]) == [3,5]
+    update!(b, ([2,3], [4,5]))
+    @test b == ([2,3], [4,5])
+
+    # tensor field
+    c = DVTI(([1 2; 3 4], [2 3; 4 5]))
+    @test c[1] == [1 2; 3 4]
+    @test c[2] == [2 3; 4 5]
+    @test interpolate(c, 0.0) == ([1 2; 3 4], [2 3; 4 5])
+    @test interpolate(c, 0.0, [1,1]) == [3 5; 7 9]
+    update!(c, ([2 3; 4 5], [5 6; 7 8]))
+    @test c == ([2 3; 4 5], [5 6; 7 8])
 end
 
-@testset "continuous, constant, time-invariant field" begin
-    f = Field(() -> 2.0)
-    @test isapprox(f([1.0], 2.0), 2.0)
+@testset "DCTV field" begin
 
+    # scalar field
+    a = DCTV(0.0 => 0.0, 1.0 => 1.0)
+    @test isapprox(interpolate(a, -1.0), 0.0)
+    @test isapprox(interpolate(a, 0.0), 0.0)
+    @test isapprox(interpolate(a, 0.5), 0.5)
+    @test isapprox(interpolate(a, 1.0), 1.0)
+    update!(a, 1.0 => 2.0)
+    @test isapprox(interpolate(a, 0.5), 1.0)
+    update!(a, 2.0 => 1.0)
+    @test isapprox(interpolate(a, 1.5), 1.5)
+
+    # vector field
+    b = DCTV(0.0 => [1.0, 2.0], 1.0 => [2.0, 3.0])
+    @test isapprox(interpolate(b, 0.5), [1.5, 2.5])
+
+    # tensor field
+    c = DCTV(0.0 => [1.0 2.0; 3.0 4.0], 1.0 => [2.0 3.0; 4.0 5.0])
+    @test isapprox(interpolate(c, 0.5), [1.5 2.5; 3.5 4.5])
 end
 
-@testset "continuous, constant, time variant field" begin
-    f = Field((time::Float64) -> 2.0*time)
-    @test isapprox(f([1.0], 2.0), 4.0)
-
+@testset "DVTV field" begin
+    # scalar field
+    a = DVTV(0.0 => (0.0, 1.0), 1.0 => (1.0, 0.0))
+    @test isapprox(interpolate(a, 0.5, [1, 1]), 1.0)
+    update!(a, 2.0 => (2.0, 0.0))
+    @test isapprox(interpolate(a, 1.5, [1, 1]), 1.5)
+    r = interpolate(a, 0.5)
+    @test isapprox(r[1], 0.5)
+    @test isapprox(r[2], 0.5)
+    update!(a, 2.0 => (4.0, 0.0))
+    @test isapprox(interpolate(a, 2.0, [1, 1]), 4.0)
 end
 
-@testset "continuous, variable, time invariant field" begin
-    f = Field((xi::Vector) -> sum(xi))
-    @test isapprox(f([1.0, 2.0], 2.0), 3.0)
+@testset "CVTV field" begin
+    f = CVTV((xi,t) -> xi[1]*xi[2]*t)
+    @test isapprox(f([1.0,2.0],3.0), 6.0)
 end
 
-@testset "continuous, variable, time variant field" begin
-    f = Field((xi::Vector, t::Float64) -> xi[1]*t)
-    @test isapprox(f([1.0], 2.0), 2.0)
+@testset "Dictionary fields" begin
+    X = Dict(1=>[0.0,0.0], 1000=>[1.0,0.0], 100000=>[1.0,1.0])
+    G = DVTId(X)
+    @test isapprox(G[1], X[1])
+    @test isapprox(G[1000], X[1000])
+    @test isapprox(G[100000], X[100000])
+    Y = Dict(1=>[2.0,2.0], 1000=>[3.0,2.0], 100000=>[3.0,3.0])
+    F = DVTVd(0.0 => X, 1.0 => Y)
+    @test isapprox(interpolate(F, 0.5)[100000], [2.0,2.0])
 end
 
-@testset "unknown function argument for continuous field" begin
-    @test_throws ErrorException Field((a, b, c) -> a*b*c)
-end
-
-@testset "dictionary fields" begin
-    f1 = Dict{Int64, Vector{Float64}}(1 => [0.0, 0.0], 2 => [0.0, 0.0])
-    f2 = Dict{Int64, Vector{Float64}}(1 => [1.0, 1.0], 2 => [1.0, 1.0])
-    f = Field(0.0 => f1, 1.0 => f2)
-    @test isa(f, DVTV)
-    @test isapprox(f(0.0)[1], [0.0, 0.0])
-    @test isapprox(f(1.0)[2], [1.0, 1.0])
-
-    f = Field(0.0 => f1)
-    update!(f, 1.0 => f2)
-    @test isa(f, DVTV)
-    @test isapprox(f(0.0)[1], [0.0, 0.0])
-    @test isapprox(f(1.0)[2], [1.0, 1.0])
-
-    f = Field(f1)
-    @test isapprox(f(0.0)[1], [0.0, 0.0])
-    @test isapprox(f[1], [0.0, 0.0])
-
-    f = Field(f1)
-    @test isa(f, DVTI)
-end
-
-@testset "test interpolation of discrete constant time-variant field" begin
-    f = DCTV(0.0 => 0.0, 1.0 => 1.0)
-    @test isapprox(f(-1.0), DCTI(0.0))
-    @test isapprox(f( 0.0), DCTI(0.0))
-    @test isapprox(f( 0.3), DCTI(0.3))
-    @test isapprox(f( 0.5), DCTI(0.5))
-    @test isapprox(f( 0.9), DCTI(0.9))
-    @test isapprox(f( 1.0), DCTI(1.0))
-    @test isapprox(f( 1.5), DCTI(1.0))
-
-    f2 = DCTV(0.0 => 0.0, 0.25 => -0.1, 0.50 => -0.1)
-    @test isapprox(f2(0.0), DCTI(0.0))
-    @test isapprox(f2(0.25), DCTI(-0.1))
-    @test isapprox(f2(0.50), DCTI(-0.1))
-    @test isapprox(f2(0.35), DCTI(-0.1))
-end
-
-@testset "default fields" begin
-    @test DCTI().data == nothing
-    @test Field().data == nothing
-    @test DCTI(1) == DCTI(1)
-    @test DCTI(1) == 1
-    @test length(DCTI(1)) == 1
-    @test length(DVTV()) == 0
+@testset "use of common constructor field" begin
+    @test isa(field(1.0), DCTI)
+    @test isa(field(1.0 => 1.0), DCTV)
+    @test isa(field((1.0,2.0)), DVTI)
+    @test isa(field(1.0 => (1.0,2.0)), DVTV)
+    @test isa(field((xi,t) -> xi[1]*t), CVTV)
+    @test isa(field(1 => [1.0, 2.0], 10 => [2.0, 3.0]), DVTId)
+    @test isa(field(0.0 => (1=>1.0,10=>2.0), 1.0 => (1=>2.0,10=>3.0)), DVTVd)
+    X = Dict(1 => [0.0,0.0], 2 => [1.0,0.0])
+    X1 = field(X)
+    X2 = field(0.0 => X)
+    @test isa(X1, DVTId)
+    @test isa(X2, DVTVd)
 end

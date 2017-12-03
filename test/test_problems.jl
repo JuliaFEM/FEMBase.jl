@@ -4,7 +4,7 @@
 using FEMBase
 using FEMBase: is_field_problem, is_boundary_problem
 using FEMBase: get_parent_field_name, get_global_solution
-using FEMBase: get_assembly, get_elements, Field
+using FEMBase: get_assembly, get_elements
 using Base.Test
 
 import FEMBase: get_unknown_field_dimension, get_unknown_field_name
@@ -87,6 +87,8 @@ get_formulation_type(p::Problem{P2}) = p.properties.formulation
     @test length(p1) == 1
     update!(p1, "geometry", Dict(1 => [0.0, 0.0], 2 => [1.0, 0.0]))
     @test haskey(el, "geometry")
+    println("geom is ", p1("geometry", 0.0))
+    println("elgeom is ", el("geometry", 0.0))
     @test isapprox(p1("geometry", 0.0)[1], [0.0, 0.0])
     @test get_parent_field_name(p2) == "p"
     @test get_gdofs(el, 1) == [1, 2]
@@ -104,7 +106,7 @@ get_formulation_type(p::Problem{P2}) = p.properties.formulation
     push!(p3, [e2], [e3])
     initialize!(p3, e1, 0.0)
     initialize!(p3, e2, 0.0)
-    p3.fields["f"] = Field(1.0)
+    p3.fields["f"] = field(1.0)
     @test haskey(p3, "f")
     @test isapprox(p3["f"].data, 1.0)
     f = p3("f", 0.0)

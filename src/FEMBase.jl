@@ -22,6 +22,7 @@ using FEMBasis
 using FEMBasis: AbstractBasis
 using FEMQuad: get_quadrature_points
 include("fields.jl")
+export interpolate, update!, DCTI, DCTV, DVTI, DVTV, CVTV, DVTId, DVTVd, field
 include("types.jl")
 include("sparse.jl")
 include("elements.jl")

@@ -4,12 +4,30 @@
 using FEMBase
 using Base.Test
 
-using FEMBase: Field
 using FEMBase: group_by_element_type
 using FEMBase: get_local_coordinates, inside
 using FEMBase: get_basis, get_dbasis, get_integration_order
 using FEMBase: get_reference_element_coordinates, get_reference_coordinates
 using FEMBase: get_element_type, is_element_type, get_element_id, filter_by_element_type
+
+type Dummy <: FieldProblem
+end
+
+@testset "add elements to problem" begin
+    problem = Problem(Dummy, "test", 2)
+    element = Element(Quad4, [1, 2, 3, 4])
+    elements = [element]
+    add_elements!(problem, elements)
+    @test problem.elements[1] == element
+end
+
+@testset "no unknown field name or assemble!-function defined" begin
+    el = Element(Quad4, [1, 2, 3, 4])
+    pr = Problem(Dummy, "problem", 2)
+    add_elements!(pr, [el])
+    assemble!(pr)
+    @test true
+end
 
 @testset "add time dependent field to element" begin
     el = Element(Seg2, [1, 2])
@@ -27,22 +45,9 @@ end
 
 @testset "add CVTV field to element" begin
     el = Element(Seg2, [1, 2])
-    f(xi, time) = xi[1]*time
-    update!(el, "my field", f)
+    el["my field"] = (xi,t) -> xi[1]*t
     v = el("my field", [1.0], 2.0)
     @test isapprox(v, 2.0)
-end
-
-@testset "add DCTI to element" begin
-    el = Element(Quad4, [1, 2, 3, 4])
-    update!(el, "displacement load", DCTI([4.0, 8.0]))
-    @test isa(el["displacement load"], DCTI)
-    @test !isa(el["displacement load"].data, DCTI)
-    update!(el, "displacement load 2", [4.0, 8.0])
-    @test isa(el["displacement load 2"], DCTI)
-    update!(el, "temperature", [1.0, 2.0, 3.0, 4.0])
-    @test isa(el["temperature"], DVTI)
-    @test isapprox(el("displacement load", [0.0, 0.0], 0.0), [4.0, 8.0])
 end
 
 @testset "interpolate DCTI from element" begin
@@ -86,7 +91,7 @@ end
 
 @testset "inverse isoparametric mapping" begin
     el = Element(Quad4, [1, 2, 3, 4])
-    X = Dict{Int64, Vector{Float64}}(
+    X = Dict(
         1 => [0.0, 0.0],
         2 => [1.0, 0.0],
         3 => [1.0, 1.0],
@@ -134,14 +139,13 @@ end
 
 @testset "dict field" begin
     el = Element(Seg2, [1, 2])
-    X = Dict{Int64, Vector{Float64}}(1 => [0.0, 0.0], 2 => [1.0, 0.0], 3 => [0.5, 0.5])
-    f = Field(X)
+    X = Dict(1 => [0.0, 0.0], 2 => [1.0, 0.0], 3 => [0.5, 0.5])
+    f = field(X)
     debug("field = $f")
     #update!(el, "geometry", X)
     el["geometry"] = f
     @test isapprox(el("geometry")[1], [0.0, 0.0])
     @test isapprox(el("geometry", 0.0)[1], [0.0, 0.0])
-    @test isapprox(el("geometry", 0.0)[3], [0.5, 0.5])
     @test isapprox(el("geometry", [0.0], 0.0), [0.5, 0.0])
 end
 
@@ -175,13 +179,6 @@ end
     @test isapprox(e1("f", [1.0], 1.0), 1.0)
 end
 
-@testset "index" begin
-    e1 = Element(Seg2, [1, 2])
-    update!(e1, "f", 0.0 => 1.0)
-    update!(e1, "f", 1.0 => 2.0)
-    @test isapprox(last(e1, "f").data, 2.0)
-end
-
 @testset "gradient, jacobian and determinant of jacobian" begin
     X = Dict(
              1 => [0.0, 0.0],
@@ -189,7 +186,7 @@ end
              3 => [2.0, 2.0],
              4 => [0.0, 2.0])
     element = Element(Quad4, [1, 2, 3, 4])
-    element.fields["geometry"] = Field(X)
+    element.fields["geometry"] = field(X)
     J = element([0.0, 0.0], 0.0, Val{:Jacobian})
     detJ = element([0.0, 0.0], 0.0, Val{:detJ})
     @test isapprox(det(J), detJ)
@@ -307,9 +304,6 @@ end
     update!(elements, "tensor 4", 1.0 => ([3.0 3.0; 3.0 3.0], [5.0 5.0; 5.0 5.0]))
     @test isapprox(element("tensor 4", (0.0), 0.5), [3.0 3.0; 3.0 3.0])
 =#
-    X = Dict(1 => 1.0)
-    @test_throws KeyError update!(elements, "fail", X)
-    @test_throws KeyError update!(elements, "fail2", 0.0 => X)
 
 end
 
@@ -331,6 +325,19 @@ end
     gradu_expected = [1.5 0.5; 1.0 2.0]
     @test isapprox(gradu, gradu_expected)
 
+    element = Element(Quad4, [1, 2, 3, 4])
+    X = ([0.0,0.0], [1.0,0.0], [1.0,1.0], [0.0,1.0])
+    u = ([0.0,0.0], [1.0,-1.0], [2.0,3.0], [0.0,0.0])
+    element["geometry"] = X
+    element["displacement"] = u
+    gradu = element("displacement", (0.0, 0.0), 0.0, Val{:Grad})
+    gradu_expected = [1.5 0.5; 1.0 2.0]
+    @test isapprox(gradu, gradu_expected)
+    @test isapprox(element("geometry", (0.0,0.0), 0.0), [0.5,0.5])
+end
+
+@testset "interpolate field" begin
+    element = Element(Quad4, [1,2,3,4])
     update!(element, "test", 0.0 => 0.0)
     update!(element, "test", 1.0 => 1.0)
     @test isapprox(element("test", (0.0, 0.0), 0.5), 0.5)
@@ -338,24 +345,8 @@ end
 
 @testset "interpolation failure" begin
     el = Element(Seg2, [1, 2])
-    el.fields["g"] = DVTI([1.0, 2.0, 3.0])
+    update!(el, "g", (1.0, 2.0, 3.0))
     @test_throws Exception el("g", [0.0], 0.0)
-end
-
-@testset "update fields to element" begin
-    el = Element(Seg2, [1, 2])
-    d = ["A", 1]
-    update!(el, "f1", 0.0 => d)
-    update!(el, "f1", 0.0 => d)
-    @test el.fields["f1"](0.0).data == d
-    update!(el, "f2", 0.0 => [1, 2])
-    update!(el, "f2", 0.0 => [2, 1])
-    @test el.fields["f2"](0.0).data == [2, 1]
-    update!(el, "f3", [1, 2, 3])
-    update!(el, "f3", [2, 3, 4])
-    @test el.fields["f3"].data == [2, 3, 4]
-    update!(el, "E" => 1.0, "E" => 2.0)
-    @test isapprox(el("E", [0.0], 0.0), 2.0)
 end
 
 @testset "get integration points for Quad4" begin
