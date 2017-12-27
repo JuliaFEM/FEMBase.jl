@@ -116,6 +116,14 @@ end
     @test isapprox(interpolate(F, 0.5)[100000], [2.0,2.0])
 end
 
+@testset "update dictionary field" begin
+    f1 = Dict(1=>1.0, 2=>2.0, 3=>3.0)
+    f2 = Dict(1=>2.0, 2=>3.0, 3=>4.0)
+    fld = DVTVd(0.0 => f1)
+    update!(fld, 1.0 => f2)
+    @test isapprox(interpolate(fld, 0.5)[1], 1.5)
+end
+
 @testset "use of common constructor field" begin
     @test isa(field(1.0), DCTI)
     @test isa(field(1.0 => 1.0), DCTV)
@@ -129,4 +137,14 @@ end
     X2 = field(0.0 => X)
     @test isa(X1, DVTId)
     @test isa(X2, DVTVd)
+end
+
+@testset "general interpolation" begin
+    a = [1, 2, 3]
+    b = (2, 3, 4)
+    @test interpolate(a, b) == 2+6+12
+    a = (1, 2)
+    b = (2, 3, 4)
+    @test interpolate(a, b) == 2+6
+    @test_throws AssertionError interpolate(b, a)
 end

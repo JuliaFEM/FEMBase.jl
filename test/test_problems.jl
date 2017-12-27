@@ -27,7 +27,6 @@ function P2()
 end
 
 get_unknown_field_name(p::P1) = "P1"
-get_unknown_field_name(p::P2) = "P2"
 get_formulation_type(p::Problem{P2}) = p.properties.formulation
 
 @testset "test creating new problems" begin
@@ -111,4 +110,22 @@ get_formulation_type(p::Problem{P2}) = p.properties.formulation
     @test isapprox(p3["f"].data, 1.0)
     f = p3("f", 0.0)
     @test_throws Exception get_gdofs(e3, 1)
+end
+
+@testset "test initializing new problems" begin
+    p1 = Problem(P1, "P1", 2)
+    p2 = Problem(P2, "P2", 2, "P1")
+    @test get_unknown_field_name(p1) == "P1"
+    @test get_unknown_field_name(p2) == "lambda"
+    @test get_parent_field_name(p2) == "P1"
+    e1 = Element(Seg2, [1, 2])
+    e2 = Element(Seg2, [1, 2])
+    add_elements!(p1, [e1])
+    add_elements!(p2, [e2])
+    initialize!(p1, 0.0)
+    initialize!(p2, 0.0)
+    println("e1 keys = ", keys(e1.fields))
+    @test isapprox(e1("P1", (0.0,), 0.0), [0.0, 0.0])
+    @test isapprox(e2("P1", (0.0,), 0.0), [0.0, 0.0])
+    @test isapprox(e2("lambda", (0.0,), 0.0), [0.0, 0.0])
 end

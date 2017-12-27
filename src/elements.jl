@@ -122,7 +122,7 @@ function (element::Element)(field_name::String, time::Float64)
     field = element[field_name]
     result = interpolate(field, time)
     if isa(result, Dict)
-        return tuple((field[i] for i in get_connectivity(element))...)
+        return tuple((result[i] for i in get_connectivity(element))...)
     else
         return result
     end
@@ -179,8 +179,8 @@ function (element::Element)(ip, time::Float64, ::Type{Val{:Grad}})
 end
 
 function (element::Element)(field_name::String, ip, time::Float64, ::Type{Val{:Grad}})
-    X = interpolate(element["geometry"], time)
-    u = interpolate(element[field_name], time)
+    X = element("geometry", time)
+    u = element(field_name, time)
     return grad(element.properties, u, X, ip)
 end
 
@@ -221,118 +221,17 @@ function size(element::Element, dim)
     return size(element)[dim]
 end
 
-#=
-""" Update element field based on a dictionary of nodal data and connectivity information.
-
-Examples
---------
-julia> data = Dict(1 => [0.0, 0.0], 2 => [1.0, 2.0])
-julia> element = Seg2([1, 2])
-julia> update!(element, "geometry", data)
-
-As a result element now have time invariant (variable) vector field "geometry" with data ([0.0, 0.0], [1.0, 2.0]).
-
-"""
-function update!{E}(element::Element{E}, field_name::AbstractString, data::Dict)
-    #element[field_name] = Field(data)
-    element_id = element.id
-    local_connectivity = get_connectivity(element)
-    for i in local_connectivity
-        if !haskey(data, i)
-            ndata = length(data)
-            critical("Unable to set field data $field_name for element $E with
-            id $element_id and connectivity $local_connectivity: no data for
-            node id $i found. Length of data dict = $ndata")
-        end
-    end
-    local_data = [data[i] for i in local_connectivity]
-    element[field_name] = local_data
-end
-
-function update!{K,V}(element::Element, field_name, data::Pair{Float64, Dict{K, V}})
-    time, field_data = data
-    element_data = V[field_data[i] for i in get_connectivity(element)]
-    update!(element, field_name, time => element_data)
-end
-
-function update!(element::Element, field_name::AbstractString, data::Pair{Float64, Vector{Any}})
-    if haskey(element, field_name)
-        update!(element[field_name], data)
-    else
-        element[field_name] = data
-    end
-end
-
-function update!(element::Element, field_name::AbstractString, data::Pair{Float64, Vector{Int64}})
-    if haskey(element, field_name)
-        update!(element[field_name], data)
-    else
-        element[field_name] = data
-    end
-end
-
-function update!(element::Element, field_name::AbstractString, data::Pair{Float64, Vector{Float64}})
-    if haskey(element, field_name)
-        update!(element[field_name], data)
-    else
-        element[field_name] = data
-    end
-end
-
-function update!(element::Element, field_name::AbstractString, data::Pair{Float64, Vector{Vector{Float64}}})
-    if haskey(element, field_name)
-        update!(element[field_name], data)
-    else
-        element[field_name] = data
-    end
-end
-
-function update!(element::Element, field_name::AbstractString, data::Pair{Float64, Float64})
-    if haskey(element, field_name)
-        update!(element[field_name], data)
-    else
-        element[field_name] = data
-    end
-end
-
-function update!(element::Element, field_name::AbstractString, data::Union{Float64, Vector})
-    if haskey(element, field_name)
-        update!(element[field_name], data)
-    else
-        if length(data) != length(element)
-            update!(element, field_name, DCTI(data))
-        else
-            element[field_name] = data
-        end
-    end
-end
-
-function update!(element::Element, datas::Pair...)
-    for (field_name, data) in datas
-        if haskey(element, field_name)
-            update!(element[field_name], data)
-        else
-            element[field_name] = data
-        end
-    end
-end
-
-function update!(element::Element, field_name::String, data::Function)
-    element[field_name] = data
-end
-
-function update!{F<:AbstractField}(element::Element, field_name::String, field::F)
-    element[field_name] = field
-end
-
-function update!{F<:AbstractField}(element::Element, field_name::String, data...)
-    update!(element.fields[field_name], data...)
-end
-=#
-
 function update!(element::Element, field_name, data)
     if haskey(element.fields, field_name)
         update!(element.fields[field_name], data)
+    else
+        element.fields[field_name] = field(data)
+    end
+end
+
+function update!(element::Element, field_name, data::Function)
+    if method_exists(data, Tuple{Element, Any, Any})
+        element.fields[field_name] = field((ip, time) -> data(element, ip, time))
     else
         element.fields[field_name] = field(data)
     end

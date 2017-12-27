@@ -146,7 +146,37 @@ function get_formulation_type(problem::Problem)
     return :incremental
 end
 
-function get_unknown_field_name{P<:BoundaryProblem}(::Type{P})
+""" 
+    get_unknown_field_dimension(problem)
+
+Return the dimension of the unknown field of this problem.
+"""
+function get_unknown_field_dimension(problem::Problem)
+    return problem.dimension
+end
+
+"""
+    get_unknown_field_name(problem)
+
+Default function if unknown field name is not defined for some problem.
+"""
+function get_unknown_field_name{P<:AbstractProblem}(::P)
+    warn("The name of unknown field (e.g. displacement, temperature, ...) of the ",
+         "problem type must be given by defining function `get_unknown_field_name`")
+    return "N/A"
+end
+
+""" Return the name of the unknown field of this problem. """
+function get_unknown_field_name{P}(problem::Problem{P})
+    return get_unknown_field_name(problem.properties)
+end
+
+""" Return the name of the parent field of this (boundary) problem. """
+function get_parent_field_name{P<:BoundaryProblem}(problem::Problem{P})
+    return problem.parent_field_name
+end
+
+function get_unknown_field_name{P<:BoundaryProblem}(::P)
     return "lambda"
 end
 
@@ -188,25 +218,22 @@ function initialize!(problem::Problem, element::Element, time::Float64)
     field_name = get_unknown_field_name(problem)
     field_dim = get_unknown_field_dimension(problem)
     nnodes = length(element)
+    if field_dim == 1  # scalar field
+        empty_field = tuple(zeros(nnodes)...)
+    else  # vector field
+        empty_field = tuple([zeros(field_dim) for i=1:nnodes]...)
+    end
 
     # initialize primary field
     if !haskey(element, field_name)
-        if field_dim == 1
-            update!(element, field_name, time => zeros(nnodes))
-        else
-            update!(element, field_name, time => [zeros(field_dim) for i=1:nnodes])
-        end
+        update!(element, field_name, time => empty_field)
     end
 
     # if a boundary problem, initialize also a field for the main problem
     is_boundary_problem(problem) || return
     field_name = get_parent_field_name(problem)
     if !haskey(element, field_name)
-        if field_dim == 1
-            update!(element, field_name, time => zeros(nnodes))
-        else
-            update!(element, field_name, time => [zeros(field_dim) for i=1:nnodes])
-        end
+        update!(element, field_name, time => empty_field)
     end
 end
 
@@ -302,7 +329,7 @@ function update!{P<:FieldProblem}(problem::Problem{P}, assembly::Assembly, eleme
     # update solution u for elements
     for element in elements
         connectivity = get_connectivity(element)
-        update!(element, field_name, time => u[connectivity])
+        update!(element, field_name, time => tuple(u[connectivity]...))
     end
 end
 
@@ -313,8 +340,8 @@ function update!{P<:BoundaryProblem}(problem::Problem{P}, assembly::Assembly, el
     # update solution and lagrange multipliers for boundary elements
     for element in elements
         connectivity = get_connectivity(element)
-        update!(element, parent_field_name, time => u[connectivity])
-        update!(element, field_name, time => la[connectivity])
+        update!(element, parent_field_name, time => tuple(u[connectivity]...))
+        update!(element, field_name, time => tuple(la[connectivity]...))
     end
 end
 
@@ -384,26 +411,6 @@ function (problem::Problem)(field_name::String, time::Float64)
     #f == nothing && return f
     #update!(problem, field_name, time => f)
     return f
-end
-
-""" Return the dimension of the unknown field of this problem. """
-function get_unknown_field_dimension(problem::Problem)
-    return problem.dimension
-end
-
-function get_unknown_field_name{P<:AbstractProblem}(::Type{P})
-    warn("The name of unknown field (e.g. displacement, temperature, ...) of the problem type must be given by defining function `get_unknown_field_name`")
-    return "N/A"
-end
-
-""" Return the name of the unknown field of this problem. """
-function get_unknown_field_name{P}(problem::Problem{P})
-    return get_unknown_field_name(P)
-end
-
-""" Return the name of the parent field of this (boundary) problem. """
-function get_parent_field_name{P<:BoundaryProblem}(problem::Problem{P})
-    return problem.parent_field_name
 end
 
 function push!(problem::Problem, elements...)

@@ -85,6 +85,17 @@ function interpolate{N,T}(f::DVTI{N,T}, t)
 end
 
 """
+    interpolate(a, b)
+
+A helper function for interpolate routines. Given iterables `a` and `b`,
+calculate c = aᵢbᵢ. Length of `a` can be less than `b`, but not vice versa.
+"""
+function interpolate(a, b)
+    @assert length(a) <= length(b)
+    return sum(a[i]*b[i] for i=1:length(a))
+end
+
+"""
     interpolate(f::DVTI, t, B)
 
 Interpolate variable, time-invariant DVTI field in time and spatial direction.
@@ -263,8 +274,8 @@ type DVTVd{T} <: AbstractField
     data :: Vector{Pair{Float64,Dict{Int64,T}}}
 end
 
-function DVTVd{T}(a::Pair{Float64,Dict{Int64,T}}, b::Pair{Float64,Dict{Int64,T}})
-    return DVTVd([a, b])
+function DVTVd{T}(data::Pair{Float64,Dict{Int64,T}}...)
+    return DVTVd(collect(data))
 end
 
 """
@@ -297,6 +308,19 @@ function interpolate{T}(field::DVTVd{T}, time)
             end
             return new_data
         end
+    end
+end
+
+"""
+    update!(f::DCTVd, time => data)
+
+Update new value to dictionary field.
+"""
+function update!{T}(f::DVTVd, data::Pair{Float64,Dict{Int64,T}})
+    if isapprox(last(f.data).first, data.first)
+        f.data[end] = data
+    else
+        push!(f.data, data)
     end
 end
 
