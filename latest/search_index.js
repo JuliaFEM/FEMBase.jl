@@ -265,6 +265,14 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "api.html#FEMBase.assemble_mass_matrix!-Tuple{FEMBase.Problem,Array{FEMBase.Element{FEMBasis.Tet10},1},Any}",
+    "page": "API",
+    "title": "FEMBase.assemble_mass_matrix!",
+    "category": "Method",
+    "text": "assemble_mass_matrix!(problem, elements::Vector{Element{Tet10}}, time)\n\nAssemble Tet10 mass matrices using special method. If Tet10 has constant metric if can be integrated analytically to gain performance.\n\n\n\n"
+},
+
+{
     "location": "api.html#FEMBase.field-Tuple{Any}",
     "page": "API",
     "title": "FEMBase.field",
@@ -353,11 +361,35 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "api.html#FEMBase.get_local_coordinates-Tuple{FEMBase.Element,Array{T,1} where T,Float64}",
+    "page": "API",
+    "title": "FEMBase.get_local_coordinates",
+    "category": "Method",
+    "text": "Find inverse isoparametric mapping of element. \n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBase.get_nonzero_rows-Tuple{SparseMatrixCSC}",
+    "page": "API",
+    "title": "FEMBase.get_nonzero_rows",
+    "category": "Method",
+    "text": "Find all nonzero rows from sparse matrix.\n\nReturns\n\nOrdered list of row indices.\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBase.get_parent_field_name-Union{Tuple{FEMBase.Problem{P}}, Tuple{P}} where P<:FEMBase.BoundaryProblem",
+    "page": "API",
+    "title": "FEMBase.get_parent_field_name",
+    "category": "Method",
+    "text": "Return the name of the parent field of this (boundary) problem. \n\n\n\n"
+},
+
+{
     "location": "api.html#FEMBase.get_unknown_field_dimension-Tuple{FEMBase.Problem}",
     "page": "API",
     "title": "FEMBase.get_unknown_field_dimension",
     "category": "Method",
-    "text": "Return the dimension of the unknown field of this problem. \n\n\n\n"
+    "text": "get_unknown_field_dimension(problem)\n\nReturn the dimension of the unknown field of this problem.\n\n\n\n"
 },
 
 {
@@ -366,6 +398,14 @@ var documenterSearchIndex = {"docs": [
     "title": "FEMBase.get_unknown_field_name",
     "category": "Method",
     "text": "Return the name of the unknown field of this problem. \n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBase.get_unknown_field_name-Union{Tuple{P}, Tuple{P}} where P<:FEMBase.AbstractProblem",
+    "page": "API",
+    "title": "FEMBase.get_unknown_field_name",
+    "category": "Method",
+    "text": "get_unknown_field_name(problem)\n\nDefault function if unknown field name is not defined for some problem.\n\n\n\n"
 },
 
 {
@@ -382,6 +422,22 @@ var documenterSearchIndex = {"docs": [
     "title": "FEMBase.initialize!",
     "category": "Method",
     "text": "function initialize!(problem_type, element_name, time)\n\nInitialize the element ready for calculation, where problem_type is the type of the problem (Elasticity, Dirichlet, etc.), element_name is the name of a constructed element (see Element(element_type, connectivity_vector)) and time is the starting time of the initializing process.\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBase.inside-Union{Tuple{E}, Tuple{FEMBase.Element{E},Any,Any}} where E",
+    "page": "API",
+    "title": "FEMBase.inside",
+    "category": "Method",
+    "text": "Test is X inside element. \n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBase.interpolate-Tuple{Any,Any}",
+    "page": "API",
+    "title": "FEMBase.interpolate",
+    "category": "Method",
+    "text": "interpolate(a, b)\n\nA helper function for interpolate routines. Given iterables a and b, calculate c = aᵢbᵢ. Length of a can be less than b, but not vice versa.\n\n\n\n"
 },
 
 {
@@ -449,6 +505,30 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "api.html#FEMBase.optimize!-Tuple{FEMBase.SparseMatrixCOO}",
+    "page": "API",
+    "title": "FEMBase.optimize!",
+    "category": "Method",
+    "text": "Combine (I,J,V) values if possible to reduce memory usage. \n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBase.resize_sparse-Tuple{Any,Any,Any}",
+    "page": "API",
+    "title": "FEMBase.resize_sparse",
+    "category": "Method",
+    "text": "Resize sparse matrix A to (higher) dimension n x m. \n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBase.resize_sparsevec-Tuple{Any,Any}",
+    "page": "API",
+    "title": "FEMBase.resize_sparsevec",
+    "category": "Method",
+    "text": "Resize sparse vector b to (higher) dimension n. \n\n\n\n"
+},
+
+{
     "location": "api.html#FEMBase.update!-Tuple{FEMBase.DCTI,Any}",
     "page": "API",
     "title": "FEMBase.update!",
@@ -494,6 +574,14 @@ var documenterSearchIndex = {"docs": [
     "title": "FEMBase.update!",
     "category": "Method",
     "text": "update!(f::DVTV, time => data)\n\nUpdate new value to field.\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBase.update!-Union{Tuple{FEMBase.DVTVd,Pair{Float64,Dict{Int64,T}}}, Tuple{T}} where T",
+    "page": "API",
+    "title": "FEMBase.update!",
+    "category": "Method",
+    "text": "update!(f::DCTVd, time => data)\n\nUpdate new value to dictionary field.\n\n\n\n"
 },
 
 {
@@ -545,75 +633,11 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "api.html#FEMBase.assemble_mass_matrix!-Tuple{FEMBase.Problem,Array{FEMBase.Element{FEMBasis.Tet10},1},Any}",
-    "page": "API",
-    "title": "FEMBase.assemble_mass_matrix!",
-    "category": "Method",
-    "text": "assemble_mass_matrix!(problem, elements::Vector{Element{Tet10}}, time)\n\nAssemble Tet10 mass matrices using special method. If Tet10 has constant metric if can be integrated analytically to gain performance.\n\n\n\n"
-},
-
-{
     "location": "api.html#FEMBase.get_global_solution-Tuple{FEMBase.Problem,FEMBase.Assembly}",
     "page": "API",
     "title": "FEMBase.get_global_solution",
     "category": "Method",
     "text": "get_global_solution(problem, assembly)\n\nReturn a global solution (u, la) for a problem.\n\nNotes\n\nIf the length of solution vector != number of nodes, i.e. the field dimension is something else than 1, reshape vectors so that their length matches to the number of nodes. This helps to get nodal results easily.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.get_local_coordinates-Tuple{FEMBase.Element,Array{T,1} where T,Float64}",
-    "page": "API",
-    "title": "FEMBase.get_local_coordinates",
-    "category": "Method",
-    "text": "Find inverse isoparametric mapping of element. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.get_nonzero_rows-Tuple{SparseMatrixCSC}",
-    "page": "API",
-    "title": "FEMBase.get_nonzero_rows",
-    "category": "Method",
-    "text": "Find all nonzero rows from sparse matrix.\n\nReturns\n\nOrdered list of row indices.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.get_parent_field_name-Union{Tuple{FEMBase.Problem{P}}, Tuple{P}} where P<:FEMBase.BoundaryProblem",
-    "page": "API",
-    "title": "FEMBase.get_parent_field_name",
-    "category": "Method",
-    "text": "Return the name of the parent field of this (boundary) problem. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.inside-Union{Tuple{E}, Tuple{FEMBase.Element{E},Any,Any}} where E",
-    "page": "API",
-    "title": "FEMBase.inside",
-    "category": "Method",
-    "text": "Test is X inside element. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.optimize!-Tuple{FEMBase.SparseMatrixCOO}",
-    "page": "API",
-    "title": "FEMBase.optimize!",
-    "category": "Method",
-    "text": "Combine (I,J,V) values if possible to reduce memory usage. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.resize_sparse-Tuple{Any,Any,Any}",
-    "page": "API",
-    "title": "FEMBase.resize_sparse",
-    "category": "Method",
-    "text": "Resize sparse matrix A to (higher) dimension n x m. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.resize_sparsevec-Tuple{Any,Any}",
-    "page": "API",
-    "title": "FEMBase.resize_sparsevec",
-    "category": "Method",
-    "text": "Resize sparse vector b to (higher) dimension n. \n\n\n\n"
 },
 
 {
