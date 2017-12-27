@@ -122,6 +122,8 @@ end
     fld = DVTVd(0.0 => f1)
     update!(fld, 1.0 => f2)
     @test isapprox(interpolate(fld, 0.5)[1], 1.5)
+    update!(fld, 1.0 => f1)
+    @test isapprox(interpolate(fld, 0.5)[1], 1.0)
 end
 
 @testset "use of common constructor field" begin

@@ -361,3 +361,15 @@ end
     update!(el, "geometry", X)
     @test_throws Exception get_local_coordinates(el, [0.1, 0.1], 0.0; max_iterations=0)
 end
+
+@testset "analytical functions as fields" begin
+    f(xi, time) = xi[1]*time
+    g(element, xi, time) = element("geometry", xi, time)*time
+    X = Dict(1 => [0.0, 0.0], 2 => [1.0, 0.0], 3 => [1.0, 1.0], 4 => [0.0, 1.0])
+    el = Element(Quad4, [1, 2, 3, 4])
+    update!(el, "geometry", X)
+    update!(el, "f", f)
+    update!(el, "g", g)
+    @test isapprox(el("f", (0.5, 0.5), 2.0), 1.0)
+    @test isapprox(el("g", (0.0, 0.0), 2.0), [1.0, 1.0])
+end
