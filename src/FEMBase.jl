@@ -20,6 +20,7 @@ export info, debug
 
 using FEMBasis
 using FEMBasis: AbstractBasis
+import FEMBasis: interpolate
 using FEMQuad: get_quadrature_points
 include("fields.jl")
 export interpolate, update!, DCTI, DCTV, DVTI, DVTV, CVTV, DVTId, DVTVd, field

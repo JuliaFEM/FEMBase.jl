@@ -1,6 +1,6 @@
 docs/build/
 docs/site/
-.ipynb_checkpoints
+docs/src/index.md
 *.cov
 *.pyc
 *.swp
