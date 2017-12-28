@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Basis functions · FEMBase</title><link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css" rel="stylesheet" type="text/css"/><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.min.js" data-main="assets/documenter.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link href="assets/documenter.css" rel="stylesheet" type="text/css"/></head><body><nav class="toc"><h1>FEMBase</h1><select id="version-selector" onChange="window.location.href=this.value" style="visibility: hidden"></select><form class="search" id="search-form" action="search.html"><input id="search-query" name="q" type="text" placeholder="Search docs"/></form><ul><li><a class="toctext" href="index.html">Introduction</a></li><li><a class="toctext" href="fields.html">Fields</a></li><li class="current"><a class="toctext" href="basis.html">Basis functions</a><ul class="internal"><li><a class="toctext" href="#Mathematics-1">Mathematics</a></li><li><a class="toctext" href="#Defining-custom-shape-functions-1">Defining custom shape functions</a></li></ul></li><li><a class="toctext" href="developing.html">Developing</a></li><li><a class="toctext" href="api.html">API</a></li></ul></nav><article id="docs"><header><nav><ul><li><a href="basis.html">Basis functions</a></li></ul><a class="edit-page" href="https://github.com/JuliaFEM/FEMBase.jl/blob/master/docs/src/basis.md"><span class="fa"></span> Edit on GitHub</a></nav><hr/><div id="topbar"><span>Basis functions</span><a class="fa fa-bars" href="#"></a></div></header><h1><a class="nav-anchor" id="Shape-functions-1" href="#Shape-functions-1">Shape functions</a></h1><p>Also known as basis functions, interpolation polynomials and so on. Typically unknown field variable is interpolated from element nodal values using continuous functions. That is, </p><p>Standard Lagrange polynomials as supported.</p><p>Linear shape functions:</p><ul><li><p>Seg2</p></li><li><p>Tri3</p></li><li><p>Quad4</p></li><li><p>Tet4</p></li><li><p>Pyr5</p></li><li><p>Wedge6</p></li><li><p>Hex8</p></li></ul><p>Quadratic and biquadratic shape functions:</p><ul><li><p>Seg3</p></li><li><p>Tri6, Tri7</p></li><li><p>Quad8, Quad9</p></li><li><p>Tet10</p></li><li><p>Wedge15</p></li><li><p>Hex20, Hex27</p></li></ul><p>NURBS shape functions:</p><ul><li><p>NSeg</p></li><li><p>NSurf</p></li><li><p>NSolid</p></li></ul><p>Evaluating basis and derivative of basis functions with respect to dimensionless coordinates:</p><pre><code class="language-julia">using FEMBase
+using FEMBase.FEMBasis: eval_dbasis!, jacobian, grad, interpolate,
+                        get_reference_element_coordinates, create_basis
+B = Quad4()</code></pre><pre><code class="language-none">FEMBasis.Quad4()</code></pre><pre><code class="language-julia">length(B)</code></pre><pre><code class="language-none">4</code></pre><pre><code class="language-julia">size(B)</code></pre><pre><code class="language-none">(2, 4)</code></pre><p>For fast evaluations, one must allocate array outside of the hot loops to get speed.</p><pre><code class="language-julia">N = zeros(1, 4)
+dN = zeros(2, 4)
+xi = (0.0, 0.0)</code></pre><pre><code class="language-none">(0.0, 0.0)</code></pre><pre><code class="language-julia">eval_basis!(B, N, xi)</code></pre><pre><code class="language-none">1×4 Array{Float64,2}:
+ 0.25  0.25  0.25  0.25</code></pre><pre><code class="language-julia">eval_dbasis!(B, dN, xi)</code></pre><pre><code class="language-none">2×4 Array{Float64,2}:
+ -0.25   0.25  0.25  -0.25
+ -0.25  -0.25  0.25   0.25</code></pre><p>For Langrange interpolation polynomials, by definition, on each node shape function corresponding to that node gets value of 1 and the rest is zero. Node ordering follows the same defined in e.g. in ABAQUS and in many other FEM softwares.</p><pre><code class="language-julia">get_reference_element_coordinates(Quad4)</code></pre><pre><code class="language-none">((-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0))</code></pre><pre><code class="language-julia">for xi in get_reference_element_coordinates(Quad4)
+    eval_basis!(B, N, xi)
+    println(&quot;$N at $xi&quot;)
+end</code></pre><pre><code class="language-none">[1.0 0.0 0.0 0.0] at (-1.0, -1.0)
+[0.0 1.0 0.0 0.0] at (1.0, -1.0)
+[0.0 0.0 1.0 0.0] at (1.0, 1.0)
+[0.0 0.0 0.0 1.0] at (-1.0, 1.0)</code></pre><h2><a class="nav-anchor" id="Mathematics-1" href="#Mathematics-1">Mathematics</a></h2><p>Without knowing anything about the real shape of domain, <code>eval_dbasis!</code> is calculating gradient with respect to dimensionless coordinates <span>$\xi_i$</span>, i.e.</p><p>\begin{equation} \frac{\partial\boldsymbol{N}}{\partial\boldsymbol{\xi}}=\left[\begin{array}{cccc} \frac{\partial N_{1}}{\partial\xi_{1}} &amp; \frac{\partial N_{2}}{\partial\xi_{1}} &amp; \cdots &amp; \frac{\partial N_{n}}{\partial\xi_{1}}\
+\frac{\partial N_{1}}{\partial\xi_{2}} &amp; \frac{\partial N_{2}}{\partial\xi_{2}} &amp; \cdots &amp; \frac{\partial N_{n}}{\partial\xi_{2}}\
+\frac{\partial N_{1}}{\partial\xi_{3}} &amp; \frac{\partial N_{2}}{\partial\xi_{3}} &amp; \cdots &amp; \frac{\partial N_{n}}{\partial\xi_{3}} \end{array}\right] \end{equation}</p><p>Usually this is not wanted, but instead gradient of basis functions is calculated with respect to natural coordinates <span>$X_i$</span>,</p><p>\begin{equation} \frac{\partial\boldsymbol{N}}{\partial\boldsymbol{X}}=\left[\begin{array}{cccc} \frac{\partial N_{1}}{\partial X_{1}} &amp; \frac{\partial N_{2}}{\partial X_{1}} &amp; \cdots &amp; \frac{\partial N_{n}}{\partial X_{1}}\
+\frac{\partial N_{1}}{\partial X_{2}} &amp; \frac{\partial N_{2}}{\partial X_{2}} &amp; \cdots &amp; \frac{\partial N_{n}}{\partial X_{2}}\
+\frac{\partial N_{1}}{\partial X_{3}} &amp; \frac{\partial N_{2}}{\partial X_{3}} &amp; \cdots &amp; \frac{\partial N_{n}}{\partial X_{3}} \end{array}\right] \end{equation}</p><p>To get this, inverse of Jacobian matrix is needed.</p><pre><code class="language-julia">X = ([0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0])
+xi = (0.0, 0.0)
+J = jacobian(B, X, xi)</code></pre><pre><code class="language-none">2×2 Array{Float64,2}:
+ 0.5  0.0
+ 0.0  0.5</code></pre><pre><code class="language-julia">inv(J) * dN</code></pre><pre><code class="language-none">2×4 Array{Float64,2}:
+ -0.5   0.5  0.5  -0.5
+ -0.5  -0.5  0.5   0.5</code></pre><p>Or directly:</p><pre><code class="language-julia">dNdX = grad(B, X, xi)</code></pre><pre><code class="language-none">2×4 Array{Float64,2}:
+ -0.5   0.5  0.5  -0.5
+ -0.5  -0.5  0.5   0.5</code></pre><p>If interpolation domain is manifold, Jacobian is not square and inverse cannot be taken.</p><pre><code class="language-julia">X2 = ([0.0,0.0,0.0], [1.0, 0.0,1.0], [1.0,1.0,1.0], [0.0,1.0,0.0])
+xi = (0.0, 0.0)
+J = jacobian(B, X2, xi)</code></pre><pre><code class="language-none">2×3 Array{Float64,2}:
+ 0.5  0.0  0.5
+ 0.0  0.5  0.0</code></pre><p>One can use Jacobian to calculate <a href="https://en.wikipedia.org/wiki/Surface_integral">surface integral</a>:</p><p>\begin{equation} \iint_{S}f\,\mathrm{d}\Sigma=\iint_{T}f\left(\boldsymbol{x}\left(s,t\right)\right)\left\Vert \frac{\partial\boldsymbol{x}}{\partial s}\times\frac{\partial\boldsymbol{x}}{\partial t}\right\Vert \,\mathrm{d}s\mathrm{d}t \end{equation}</p><pre><code class="language-julia">4*norm(cross(J[1,:], J[2,:])), sqrt(2) # area of manifold</code></pre><pre><code class="language-none">(1.4142135623730951, 1.4142135623730951)</code></pre><p>Gradient of e.g. displacement field or temperature field can be also evaluated:</p><pre><code class="language-julia">u = ([0.0, 0.0], [1.0, -1.0], [2.0, 3.0], [0.0, 0.0])
+T = (1.0, 2.0, 3.0, 4.0)
+grad(B, u, X, xi)</code></pre><pre><code class="language-none">2×2 Array{Float64,2}:
+ 1.5  0.5
+ 1.0  2.0</code></pre><pre><code class="language-julia">grad(B, T, X, xi)</code></pre><pre><code class="language-none">1×2 RowVector{Float64,Array{Float64,1}}:
+ 0.0  2.0</code></pre><p>One can interpolate fields using basis:</p><pre><code class="language-julia">interpolate(B, u, xi)</code></pre><pre><code class="language-none">2-element Array{Float64,1}:
+ 0.75
+ 0.5</code></pre><pre><code class="language-julia">interpolate(B, T, xi)</code></pre><pre><code class="language-none">2.5</code></pre><p>At last to avoid unnecessary memory allocations, a struct <code>BasisInfo</code> is introduced, containing memory space for calculations.</p><pre><code class="language-julia">bi = BasisInfo(Quad4)
+eval_basis!(bi, X, xi)</code></pre><pre><code class="language-none">FEMBasis.BasisInfo{FEMBasis.Quad4,Float64}([0.25 0.25 0.25 0.25], [-0.25 0.25 0.25 -0.25; -0.25 -0.25 0.25 0.25], [-0.5 0.5 0.5 -0.5; -0.5 -0.5 0.5 0.5], [0.5 0.0; 0.0 0.5], [2.0 -0.0; -0.0 2.0], 0.25)</code></pre><pre><code class="language-julia">bi.J</code></pre><pre><code class="language-none">2×2 Array{Float64,2}:
+ 0.5  0.0
+ 0.0  0.5</code></pre><pre><code class="language-julia">bi.N</code></pre><pre><code class="language-none">1×4 Array{Float64,2}:
+ 0.25  0.25  0.25  0.25</code></pre><pre><code class="language-julia">bi.dN</code></pre><pre><code class="language-none">2×4 Array{Float64,2}:
+ -0.25   0.25  0.25  -0.25
+ -0.25  -0.25  0.25   0.25</code></pre><pre><code class="language-julia">bi.detJ</code></pre><pre><code class="language-none">0.25</code></pre><pre><code class="language-julia">bi.grad</code></pre><pre><code class="language-none">2×4 Array{Float64,2}:
+ -0.5   0.5  0.5  -0.5
+ -0.5  -0.5  0.5   0.5</code></pre><pre><code class="language-julia">bi.invJ</code></pre><pre><code class="language-none">2×2 Array{Float64,2}:
+  2.0  -0.0
+ -0.0   2.0</code></pre><pre><code class="language-julia">gradu = zeros(2, 2)
+grad!(bi, gradu, u)</code></pre><pre><code class="language-none">2×2 Array{Float64,2}:
+ 1.5  0.5
+ 1.0  2.0</code></pre><h2><a class="nav-anchor" id="Defining-custom-shape-functions-1" href="#Defining-custom-shape-functions-1">Defining custom shape functions</a></h2><p>Depending from the type of shape functions, they can be created more or less automatic way. For Lagrange type interpolation, ones needs only to define polynomial and corner points for domain. For example, if domain is <span>$[0,1]^2$</span>, one can use <code>create_basis</code>:</p><pre><code class="language-julia">code = create_basis(
+    :MyQuad,
+    &quot;My special domain&quot;,
+    (
+        (0.0, 0.0),
+        (1.0, 0.0),
+        (1.0, 1.0),
+        (0.0, 1.0),
+    ),
+    &quot;1 + u + v + u*v&quot;
+)
+eval(code)</code></pre><pre><code class="language-julia">B = MyQuad()
+xi = (0.5, 0.5)
+eval_basis!(B, N, xi)</code></pre><pre><code class="language-none">1×4 Array{Float64,2}:
+ 0.25  0.25  0.25  0.25</code></pre><p>In this case partial derivatives of shape functions are with respect to <span>$X$</span>, because interpolation polynomials are calculated against real domain and not &quot;reference domain&quot;:</p><pre><code class="language-julia">eval_dbasis!(B, dN, xi)</code></pre><pre><code class="language-none">2×4 Array{Float64,2}:
+ -0.5   0.5  0.5  -0.5
+ -0.5  -0.5  0.5   0.5</code></pre><pre><code class="language-julia">J = jacobian(B, X, xi)</code></pre><pre><code class="language-none">2×2 Array{Float64,2}:
+ 1.0  0.0
+ 0.0  1.0</code></pre><pre><code class="language-julia">u = ([0.0, 0.0], [1.0, -1.0], [2.0, 3.0], [0.0, 0.0])
+grad(B, u, X, xi)</code></pre><pre><code class="language-none">2×2 Array{Float64,2}:
+ 1.5  0.5
+ 1.0  2.0</code></pre><p>Shape functions can be defined manually and calculate partial derivatives automatically. C1-continuous Hermite shape functions can be defined as:</p><pre><code class="language-julia">code = create_basis(
+    :C1Hermite,
+    &quot;C1-continuous Hermite shape functions&quot;,
+    (
+        (0.0,),
+        (0.0,),
+        (1.0,),
+        (1.0,)
+    ),
+    (
+        &quot;2*u^3 - 3*u^2 + 1&quot;,
+        &quot;u^3 - 2*u^2 + u&quot;,
+        &quot;-2*u^3 + 3*u^2&quot;,
+        &quot;u^3 - u^2&quot;
+    )
+)
+eval(code)</code></pre><pre><code class="language-julia">B = C1Hermite()
+xi = (0.0,)
+eval_basis!(B, N, xi)</code></pre><pre><code class="language-none">1×4 Array{Float64,2}:
+ 1.0  0.0  0.0  0.0</code></pre><pre><code class="language-julia">dN = zeros(1, 4)
+eval_dbasis!(B, dN, xi)</code></pre><pre><code class="language-none">1×4 Array{Float64,2}:
+ 0.0  1.0  0.0  0.0</code></pre><pre><code class="language-julia">xi = (1.0,)
+eval_basis!(B, N, xi)</code></pre><pre><code class="language-none">1×4 Array{Float64,2}:
+ 0.0  0.0  1.0  0.0</code></pre><pre><code class="language-julia">eval_dbasis!(B, dN, xi)</code></pre><pre><code class="language-none">1×4 Array{Float64,2}:
+ 0.0  0.0  0.0  1.0</code></pre><p>The last option is to build everything from scratch. For that, one must import and define following functions:</p><ul><li><p>Base.size</p></li><li><p>Base.length</p></li><li><p>FEMBase.FEMBasis.get_reference_element_coordinates</p></li><li><p>FEMBase.FEMBasis.eval_basis!</p></li><li><p>FEMBase.FEMBasis.eval_dbasis!</p></li></ul><p>A simple implementation of P-hierarchical 1d-basis would then be</p><pre><code class="language-julia">import Base: size, length
+import FEMBase: get_reference_element_coordinates,
+                eval_basis!, eval_dbasis!,
+                AbstractBasis
+
+type PSeg &lt;: AbstractBasis
+    order :: Int
+end
+
+function PSeg()
+    return PSeg(1)
+end
+
+function length(basis::PSeg)
+    return basis.order+1
+end
+
+function size(basis::PSeg)
+    return (1, basis.order+1)
+end
+
+function get_reference_element_coordinates(basis::PSeg)
+    return ((-1.0,), (1.0,))
+end
+
+&quot;&quot;&quot;
+    get_legendre_polynomial(n)
+
+Return Legendgre polynomial of order `n` to inverval ξ ∈ [1, 1].
+
+Implementation uses Bonnet&#39;s recursion formula. See
+https://en.wikipedia.org/wiki/Legendre_polynomials
+&quot;&quot;&quot;
+function get_legendre_polynomial(n)
+    n == 0 &amp;&amp; return xi -&gt; 1.0
+    n == 1 &amp;&amp; return xi -&gt; xi
+    Pm1 = get_legendre_polynomial(n-1)
+    Pm2 = get_legendre_polynomial(n-2)
+    A(xi) = (2.0*n-1.0)*xi*Pm1(xi)
+    B(xi) = (n-1.0)*Pm2(xi)
+    return xi -&gt; (A(xi)-B(xi))/n
+end
+
+&quot;&quot;&quot;
+    get_legendre_polynomial_derivative(n)
+
+Return derivative of Legendgre polynomial of order `n` to
+inverval ξ ∈  [-1, 1]
+&quot;&quot;&quot;
+function get_legendre_polynomial_derivative(n)
+    n == 0 &amp;&amp; return xi -&gt; 0.0
+    n == 1 &amp;&amp; return xi -&gt; 1.0
+    Pm1 = get_legendre_polynomial_derivative(n-1)
+    Pm2 = get_legendre_polynomial_derivative(n-2)
+    A(xi) = (2.0*(n-1.0)+1.0)*xi*Pm1(xi)
+    B(xi) = (n+1.0-1.0)*Pm2(xi)
+    return xi -&gt; (A(xi)-B(xi))/(n-1.0)
+end
+
+function eval_basis!{T}(basis::PSeg, N::Matrix{T}, xi::Tuple{T})
+    n = length(basis)
+    t = xi[1]
+    N[1] = 0.5*(1-t)
+    N[2] = 0.5*(1+t)
+    n &lt; 3 &amp;&amp; return N
+    for i=3:n
+        j = i-1
+        P1 = get_legendre_polynomial(j)
+        P2 = get_legendre_polynomial(j-2)
+        N[i] = 1.0/sqrt(2.0*(2.0*j-1.0))*(P1(t)-P2(t))
+    end
+    return N
+end
+
+function eval_dbasis!{T}(basis::PSeg, dN::Matrix{T}, xi::Tuple{T})
+    n = length(basis)
+    t = xi[1]
+    dN[1] = -0.5
+    dN[2] = 0.5
+    n &lt; 3 &amp;&amp; return N
+    for i=3:n
+        j = i-1
+        P1 = get_legendre_polynomial_derivative(j)
+        P2 = get_legendre_polynomial_derivative(j-2)
+        dN[i] = 1.0/sqrt(2.0*(2.0*j-1.0))*(P1(t)-P2(t))
+    end
+    return dN
+end</code></pre><pre><code class="language-none">eval_dbasis! (generic function with 21 methods)</code></pre><pre><code class="language-julia">B = PSeg()</code></pre><pre><code class="language-none">PSeg(1)</code></pre><pre><code class="language-julia">N = zeros(1, 2)
+eval_basis!(B, N, (0.0,))</code></pre><pre><code class="language-none">1×2 Array{Float64,2}:
+ 0.5  0.5</code></pre><pre><code class="language-julia">N = zeros(1, 3)
+B.order = 2
+eval_basis!(B, N, (0.0,))</code></pre><pre><code class="language-none">1×3 Array{Float64,2}:
+ 0.5  0.5  -0.612372</code></pre><pre><code class="language-julia">using PyPlot
+B.order = 6
+N = zeros(1, length(B))
+n = 50
+xi = linspace(-1, 1, n)
+NN = zeros(n, length(B))
+for i=1:n
+    eval_basis!(B, N, (xi[i],))
+    NN[i,:] = N[:]
+end</code></pre><pre><code class="language-julia">plot(NN)
+title(&quot;Hierarchical shape functions to order 6&quot;);</code></pre><p><img src="basis_files/basis_55_0.png" alt="png"/></p><footer><hr/><a class="previous" href="fields.html"><span class="direction">Previous</span><span class="title">Fields</span></a><a class="next" href="developing.html"><span class="direction">Next</span><span class="title">Developing</span></a></footer></article></body></html>
