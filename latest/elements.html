@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Elements · FEMBase</title><link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css" rel="stylesheet" type="text/css"/><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.min.js" data-main="assets/documenter.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link href="assets/documenter.css" rel="stylesheet" type="text/css"/></head><body><nav class="toc"><h1>FEMBase</h1><select id="version-selector" onChange="window.location.href=this.value" style="visibility: hidden"></select><form class="search" id="search-form" action="search.html"><input id="search-query" name="q" type="text" placeholder="Search docs"/></form><ul><li><a class="toctext" href="index.html">Introduction</a></li><li><a class="toctext" href="fields.html">Fields</a></li><li><a class="toctext" href="basis.html">Basis functions</a></li><li class="current"><a class="toctext" href="elements.html">Elements</a><ul class="internal"></ul></li><li><a class="toctext" href="developing.html">Developing</a></li><li><a class="toctext" href="api.html">API</a></li></ul></nav><article id="docs"><header><nav><ul><li><a href="elements.html">Elements</a></li></ul><a class="edit-page" href="https://github.com/JuliaFEM/FEMBase.jl/blob/master/docs/src/elements.md"><span class="fa"></span> Edit on GitHub</a></nav><hr/><div id="topbar"><span>Elements</span><a class="fa fa-bars" href="#"></a></div></header><p>In JuliaFEM, elements are &quot;containers&quot;, combining fields and basis functions described above. Among that, element has information about topology (connectivity) and integration rule. These fundamentals forms a finite element, the backbone of finite element method, as the basic idea after all is just to discretize continuous domain to smaller topological entities like tetrahedrons and perform same operations to each element.</p><pre><code class="language-julia">using FEMBase</code></pre><pre><code class="language-julia">el = Element(Quad4, [1, 2, 3, 4])</code></pre><pre><code class="language-none">FEMBase.Element{FEMBasis.Quad4}(-1, [1, 2, 3, 4], FEMBase.Point{FEMBase.IntegrationPoint}[], Dict{String,FEMBase.AbstractField}(), FEMBasis.Quad4())</code></pre><p>Setting fields to element is done using a command <code>update!</code>, which either creates new field if does not already exist, or updates the old one. Typically, at least field called <code>geometry</code> needs to be defined to element as it&#39;s used to calculate Jacobian of element. Fields can be discrete, continuous, time invariant or variant, variable or constant, like described earlier.</p><pre><code class="language-julia">X = Dict(1 =&gt; [0.0,0.0], 2=&gt;[1.0,0.0], 3=&gt;[1.0,1.0], 4=&gt;[0.0,1.0])
+update!(el, &quot;geometry&quot;, X)</code></pre><pre><code class="language-none">FEMBase.DVTId{Array{Float64,1}}(Dict(4=&gt;[0.0, 1.0],2=&gt;[1.0, 0.0],3=&gt;[1.0, 1.0],1=&gt;[0.0, 0.0]))</code></pre><pre><code class="language-julia">el.fields</code></pre><pre><code class="language-none">Dict{String,FEMBase.AbstractField} with 1 entry:
+  &quot;geometry&quot; =&gt; FEMBase.DVTId{Array{Float64,1}}(Dict(4=&gt;[0.0, 1.0],2=&gt;[1.0, 0.0…</code></pre><pre><code class="language-julia">u0 = ([0.0,0.0], [0.0,0.0], [0.0,0.0], [0.0,0.0])
+u1 = ([0.0,0.0], [0.0,0.0], [0.5,0.0], [0.0,0.0])
+update!(el, &quot;displacement&quot;, 0.0 =&gt; u0)
+update!(el, &quot;displacement&quot;, 1.0 =&gt; u1)
+el.fields</code></pre><pre><code class="language-none">Dict{String,FEMBase.AbstractField} with 2 entries:
+  &quot;geometry&quot;     =&gt; FEMBase.DVTId{Array{Float64,1}}(Dict(4=&gt;[0.0, 1.0],2=&gt;[1.0,…
+  &quot;displacement&quot; =&gt; FEMBase.DVTV{4,Array{Float64,1}}(Pair{Float64,NTuple{4,Arra…</code></pre><p>Interpolating of fields goes calling <code>Element(field_name, xi, time)</code>. For example, position of material particle <span>$X$</span> in initial configuration and deformed configuration in the middle of the element at time <span>$t=1$</span> can be found as</p><pre><code class="language-julia">xi = (0.0, 0.0)
+time = 1.0
+X = el(&quot;geometry&quot;, xi, time)
+u = el(&quot;displacement&quot;, xi, time)
+x = X+u
+println(&quot;X = $X, x = $x&quot;)</code></pre><pre><code class="language-none">X = [0.5, 0.5], x = [0.625, 0.5]</code></pre><p>Jacobian, determinant of Jacobian and gradient of field can be calculated adding extra argument <code>Val{:Jacobian}</code>, <code>Val{:detJ}</code>, <code>Val{:Grad}</code> to the above command and not passing field name, i.e.</p><pre><code class="language-julia">el(xi, time, Val{:Jacobian})</code></pre><pre><code class="language-none">2×2 Array{Float64,2}:
+ 0.5  0.0
+ 0.0  0.5</code></pre><pre><code class="language-julia">el(xi, time, Val{:detJ})</code></pre><pre><code class="language-none">0.25</code></pre><pre><code class="language-julia">el(xi, time, Val{:Grad})</code></pre><pre><code class="language-none">2×4 Array{Float64,2}:
+ -0.5   0.5  0.5  -0.5
+ -0.5  -0.5  0.5   0.5</code></pre><p>Usually what the user wants is still a gradient of some field. For example, displacement gradient:</p><pre><code class="language-julia">gradu = el(&quot;displacement&quot;, xi, time, Val{:Grad})
+gradu</code></pre><pre><code class="language-none">2×2 Array{Float64,2}:
+ 0.25  0.25
+ 0.0   0.0</code></pre><p>Or temperature gradient:</p><pre><code class="language-julia">update!(el, &quot;temperature&quot;, (1.0, 2.0, 3.0, 4.0))
+gradT = el(&quot;temperature&quot;, xi, time, Val{:Grad})</code></pre><pre><code class="language-none">1×2 RowVector{Float64,Array{Float64,1}}:
+ 0.0  2.0</code></pre><p>Accessing integration points of element is done using command <code>get_integration_points</code>. Combining interpolation and integration one can already calculate local matrices of a single element or, for example area and strain energy:</p><pre><code class="language-julia">update!(el, &quot;lambda&quot;, 96.0)
+update!(el, &quot;mu&quot;, 48.0)
+
+A = 0.0
+W = 0.0
+for ip in get_integration_points(el)
+    detJ = el(ip, time, Val{:detJ})
+    A += ip.weight * detJ
+    ∇u = el(&quot;displacement&quot;, ip, time, Val{:Grad})
+    E = 1/2*(∇u + ∇u&#39;)
+    λ = el(&quot;lambda&quot;, ip, time)
+    μ = el(&quot;mu&quot;, ip, time)
+    W += ip.weight * ( λ/2*trace(E*E&#39;) + μ*trace(E)^2) * detJ
+end
+
+println(&quot;Area: $A&quot;)
+println(&quot;Strain energy: $W&quot;)</code></pre><pre><code class="language-none">Area: 1.0
+Strain energy: 10.0</code></pre><p>Local stiffness matrix for Poisson problem:</p><pre><code class="language-julia">K = zeros(4,4)
+update!(el, &quot;coefficient&quot;, 36.0)
+for ip in get_integration_points(el)
+    dN = el(ip, time, Val{:Grad})
+    detJ = el(ip, time, Val{:detJ})
+    c = el(&quot;coefficient&quot;, ip, time)
+    K += ip.weight * c*dN&#39;*dN * detJ
+end
+K</code></pre><pre><code class="language-none">4×4 Array{Float64,2}:
+  24.0   -6.0  -12.0   -6.0
+  -6.0   24.0   -6.0  -12.0
+ -12.0   -6.0   24.0   -6.0
+  -6.0  -12.0   -6.0   24.0</code></pre><footer><hr/><a class="previous" href="basis.html"><span class="direction">Previous</span><span class="title">Basis functions</span></a><a class="next" href="developing.html"><span class="direction">Next</span><span class="title">Developing</span></a></footer></article></body></html>
