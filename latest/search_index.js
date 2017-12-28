@@ -9,11 +9,11 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "index.html#FEMBase.jl-documentation-1",
+    "location": "index.html#FEMBase.jl-1",
     "page": "Introduction",
-    "title": "FEMBase.jl documentation",
+    "title": "FEMBase.jl",
     "category": "section",
-    "text": "Pages = [\"index.md\", \"theory.md\", \"api.md\"]"
+    "text": "(Image: Build Status)(Image: Coverage Status)(Image: )(Image: )(Image: Issues)FEMBase.jl is a JuliaFEM base package. It includes all basic data structures so that one can start programming own finite element models."
 },
 
 {
@@ -473,78 +473,6 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "api.html#FEMBase.interpolate-Tuple{Any,Any}",
-    "page": "API",
-    "title": "FEMBase.interpolate",
-    "category": "Method",
-    "text": "interpolate(a, b)\n\nA helper function for interpolate routines. Given iterables a and b, calculate c = aᵢbᵢ. Length of a can be less than b, but not vice versa.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.interpolate-Tuple{FEMBase.DCTI,Vararg{Any,N} where N}",
-    "page": "API",
-    "title": "FEMBase.interpolate",
-    "category": "Method",
-    "text": "interpolate(f::DCTI, args...)\n\nInterpolate constant, time-invariant DCTI field in time direction. That is trivially only the data itself.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.interpolate-Tuple{FEMBase.DCTV,Any}",
-    "page": "API",
-    "title": "FEMBase.interpolate",
-    "category": "Method",
-    "text": "interpolate(f::DCTV, time)\n\nInterpolate constant time variant DCTV field in time direction.\n\nNotes\n\nFirst check that is outside of range -> extrapolate Secondly check is \"exact match\" in time At last, find the correct bin and use linear interpolation\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.interpolate-Tuple{FEMBase.DVTId,Any}",
-    "page": "API",
-    "title": "FEMBase.interpolate",
-    "category": "Method",
-    "text": "interpolate(f::DVTId, time)\n\nInterpolate DVTId, returns trivially the content as this is time invariant field.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.interpolate-Union{Tuple{FEMBase.DVTI{N,T},Any,Any}, Tuple{N}, Tuple{T}} where T where N",
-    "page": "API",
-    "title": "FEMBase.interpolate",
-    "category": "Method",
-    "text": "interpolate(f::DVTI, t, B)\n\nInterpolate variable, time-invariant DVTI field in time and spatial direction.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.interpolate-Union{Tuple{FEMBase.DVTI{N,T},Any}, Tuple{N}, Tuple{T}} where T where N",
-    "page": "API",
-    "title": "FEMBase.interpolate",
-    "category": "Method",
-    "text": "interpolate(f::DVTI, t)\n\nInterpolate variable, time-invariant DVTI field in time direction.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.interpolate-Union{Tuple{FEMBase.DVTVd{T},Any}, Tuple{T}} where T",
-    "page": "API",
-    "title": "FEMBase.interpolate",
-    "category": "Method",
-    "text": "interpolate(f::DVTVd, time)\n\nInterpolate variable, time variant DVTVd dictionary field in time direction.\n\nNotes\n\nFirst check that is outside of range -> extrapolate Secondly check is \"exact match\" in time At last, find the correct bin and use linear interpolation\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.interpolate-Union{Tuple{FEMBase.DVTV{N,T},Any,Any}, Tuple{N}, Tuple{T}} where T where N",
-    "page": "API",
-    "title": "FEMBase.interpolate",
-    "category": "Method",
-    "text": "interpolate(f::DVTV, time, basis)\n\nInterpolate variable, time variant DVTV field in both time and spatial direction.\n\nNotes\n\nFirst check that is outside of range -> extrapolate Secondly check is \"exact match\" in time At last, find the correct bin and use linear interpolation\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.interpolate-Union{Tuple{FEMBase.DVTV{N,T},Any}, Tuple{N}, Tuple{T}} where T where N",
-    "page": "API",
-    "title": "FEMBase.interpolate",
-    "category": "Method",
-    "text": "interpolate(f::DVTV, time)\n\nInterpolate variable, time variant DVTV field in time direction.\n\nNotes\n\nFirst check that is outside of range -> extrapolate Secondly check is \"exact match\" in time At last, find the correct bin and use linear interpolation\n\n\n\n"
-},
-
-{
     "location": "api.html#FEMBase.optimize!-Tuple{FEMBase.SparseMatrixCOO}",
     "page": "API",
     "title": "FEMBase.optimize!",
@@ -638,6 +566,78 @@ var documenterSearchIndex = {"docs": [
     "title": "FEMBase.update!",
     "category": "Method",
     "text": "update!(problem.properties, attr...)\n\nUpdate properties for a problem.\n\nExample\n\nupdate!(body.properties, \"finite_strain\" => \"false\")\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBasis.interpolate-Tuple{Any,Any}",
+    "page": "API",
+    "title": "FEMBasis.interpolate",
+    "category": "Method",
+    "text": "interpolate(a, b)\n\nA helper function for interpolate routines. Given iterables a and b, calculate c = aᵢbᵢ. Length of a can be less than b, but not vice versa.\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBasis.interpolate-Tuple{FEMBase.DCTI,Vararg{Any,N} where N}",
+    "page": "API",
+    "title": "FEMBasis.interpolate",
+    "category": "Method",
+    "text": "interpolate(f::DCTI, args...)\n\nInterpolate constant, time-invariant DCTI field in time direction. That is trivially only the data itself.\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBasis.interpolate-Tuple{FEMBase.DCTV,Any}",
+    "page": "API",
+    "title": "FEMBasis.interpolate",
+    "category": "Method",
+    "text": "interpolate(f::DCTV, time)\n\nInterpolate constant time variant DCTV field in time direction.\n\nNotes\n\nFirst check that is outside of range -> extrapolate Secondly check is \"exact match\" in time At last, find the correct bin and use linear interpolation\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBasis.interpolate-Tuple{FEMBase.DVTId,Any}",
+    "page": "API",
+    "title": "FEMBasis.interpolate",
+    "category": "Method",
+    "text": "interpolate(f::DVTId, time)\n\nInterpolate DVTId, returns trivially the content as this is time invariant field.\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBasis.interpolate-Union{Tuple{FEMBase.DVTI{N,T},Any,Any}, Tuple{N}, Tuple{T}} where T where N",
+    "page": "API",
+    "title": "FEMBasis.interpolate",
+    "category": "Method",
+    "text": "interpolate(f::DVTI, t, B)\n\nInterpolate variable, time-invariant DVTI field in time and spatial direction.\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBasis.interpolate-Union{Tuple{FEMBase.DVTI{N,T},Any}, Tuple{N}, Tuple{T}} where T where N",
+    "page": "API",
+    "title": "FEMBasis.interpolate",
+    "category": "Method",
+    "text": "interpolate(f::DVTI, t)\n\nInterpolate variable, time-invariant DVTI field in time direction.\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBasis.interpolate-Union{Tuple{FEMBase.DVTVd{T},Any}, Tuple{T}} where T",
+    "page": "API",
+    "title": "FEMBasis.interpolate",
+    "category": "Method",
+    "text": "interpolate(f::DVTVd, time)\n\nInterpolate variable, time variant DVTVd dictionary field in time direction.\n\nNotes\n\nFirst check that is outside of range -> extrapolate Secondly check is \"exact match\" in time At last, find the correct bin and use linear interpolation\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBasis.interpolate-Union{Tuple{FEMBase.DVTV{N,T},Any,Any}, Tuple{N}, Tuple{T}} where T where N",
+    "page": "API",
+    "title": "FEMBasis.interpolate",
+    "category": "Method",
+    "text": "interpolate(f::DVTV, time, basis)\n\nInterpolate variable, time variant DVTV field in both time and spatial direction.\n\nNotes\n\nFirst check that is outside of range -> extrapolate Secondly check is \"exact match\" in time At last, find the correct bin and use linear interpolation\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBasis.interpolate-Union{Tuple{FEMBase.DVTV{N,T},Any}, Tuple{N}, Tuple{T}} where T where N",
+    "page": "API",
+    "title": "FEMBasis.interpolate",
+    "category": "Method",
+    "text": "interpolate(f::DVTV, time)\n\nInterpolate variable, time variant DVTV field in time direction.\n\nNotes\n\nFirst check that is outside of range -> extrapolate Secondly check is \"exact match\" in time At last, find the correct bin and use linear interpolation\n\n\n\n"
 },
 
 {
