@@ -577,11 +577,11 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "api.html#FEMBasis.interpolate-Tuple{FEMBase.DCTI,Vararg{Any,N} where N}",
+    "location": "api.html#FEMBasis.interpolate-Tuple{FEMBase.DCTI,Any}",
     "page": "API",
     "title": "FEMBasis.interpolate",
     "category": "Method",
-    "text": "interpolate(f::DCTI, args...)\n\nInterpolate constant, time-invariant DCTI field in time direction. That is trivially only the data itself.\n\n\n\n"
+    "text": "interpolate(f::DCTI, time)\n\nInterpolate constant, time-invariant DCTI field in time direction. That is trivially only the data itself.\n\n\n\n"
 },
 
 {
@@ -601,11 +601,19 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "api.html#FEMBasis.interpolate-Tuple{FEMBase.Element,String,Float64}",
+    "page": "API",
+    "title": "FEMBasis.interpolate",
+    "category": "Method",
+    "text": "interpolate(element, field_name, time)\n\nInterpolate field field_name from element at given time.\n\nExample\n\nelement = Element(Seg2, [1, 2])\ndata1 = Dict(1 => 1.0, 2 => 2.0)\ndata2 = Dict(1 => 2.0, 2 => 3.0)\nupdate!(element, \"my field\", 0.0 => data1)\nupdate!(element, \"my field\", 1.0 => data2)\ninterpolate(element, \"my field\", 0.5)\n\n# output\n\n(1.5, 2.5)\n\n\n\n\n"
+},
+
+{
     "location": "api.html#FEMBasis.interpolate-Union{Tuple{FEMBase.DVTI{N,T},Any,Any}, Tuple{N}, Tuple{T}} where T where N",
     "page": "API",
     "title": "FEMBasis.interpolate",
     "category": "Method",
-    "text": "interpolate(f::DVTI, t, B)\n\nInterpolate variable, time-invariant DVTI field in time and spatial direction.\n\n\n\n"
+    "text": "interpolate(f::DVTI, time, basis)\n\nInterpolate variable, time-invariant DVTI field in time and spatial direction.\n\n\n\n"
 },
 
 {
@@ -613,7 +621,7 @@ var documenterSearchIndex = {"docs": [
     "page": "API",
     "title": "FEMBasis.interpolate",
     "category": "Method",
-    "text": "interpolate(f::DVTI, t)\n\nInterpolate variable, time-invariant DVTI field in time direction.\n\n\n\n"
+    "text": "interpolate(f::DVTI, time)\n\nInterpolate variable, time-invariant DVTI field in time direction.\n\n\n\n"
 },
 
 {
@@ -649,6 +657,14 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "api.html#Base.getindex-Tuple{FEMBase.DCTI,Int64}",
+    "page": "API",
+    "title": "Base.getindex",
+    "category": "Method",
+    "text": "getindex(f::DCTI, i)\n\nReturn ith item from constant field. Trivially the data itself.\n\n\n\n"
+},
+
+{
     "location": "api.html#Base.haskey-Tuple{FEMBase.Element,Any}",
     "page": "API",
     "title": "Base.haskey",
@@ -665,11 +681,19 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "api.html#Base.length-Union{Tuple{B}, Tuple{FEMBase.Element{B}}} where B",
+    "location": "api.html#Base.length-Tuple{FEMBase.Element}",
     "page": "API",
     "title": "Base.length",
     "category": "Method",
-    "text": "length(element::Element)\n\nReturn the number of nodes in element.\n\n\n\n"
+    "text": "length(element)\n\nReturn the length of basis (number of nodes).\n\n\n\n"
+},
+
+{
+    "location": "api.html#Base.size-Tuple{FEMBase.Element}",
+    "page": "API",
+    "title": "Base.size",
+    "category": "Method",
+    "text": "size(element)\n\nReturn the size of basis (dim, nnodes).\n\n\n\n"
 },
 
 {
