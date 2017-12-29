@@ -6,6 +6,7 @@ using FEMBase: assemble_mass_matrix!
 using Base.Test
 
 type Dummy <: FieldProblem end
+type Dummy2 <: FieldProblem end
 
 @testset "test tet4 mass matrix" begin
     X = Dict(
@@ -100,7 +101,9 @@ end
 
 @testset "pre and posthooks, warnings" begin
     p = Problem(Dummy, "test", 1)
+    p2 = Problem(Dummy2, "test2", 1)
     assemble!(p, 0.0)
+    assemble!(p2, 0.0)
     k = [1.0 -1.0; -1.0 1.0]
     K_expected = zeros(3,3)
     K_expected[1:2,1:2] += k
