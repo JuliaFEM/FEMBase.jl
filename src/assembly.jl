@@ -11,10 +11,10 @@ function isapprox(a1::Assembly, a2::Assembly)
     return T
 end
 
-function assemble_prehook!
+function assemble_prehook!(::Problem, time)
 end
 
-function assemble_posthook!
+function assemble_posthook!(::Problem, time)
 end
 
 function assemble!(problem::Problem, time=0.0; auto_initialize=true)
@@ -34,17 +34,13 @@ function assemble!(problem::Problem, time=0.0; auto_initialize=true)
             end
         end
     end
-    if method_exists(assemble_prehook!, Tuple{typeof(problem), Float64})
-        assemble_prehook!(problem, time)
-    end
+    assemble_prehook!(problem, time)
     assemble!(get_assembly(problem), problem, get_elements(problem), time)
-    if method_exists(assemble_posthook!, Tuple{typeof(problem), Float64})
-        assemble_posthook!(problem, time)
-    end
+    assemble_posthook!(problem, time)
     return true
 end
 
-function assemble!{P}(assembly::Assembly, problem::Problem{P}, element::Element, time)
+function assemble!{P}(::Assembly, ::Problem{P}, element::Element, time)
     warn("One must define assemble! function for problem of type $P. Not doing anything.")
     return nothing
 end
@@ -70,7 +66,7 @@ function assemble_mass_matrix!(problem::Problem, time)
 end
 
 function assemble_mass_matrix!{Basis}(problem::Problem, elements::Vector{Element{Basis}}, time)
-    nnodes = length(Basis)
+    nnodes = length(first(elements))
     dim = get_unknown_field_dimension(problem)
     M = zeros(nnodes, nnodes)
     N = zeros(1, nnodes)

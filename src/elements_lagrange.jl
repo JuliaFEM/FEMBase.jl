@@ -24,8 +24,9 @@ function get_integration_order(element::Poi1)
     return 1
 end
 
+@lintpragma("Ignore unused order")
 function get_integration_points(element::Poi1, order::Int64)
-    return [ (1.0, 0.0) ]
+    return [ (1.0, (0.0, )) ]
 end
 
 function size(::Type{Poi1})
@@ -38,20 +39,6 @@ end
 
 function FEMBasis.get_reference_element_coordinates(::Type{Poi1})
     Vector{Float64}[[0.0]]
-end
-
-function get_basis{B}(element::Element{B}, ip, time)
-    T = typeof(first(ip))
-    N = zeros(T, 1, length(B))
-    eval_basis!(B, N, tuple(ip...))
-    return N
-end
-
-function get_dbasis{B}(element::Element{B}, ip, time)
-    T = typeof(first(ip))
-    dN = zeros(T, size(B)...)
-    eval_dbasis!(B, dN, tuple(ip...))
-    return dN
 end
 
 function inside(::Union{Type{Seg2}, Type{Seg3}, Type{Quad4}, Type{Quad8},

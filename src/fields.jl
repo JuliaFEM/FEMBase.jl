@@ -41,16 +41,23 @@ function update!(f::DCTI, data)
     f.data = data
 end
 
+@lintpragma("Ignore unused time")
 """
-    interpolate(f::DCTI, args...)
+    interpolate(f::DCTI, time)
 
 Interpolate constant, time-invariant DCTI field in time direction. That is
 trivially only the data itself.
 """
-function interpolate(f::DCTI, args...)
+function interpolate(f::DCTI, time)
     return f.data
 end
 
+@lintpragma("Ignore unused i")
+"""
+    getindex(f::DCTI, i)
+
+Return `i`th item from constant field. Trivially the data itself.
+"""
 function getindex(f::DCTI, i::Int64)
     return f.data
 end
@@ -76,11 +83,12 @@ function update!(f::DVTI, data)
 end
 
 """
-    interpolate(f::DVTI, t)
+    interpolate(f::DVTI, time)
 
 Interpolate variable, time-invariant DVTI field in time direction.
 """
-function interpolate{N,T}(f::DVTI{N,T}, t)
+function interpolate{N,T}(f::DVTI{N,T}, time)
+    # time
     return f.data
 end
 
@@ -96,12 +104,12 @@ function interpolate(a, b)
 end
 
 """
-    interpolate(f::DVTI, t, B)
+    interpolate(f::DVTI, time, basis)
 
 Interpolate variable, time-invariant DVTI field in time and spatial direction.
 """
-function interpolate{N,T}(f::DVTI{N,T}, t, B)
-    return sum(f.data[i]*B[i] for i=1:N)
+function interpolate{N,T}(f::DVTI{N,T}, time, basis)
+    return interpolate(f.data, basis)
 end
 
 ## DISCRETE, CONSTANT, TIME VARIANT
@@ -203,8 +211,7 @@ function interpolate{N,T}(field::DVTV{N,T}, time)
             y0 = field.data[i-1].second
             y1 = field.data[i].second
             f = (time-t0)/(t1-t0)
-            new_data = tuple((f*y0[i] + (1-f)*y1[i] for i=1:N)...)
-            return new_data
+            return map((a,b) -> f*a + (1-f)*b, y0, y1)
         end
     end
 end
@@ -222,7 +229,7 @@ At last, find the correct bin and use linear interpolation
 """
 function interpolate{N,T}(field::DVTV{N,T}, time, basis)
     data = interpolate(field, time)
-    return sum(data[i]*basis[i] for i=1:N)
+    return interpolate(basis, data)
 end
 
 """

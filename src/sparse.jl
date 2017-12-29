@@ -116,8 +116,8 @@ end
 
 """ Add sparse matrix of CSC to COO. """
 function add!(A::SparseMatrixCOO, B::SparseMatrixCSC)
-    I, J, V = findnz(B)
-    C = SparseMatrixCOO(I, J, V)
+    i, j, v = findnz(B)
+    C = SparseMatrixCOO(i, j, v)
     append!(A, C)
 end
 
@@ -135,18 +135,18 @@ end
 
 """ Add SparseVector to SparseVectorCOO. """
 function add!(a::SparseVectorCOO, b::SparseVector)
-    I, V = findnz(b)
-    c = SparseVectorCOO(I, V)
+    i, v = findnz(b)
+    c = SparseVectorCOO(i, v)
     append!(a, c)
     return
 end
 
 """ Combine (I,J,V) values if possible to reduce memory usage. """
 function optimize!(A::SparseMatrixCOO)
-    I, J, V = findnz(sparse(A))
-    A.I = I
-    A.J = J
-    A.V = V
+    i, j, v = findnz(sparse(A))
+    A.I = i
+    A.J = j
+    A.V = v
     return
 end
 

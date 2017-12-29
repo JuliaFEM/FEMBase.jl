@@ -30,19 +30,24 @@ function Element{E<:AbstractBasis}(::Type{E}, connectivity::Vector{Int})
 end
 
 """
-    length(element::Element)
+    length(element)
 
-Return the number of nodes in element.
+Return the length of basis (number of nodes).
 """
-function length{B}(element::Element{B})
-    return length(B)
+function length(element::Element)
+    return length(element.properties)
 end
 
-function size{B}(element::Element{B})
-    return size(B)
+"""
+    size(element)
+
+Return the size of basis (dim, nnodes).
+"""
+function size(element::Element)
+    return size(element.properties)
 end
 
-function getindex(element::Element, field_name::AbstractString)
+function getindex(element::Element, field_name::String)
     return element.fields[field_name]
 end
 
@@ -50,7 +55,7 @@ function setindex!{T<:AbstractField}(element::Element, data::T, field_name)
     element.fields[field_name] = data
 end
 
-function get_element_type{E}(element::Element{E})
+function get_element_type{E}(::Element{E})
     return E
 end
 
@@ -58,12 +63,16 @@ function get_element_id{E}(element::Element{E})
     return element.id
 end
 
-function is_element_type{E}(element::Element{E}, element_type)
+function is_element_type{E}(::Element{E}, element_type)
     return E === element_type
 end
 
 function filter_by_element_type(element_type, elements)
     return Iterators.filter(element -> is_element_type(element, element_type), elements)
+end
+
+function get_connectivity(element::Element)
+    return element.connectivity
 end
 
 """
@@ -109,23 +118,49 @@ function (element::Element)(field_name::String)
     return element[field_name]
 end
 
-#""" Return a Field object from element and interpolate in time direction.
-#Examples
-#--------
-#>>> element = Element(Seg2, [1, 2])
-#>>> data1 = Dict(1 => 1.0, 2 => 2.0)
-#>>> data2 = Dict(1 => 2.0, 2 => 3.0)
-#>>> update!(element, "my field", 0.0 => data1, 1.0 => data2)
-#>>> element("my field", 0.5)
-#"""
-function (element::Element)(field_name::String, time::Float64)
+"""
+    interpolate(element, field_name, time)
+
+Interpolate field `field_name` from element at given `time`.
+
+# Example
+```
+element = Element(Seg2, [1, 2])
+data1 = Dict(1 => 1.0, 2 => 2.0)
+data2 = Dict(1 => 2.0, 2 => 3.0)
+update!(element, "my field", 0.0 => data1)
+update!(element, "my field", 1.0 => data2)
+interpolate(element, "my field", 0.5)
+
+# output
+
+(1.5, 2.5)
+
+```
+"""
+function interpolate(element::Element, field_name::String, time::Float64)
     field = element[field_name]
     result = interpolate(field, time)
     if isa(result, Dict)
-        return tuple((result[i] for i in get_connectivity(element))...)
+        connectivity = get_connectivity(element)
+        return tuple((result[i] for i in connectivity)...)
     else
         return result
     end
+end
+
+function get_basis{B}(element::Element{B}, ip, time)
+    T = typeof(first(ip))
+    N = zeros(T, 1, length(element))
+    eval_basis!(B, N, tuple(ip...))
+    return N
+end
+
+function get_dbasis{B}(element::Element{B}, ip, time)
+    T = typeof(first(ip))
+    dN = zeros(T, size(element)...)
+    eval_dbasis!(B, dN, tuple(ip...))
+    return dN
 end
 
 function (element::Element)(ip, time::Float64=0.0)
@@ -186,29 +221,33 @@ end
 
 function (element::Element)(field_name::String, ip, time::Float64)
     field = element[field_name]
-    return element(field, ip, time)
+    return interpolate(element, field, ip, time)
 end
 
-function (element::Element)(field::DCTI, ip, time::Float64)
+@lintpragma("Ignore unused ip")
+@lintpragma("Ignore unused element")
+function interpolate(element::Element, field::DCTI, ip, time::Float64)
     return field.data
 end
 
-function (element::Element)(field::DCTV, ip, time::Float64)
+function interpolate(element::Element, field::DCTV, ip, time::Float64)
     return interpolate(field, time)
 end
 
-function (element::Element)(field::CVTV, ip, time::Float64)
+function interpolate(element::Element, field::CVTV, ip, time::Float64)
     return field(ip, time)
 end
 
-function (element::Element){F<:AbstractField}(field::F, ip, time::Float64)
+function interpolate{F<:AbstractField}(element::Element, field::F, ip, time::Float64)
     field_ = interpolate(field, time)
     basis = element(ip, time)
     n = length(element)
     if isa(field_, Tuple)
         m = length(field_)
         if n != m
-            error("Error when trying to interpolate field $field at coords $ip and time $time: element length is $n and field length is $m, f = Nᵢfᵢ makes no sense!")
+            error("Error when trying to interpolate field $field at coords $ip ",
+                  "and time $time: element length is $n and field length is $m, ",
+                  "f = Nᵢfᵢ makes no sense!")
         end
         return sum(field_[i]*basis[i] for i=1:n)
     else
@@ -248,15 +287,11 @@ function haskey(element::Element, field_name)
     return haskey(element.fields, field_name)
 end
 
-function get_connectivity(element::Element)
-    return element.connectivity
-end
-
 function get_integration_points{E}(element::Element{E})
     # first time initialize default integration points
     if length(element.integration_points) == 0
         ips = get_integration_points(element.properties)
-        if E in (Poi1, Seg2, Seg3, NSeg)
+        if E in (Seg2, Seg3, NSeg)
             element.integration_points = [IP(i, w, (xi,)) for (i, (w, xi)) in enumerate(ips)]
         else
             element.integration_points = [IP(i, w, xi) for (i, (w, xi)) in enumerate(ips)]
@@ -270,7 +305,7 @@ of integration scheme mainly for mass matrix.
 """
 function get_integration_points{E}(element::Element{E}, change_order::Int)
     ips = get_integration_points(element.properties, Val{change_order})
-    if E in (Poi1, Seg2, Seg3, NSeg)
+    if E in (Seg2, Seg3, NSeg)
         return [IP(i, w, (xi,)) for (i, (w, xi)) in enumerate(ips)]
     else
         return [IP(i, w, xi) for (i, (w, xi)) in enumerate(ips)]
@@ -298,4 +333,11 @@ end
 function inside{E}(element::Element{E}, X, time)
     xi = get_local_coordinates(element, X, time)
     return inside(E, xi)
+end
+
+## Convenience functions
+
+# element("displacement", 0.0)
+function (element::Element)(field_name::String, time::Float64)
+    return interpolate(element, field_name, time)
 end

@@ -142,7 +142,7 @@ function Problem{P<:BoundaryProblem}(::Type{P}, name, dimension, parent_field_na
     return Problem{P}(name, dimension, parent_field_name, [], Dict(), Assembly(), Dict(), Vector(), P())
 end
 
-function get_formulation_type(problem::Problem)
+function get_formulation_type(::Problem)
     return :incremental
 end
 
@@ -180,12 +180,14 @@ function get_unknown_field_name{P<:BoundaryProblem}(::P)
     return "lambda"
 end
 
-# one-liner helpers to identify problem types
+is_field_problem(::Problem) = false
+is_field_problem{P<:FieldProblem}(::Problem{P}) = true
+is_boundary_problem(::Problem) = false
+is_boundary_problem{P<:BoundaryProblem}(::Problem{P}) = true
 
-is_field_problem(problem) = false
-is_field_problem{P<:FieldProblem}(problem::Problem{P}) = true
-is_boundary_problem(problem) = false
-is_boundary_problem{P<:BoundaryProblem}(problem::Problem{P}) = true
+function get_elements(problem::Problem)
+    return problem.elements
+end
 
 
 """
@@ -356,10 +358,6 @@ function add_elements!(problem::Problem, elements)
     end
 end
 
-function get_elements(problem::Problem)
-    return problem.elements
-end
-
 function get_assembly(problem::Problem)
     return problem.assembly
 end
@@ -390,14 +388,10 @@ function (problem::Problem)(field_name::String, time::Float64)
     #if haskey(problem, field_name)
     #    return problem[field_name](time)
     #end
-    f = nothing
+    f = Dict{Int64, Any}()
     for element in get_elements(problem)
         haskey(element, field_name) || continue
         for (c, v) in zip(get_connectivity(element), element(field_name, time))
-            if f == nothing
-                f = Dict(c => v)
-                continue
-            end
             if haskey(f, c)
                 if !isapprox(f[c], v)
                     info("several values for single node when returning field $field_name")
