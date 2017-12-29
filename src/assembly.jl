@@ -11,11 +11,9 @@ function isapprox(a1::Assembly, a2::Assembly)
     return T
 end
 
-function assemble_prehook!(::Problem, time)
-end
+function assemble_prehook!(::Problem, time) end
 
-function assemble_posthook!(::Problem, time)
-end
+function assemble_posthook!(::Problem, time) end
 
 function assemble!(problem::Problem, time=0.0; auto_initialize=true)
     if !isempty(problem.assembly)
