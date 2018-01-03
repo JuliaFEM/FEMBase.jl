@@ -43,12 +43,12 @@ end
 
 @lintpragma("Ignore unused time")
 """
-    interpolate(f::DCTI, time)
+    interpolate_(f::DCTI, time)
 
 Interpolate constant, time-invariant DCTI field in time direction. That is
 trivially only the data itself.
 """
-function interpolate(f::DCTI, time)
+function interpolate_(f::DCTI, time)
     return f.data
 end
 
@@ -83,12 +83,11 @@ function update!(f::DVTI, data)
 end
 
 """
-    interpolate(f::DVTI, time)
+    interpolate_(f::DVTI, time)
 
 Interpolate variable, time-invariant DVTI field in time direction.
 """
-function interpolate{N,T}(f::DVTI{N,T}, time)
-    # time
+function interpolate_{N,T}(f::DVTI{N,T}, time)
     return f.data
 end
 
@@ -101,15 +100,6 @@ calculate c = aᵢbᵢ. Length of `a` can be less than `b`, but not vice versa.
 function interpolate(a, b)
     @assert length(a) <= length(b)
     return sum(a[i]*b[i] for i=1:length(a))
-end
-
-"""
-    interpolate(f::DVTI, time, basis)
-
-Interpolate variable, time-invariant DVTI field in time and spatial direction.
-"""
-function interpolate{N,T}(f::DVTI{N,T}, time, basis)
-    return interpolate(f.data, basis)
 end
 
 ## DISCRETE, CONSTANT, TIME VARIANT
@@ -136,17 +126,18 @@ function DCTV{T}(a::Pair{Float64,T}, b::Pair{Float64,T})
 end
 
 """
-    interpolate(f::DCTV, time)
+    interpolate_(f::DCTV, time)
 
 Interpolate constant time variant DCTV field in time direction.
 
-# Notes
-First check that is outside of range -> extrapolate
-Secondly check is "exact match" in time
-At last, find the correct bin and use linear interpolation
+First algorithm checks that is time out of range, i.e. time is smaller than
+time of first frame or larger than last frame. If that is the case, return
+first or last frame. Secondly algorithm finds is given time exact match to
+time of some frame and return that frame. At last, we find correct bin so
+that t0 < time < t1 and use linear interpolation.
 
 """
-function interpolate(field::DCTV, time)
+function interpolate_(field::DCTV, time)
     time < first(field.data).first && return first(field.data).second
     time > last(field.data).first && return last(field.data).second
     for i=reverse(1:length(field))
@@ -188,17 +179,17 @@ function DVTV{N,T}(a::Pair{Float64,NTuple{N,T}}, b::Pair{Float64,NTuple{N,T}})
 end
 
 """
-    interpolate(f::DVTV, time)
+    interpolate_(f::DVTV, time)
 
 Interpolate variable, time variant DVTV field in time direction.
 
-# Notes
-First check that is outside of range -> extrapolate
-Secondly check is "exact match" in time
-At last, find the correct bin and use linear interpolation
-
+First algorithm checks that is time out of range, i.e. time is smaller than
+time of first frame or larger than last frame. If that is the case, return
+first or last frame. Secondly algorithm finds is given time exact match to
+time of some frame and return that frame. At last, we find correct bin so
+that t0 < time < t1 and use linear interpolation.
 """
-function interpolate{N,T}(field::DVTV{N,T}, time)
+function interpolate_{N,T}(field::DVTV{N,T}, time)
     time < first(field.data).first && return first(field.data).second
     time > last(field.data).first && return last(field.data).second
     for i=reverse(1:length(field))
@@ -214,22 +205,6 @@ function interpolate{N,T}(field::DVTV{N,T}, time)
             return map((a,b) -> f*a + (1-f)*b, y0, y1)
         end
     end
-end
-
-"""
-    interpolate(f::DVTV, time, basis)
-
-Interpolate variable, time variant DVTV field in both time and spatial direction.
-
-# Notes
-First check that is outside of range -> extrapolate
-Secondly check is "exact match" in time
-At last, find the correct bin and use linear interpolation
-
-"""
-function interpolate{N,T}(field::DVTV{N,T}, time, basis)
-    data = interpolate(field, time)
-    return interpolate(basis, data)
 end
 
 """
@@ -255,11 +230,11 @@ type DVTId{T} <: AbstractField
 end
 
 """
-    interpolate(f::DVTId, time)
+    interpolate_(f::DVTId, time)
 
 Interpolate DVTId, returns trivially the content as this is time invariant field.
 """
-function interpolate(f::DVTId, time)
+function interpolate_(f::DVTId, time)
     return f.data
 end
 
@@ -286,7 +261,7 @@ function DVTVd{T}(data::Pair{Float64,Dict{Int64,T}}...)
 end
 
 """
-    interpolate(f::DVTVd, time)
+    interpolate_(f::DVTVd, time)
 
 Interpolate variable, time variant DVTVd dictionary field in time direction.
 
@@ -296,7 +271,7 @@ Secondly check is "exact match" in time
 At last, find the correct bin and use linear interpolation
 
 """
-function interpolate{T}(field::DVTVd{T}, time)
+function interpolate_{T}(field::DVTVd{T}, time)
     time < first(field.data).first && return first(field.data).second
     time > last(field.data).first && return last(field.data).second
     for i=reverse(1:length(field))
@@ -338,9 +313,20 @@ Create new discrete, constant, time invariant field from value `x`.
 
 # Example
 
-```julia
+```@example abc
 f = field(1.0)
 ```
+
+```@example abc
+using FEMBase
+f = field(1.0)
+```
+
+```jldoctest
+julia> field(1.0)
+FEMBase.DCTI{Float64}(1.0)
+```
+
 """
 function field(x)
     return DCTI(x)
@@ -462,4 +448,49 @@ and dictionary.
 """
 function field{T}(data::Pair{Float64, Dict{Int64, T}}...)
     return DVTVd(collect(data))
+end
+
+"""
+    interpolate(field, time)
+
+Interpolate field in time direction.
+
+# Examples
+
+For time invariant fields `DCTI`, `DVTI`, `DVTId` solution is trivially the
+data inside field as fields does not depend from time:
+
+```jldoctest
+julia> a = field(1.0)
+FEMBase.DCTI{Float64}(1.0)
+
+julia> interpolate(a, 0.0)
+1.0
+```
+
+```jldoctest
+julia> a = field((1.0, 2.0))
+FEMBase.DVTI{2,Float64}((1.0, 2.0))
+
+julia> interpolate(a, 0.0)
+(1.0, 2.0)
+```
+
+```jldoctest
+julia> a = field(1=>1.0, 2=>2.0)
+FEMBase.DVTId{Float64}(Dict(2=>2.0,1=>1.0))
+
+julia> interpolate(a, 0.0)
+Dict{Int64,Float64} with 2 entries:
+  2 => 2.0
+  1 => 1.0
+```
+
+For time invariant fields DCTI, DVTI,
+DVTId trivial solution is returned. For time variant fields DCTV, DVTV, DVTVd
+linear interpolation is performed.
+
+"""
+function interpolate{F<:AbstractField}(field::F, time)
+    return interpolate_(field, time)
 end
