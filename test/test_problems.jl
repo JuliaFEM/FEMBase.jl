@@ -8,7 +8,7 @@ using FEMBase: get_assembly, get_elements
 using Base.Test
 
 import FEMBase: get_unknown_field_dimension, get_unknown_field_name
-import FEMBase: get_formulation_type
+import FEMBase: get_formulation_type, assemble!
 
 type P1 <: FieldProblem
     A :: Bool
@@ -128,4 +128,56 @@ end
     @test isapprox(e1("P1", (0.0,), 0.0), [0.0, 0.0])
     @test isapprox(e2("P1", (0.0,), 0.0), [0.0, 0.0])
     @test isapprox(e2("lambda", (0.0,), 0.0), [0.0, 0.0])
+end
+
+function assemble!{E}(problem::Problem{P1},
+                      assembly::Assembly,
+                      elements::Vector{Element{E}},
+                      time::Float64)
+
+    info("Assembling elements of kind $E")
+    bi = BasisInfo(E)
+    ndofs = length(E)
+    Ke = zeros(ndofs, ndofs)
+    K = assembly.K
+
+    for element in elements
+        fill!(Ke, 0.0)
+        for ip in get_integration_points(element)
+            J, detJ, N, dN = element_info!(bi, element, ip, time)
+            c = element("coefficient", ip, time)
+            Ke += ip.weight * c*dN'*dN * detJ
+        end
+        gdofs = get_gdofs(problem, element)
+        add!(K, gdofs, gdofs, Ke)
+    end
+
+    return nothing
+
+end
+
+@testset "test assemble test problem" begin
+    el1 = Element(Quad4, [1, 2, 3, 4])
+    el2 = Element(Tri3, [3, 2, 5])
+    X = Dict(1 => [0.0, 0.0],
+             2 => [1.0, 0.0],
+             3 => [1.0, 1.0],
+             4 => [0.0, 1.0],
+             5 => [2.0, 1.0])
+    elements = [el1, el2]
+    update!(elements, "geometry", X)
+    update!(elements, "coefficient", 6.0)
+
+    problem = Problem(P1, "test problem", 1)
+    add_elements!(problem, elements)
+    time = 0.0
+    assemble!(problem, time)
+    K = full(problem.assembly.K)
+    K_expected = [
+                  4.0 -1.0 -2.0 -1.0  0.0
+                 -1.0  7.0 -4.0 -2.0  0.0
+                 -2.0 -4.0 10.0 -1.0 -3.0
+                 -1.0 -2.0 -1.0  4.0  0.0
+                  0.0  0.0 -3.0  0.0  3.0]
+    @test isapprox(K, K_expected)
 end
