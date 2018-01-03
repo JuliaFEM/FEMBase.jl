@@ -190,7 +190,7 @@ end
 
 function (element::Element)(ip, time, ::Type{Val{:Jacobian}})
     X = element("geometry", time)
-    J = FEMBasis.jacobian(element.properties, X, ip)
+    J = jacobian(element.properties, X, ip)
     return J
 end
 
@@ -219,26 +219,26 @@ function (element::Element)(field_name::String, ip, time::Float64, ::Type{Val{:G
     return grad(element.properties, u, X, ip)
 end
 
-function (element::Element)(field_name::String, ip, time::Float64)
+function interpolate(element::Element, field_name, ip, time)
     field = element[field_name]
-    return interpolate(element, field, ip, time)
+    return interpolate_(element, field, ip, time)
 end
 
 @lintpragma("Ignore unused ip")
 @lintpragma("Ignore unused element")
-function interpolate(element::Element, field::DCTI, ip, time::Float64)
+function interpolate_(element::Element, field::DCTI, ip, time::Float64)
     return field.data
 end
 
-function interpolate(element::Element, field::DCTV, ip, time::Float64)
-    return interpolate(field, time)
+function interpolate_(element::Element, field::DCTV, ip, time::Float64)
+    return interpolate_(field, time)
 end
 
-function interpolate(element::Element, field::CVTV, ip, time::Float64)
+function interpolate_(element::Element, field::CVTV, ip, time::Float64)
     return field(ip, time)
 end
 
-function interpolate{F<:AbstractField}(element::Element, field::F, ip, time::Float64)
+function interpolate_{F<:AbstractField}(element::Element, field::F, ip, time::Float64)
     field_ = interpolate(field, time)
     basis = element(ip, time)
     n = length(element)
@@ -340,4 +340,15 @@ end
 # element("displacement", 0.0)
 function (element::Element)(field_name::String, time::Float64)
     return interpolate(element, field_name, time)
+end
+
+# element("displacement", (0.0, 0.0), 0.0)
+function (element::Element)(field_name::String, ip, time::Float64)
+    return interpolate(element, field_name, ip, time)
+end
+
+function element_info!{E,T}(bi::BasisInfo{E,T}, element::Element{E}, ip, time)
+    X = interpolate(element, "geometry", time)
+    eval_basis!(bi, X, ip)
+    return bi.J, bi.detJ, bi.N, bi.grad
 end
