@@ -42,7 +42,6 @@ end
     @test a[1] == 1
     @test a[2] == 2
     @test interpolate(a, 0.0) == (1, 2)
-    @test interpolate(a, 0.0, [1,1]) == 3
     update!(a, (2,3))
     @test a == (2,3)
 
@@ -51,7 +50,6 @@ end
     @test b[1] == [1,2]
     @test b[2] == [2,3]
     @test interpolate(b, 0.0) == ([1,2], [2,3])
-    @test interpolate(b, 0.0, [1,1]) == [3,5]
     update!(b, ([2,3], [4,5]))
     @test b == ([2,3], [4,5])
 
@@ -60,7 +58,6 @@ end
     @test c[1] == [1 2; 3 4]
     @test c[2] == [2 3; 4 5]
     @test interpolate(c, 0.0) == ([1 2; 3 4], [2 3; 4 5])
-    @test interpolate(c, 0.0, [1,1]) == [3 5; 7 9]
     update!(c, ([2 3; 4 5], [5 6; 7 8]))
     @test c == ([2 3; 4 5], [5 6; 7 8])
 end
@@ -90,14 +87,11 @@ end
 @testset "DVTV field" begin
     # scalar field
     a = DVTV(0.0 => (0.0, 1.0), 1.0 => (1.0, 0.0))
-    @test isapprox(interpolate(a, 0.5, [1, 1]), 1.0)
     update!(a, 2.0 => (2.0, 0.0))
-    @test isapprox(interpolate(a, 1.5, [1, 1]), 1.5)
     r = interpolate(a, 0.5)
     @test isapprox(r[1], 0.5)
     @test isapprox(r[2], 0.5)
     update!(a, 2.0 => (4.0, 0.0))
-    @test isapprox(interpolate(a, 2.0, [1, 1]), 4.0)
 end
 
 @testset "CVTV field" begin
