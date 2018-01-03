@@ -305,6 +305,14 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "api.html#FEMBase.assemble!-Union{Tuple{E}, Tuple{FEMBase.Problem,FEMBase.Assembly,Array{FEMBase.Element{E},1},Float64}} where E",
+    "page": "API",
+    "title": "FEMBase.assemble!",
+    "category": "Method",
+    "text": "assemble!(problem, assembly, elements, time)\n\nThis should be overridden with own custom assemble operation.\n\n\n\n"
+},
+
+{
     "location": "api.html#FEMBase.assemble_mass_matrix!-Tuple{FEMBase.Problem,Array{FEMBase.Element{FEMBasis.Tet10},1},Any}",
     "page": "API",
     "title": "FEMBase.assemble_mass_matrix!",
