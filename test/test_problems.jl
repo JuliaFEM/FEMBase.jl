@@ -254,6 +254,7 @@ end
     problem = Problem(P3, "P3", 1)
     elements = [Element(Seg2, [1, 2])]
     add_elements!(problem, elements)
+    assemble!(problem)
     assemble!(problem.assembly, problem, first(elements), 0.0)
     assemble!(problem.assembly, problem, problem.elements, 0.0)
     assemble_elements!(problem, problem.assembly, elements, 0.0)
