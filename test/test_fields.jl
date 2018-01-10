@@ -60,6 +60,9 @@ end
     @test interpolate(c, 0.0) == ([1 2; 3 4], [2 3; 4 5])
     update!(c, ([2 3; 4 5], [5 6; 7 8]))
     @test c == ([2 3; 4 5], [5 6; 7 8])
+
+    d = DVTI(2, 3)
+    @test a == d
 end
 
 @testset "DCTV field" begin
@@ -124,6 +127,7 @@ end
     @test isa(field(1.0), DCTI)
     @test isa(field(1.0 => 1.0), DCTV)
     @test isa(field((1.0,2.0)), DVTI)
+    @test isa(field(1, 2), DVTI)
     @test isa(field(1.0 => (1.0,2.0)), DVTV)
     @test isa(field((xi,t) -> xi[1]*t), CVTV)
     @test isa(field(1 => [1.0, 2.0], 10 => [2.0, 3.0]), DVTId)
