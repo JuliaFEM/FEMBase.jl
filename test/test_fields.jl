@@ -44,6 +44,7 @@ end
     @test interpolate(a, 0.0) == (1, 2)
     update!(a, (2,3))
     @test a == (2,3)
+    @test (2,3) == a
 
     # vector field
     b = DVTI(([1,2], [2,3]))

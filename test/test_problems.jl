@@ -26,8 +26,16 @@ function P2()
     return P2(:incremental)
 end
 
+type P3 <: FieldProblem
+end
+
 get_unknown_field_name(p::P1) = "P1"
 get_formulation_type(p::Problem{P2}) = p.properties.formulation
+
+@testset "test get_unknown_field_name" begin
+    p = Problem(P3, "P3", 1)
+    @test get_unknown_field_name(p) == "N/A"
+end
 
 @testset "test creating new problems" begin
     p1 = Problem(P1, "P1", 1)
@@ -240,4 +248,13 @@ end
     g_expected = [0.5, 0.0, 1.0]
     @test isapprox(C, C_expected)
     @test isapprox(g, g_expected)
+end
+
+@testset "test deprecated assembly procedure" begin
+    problem = Problem(P3, "P3", 1)
+    elements = [Element(Seg2, [1, 2])]
+    add_elements!(problem, elements)
+    assemble!(problem.assembly, problem, first(elements), 0.0)
+    assemble!(problem.assembly, problem, problem.elements, 0.0)
+    assemble_elements!(problem, problem.assembly, elements, 0.0)
 end
