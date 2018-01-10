@@ -223,7 +223,9 @@ function initialize!(problem::Problem, element::Element, time::Float64)
     if field_dim == 1  # scalar field
         empty_field = tuple(zeros(nnodes)...)
     else  # vector field
-        empty_field = tuple([zeros(field_dim) for i=1:nnodes]...)
+        # FIXME: the most effective way to do
+        # ([0.0,0.0], [0.0,0.0], ..., [0.0,0.0]) ?
+        empty_field = tuple(map((x)->zeros(field_dim)*x, 1:nnodes)...)
     end
 
     # initialize primary field

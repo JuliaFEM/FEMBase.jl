@@ -22,7 +22,7 @@ end
 export info, debug
 
 using FEMBasis
-using FEMBasis: AbstractBasis, jacobian
+using FEMBasis: AbstractBasis, jacobian, get_reference_element_coordinates
 import FEMBasis: interpolate
 using FEMQuad: get_quadrature_points
 include("fields.jl")
@@ -48,6 +48,7 @@ export SparseMatrixCOO, SparseVectorCOO, Node, BasisInfo,
 export is_field_problem, is_boundary_problem, get_elements,
        get_connectivity,
        get_parent_field_name, get_reference_coordinates,
+       get_reference_element_coordinates,
        get_assembly, get_nonzero_rows, get_nonzero_columns,
        eval_basis!, get_basis, get_dbasis, grad!,
        assemble_mass_matrix!, get_local_coordinates, inside,

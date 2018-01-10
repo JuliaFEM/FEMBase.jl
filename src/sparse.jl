@@ -57,9 +57,22 @@ function sparse(A::SparseMatrixCOO, n::Int, m::Int, f::Function; tol=1.0e-12)
     return B
 end
 
+# For backward compatibility, will be removed
 function push!(A::SparseMatrixCOO, I::Int, J::Int, V::Float64)
     push!(A.I, I)
     push!(A.J, J)
+    push!(A.V, V)
+end
+
+function add!(A::SparseMatrixCOO, I::Int, J::Int, V::Float64)
+    push!(A.I, I)
+    push!(A.J, J)
+    push!(A.V, V)
+end
+
+function add!(A::SparseMatrixCOO, I::Int, V::Float64)
+    push!(A.I, I)
+    push!(A.J, 1)
     push!(A.V, V)
 end
 
@@ -107,11 +120,10 @@ function add!(A::SparseMatrixCOO, dofs1::Vector{Int}, dofs2::Vector{Int}, data::
     n, m = size(data)
     for j=1:m
         for i=1:n
-            push!(A.I, dofs1[i])
-            push!(A.J, dofs2[j])
+            add!(A, dofs1[i], dofs2[j], data[i,j])
         end
     end
-    append!(A.V, vec(data))
+    return nothing
 end
 
 """ Add sparse matrix of CSC to COO. """
