@@ -25,7 +25,7 @@ end
     el = Element(Quad4, [1, 2, 3, 4])
     pr = Problem(Dummy, "problem", 2)
     add_elements!(pr, [el])
-    assemble!(pr)
+    assemble!(pr, 0.0)
     @test true
 end
 
@@ -341,12 +341,6 @@ end
     update!(element, "test", 0.0 => 0.0)
     update!(element, "test", 1.0 => 1.0)
     @test isapprox(element("test", (0.0, 0.0), 0.5), 0.5)
-end
-
-@testset "interpolation failure" begin
-    el = Element(Seg2, [1, 2])
-    update!(el, "g", (1.0, 2.0, 3.0))
-    @test_throws Exception el("g", [0.0], 0.0)
 end
 
 @testset "get integration points for Quad4" begin
