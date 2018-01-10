@@ -8,7 +8,7 @@ using FEMBase: get_assembly, get_elements
 using Base.Test
 
 import FEMBase: get_unknown_field_dimension, get_unknown_field_name
-import FEMBase: get_formulation_type, assemble!
+import FEMBase: get_formulation_type, assemble_elements!
 
 type P1 <: FieldProblem
     A :: Bool
@@ -130,10 +130,10 @@ end
     @test isapprox(e2("lambda", (0.0,), 0.0), [0.0, 0.0])
 end
 
-function assemble!{E}(problem::Problem{P1},
-                      assembly::Assembly,
-                      elements::Vector{Element{E}},
-                      time::Float64)
+function assemble_elements!{E}(problem::Problem{P1},
+                               assembly::Assembly,
+                               elements::Vector{Element{E}},
+                               time::Float64)
 
     info("Assembling elements of kind $E")
     bi = BasisInfo(E)
@@ -156,7 +156,7 @@ function assemble!{E}(problem::Problem{P1},
 
 end
 
-@testset "test assemble test problem" begin
+@testset "test assemble field problem" begin
     el1 = Element(Quad4, [1, 2, 3, 4])
     el2 = Element(Tri3, [3, 2, 5])
     X = Dict(1 => [0.0, 0.0],
@@ -180,4 +180,64 @@ end
                  -1.0 -2.0 -1.0  4.0  0.0
                   0.0  0.0 -3.0  0.0  3.0]
     @test isapprox(K, K_expected)
+end
+
+type DirBC <: BoundaryProblem
+end
+
+function assemble_elements!{E}(problem::Problem{DirBC},
+                               assembly::Assembly,
+                               elements::Vector{Element{E}},
+                               time::Float64)
+
+    name = get_parent_field_name(problem)
+    dim = get_unknown_field_dimension(problem)
+
+    data = Dict{Int64,Float64}()
+    for element in elements
+        for i=1:dim
+            haskey(element, "$name $dim") || continue
+            gdofs = get_gdofs(problem, element)
+            ldofs = gdofs[i:dim:end]
+            xis = get_reference_element_coordinates(E)
+            for (ldof, xi) in zip(ldofs, xis)
+                data[ldof] = interpolate(element, "$name $dim", xi, time)
+            end
+        end
+    end
+
+    for (dof, val) in data
+        add!(assembly.C1, dof, dof, 1.0)
+        add!(assembly.C2, dof, dof, 1.0)
+        add!(assembly.g, dof, val)
+    end
+
+    return nothing
+
+end
+
+@testset "test assemble boundary problem" begin
+    el1 = Element(Seg2, [1, 2])
+    el2 = Element(Seg2, [2, 3])
+    X = Dict(1 => [0.0, 0.0],
+             2 => [1.0, 0.0],
+             3 => [1.0, 1.0],
+             4 => [0.0, 1.0],
+             5 => [2.0, 1.0])
+    elements = [el1, el2]
+    update!(elements, "geometry", X)
+    T0 = Dict(1 => 0.5, 2 => 0.0, 3 => 1.0)
+    update!(elements, "temperature 1", T0)
+    problem = Problem(DirBC, "boundary", 1, "temperature")
+    add_elements!(problem, elements)
+    time = 0.0
+    assemble!(problem, time)
+    C = full(problem.assembly.C1)
+    g = full(problem.assembly.g)
+    println(C)
+    println(g)
+    C_expected = [1.0 0.0 0.0; 0.0 1.0 0.0; 0.0 0.0 1.0]
+    g_expected = [0.5, 0.0, 1.0]
+    @test isapprox(C, C_expected)
+    @test isapprox(g, g_expected)
 end
