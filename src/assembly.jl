@@ -11,50 +11,12 @@ function isapprox(a1::Assembly, a2::Assembly)
     return T
 end
 
-function assemble_prehook!(::Problem, time) end
+function assemble_prehook!{T<:Number}(::Problem, ::T) end
 
-function assemble_posthook!(::Problem, time) end
-
-function assemble!(problem::Problem, time)
-
-    elements = get_elements(problem)
-    assembly = get_assembly(problem)
-
-    if !isempty(assembly)
-        warn("Assembling elements for problem $(problem.name): problem.assembly ",
-             "is not empty before assembling. This is probably causing unexpected ",
-             "results. To remove old assembly, use `empty!(problem.assembly)`")
-        return nothing
-    end
-
-    if isempty(elements)
-        warn("Assembling elements for problem $(problem.name): problem.elements ",
-             "is empty, there is no elements in problem. Before assembling ",
-             "problem, elements must be added using ",
-             "`add_elements!(problem, elements)`.")
-        return nothing
-    end
-
-    first_element = first(elements)
-    unknown_field_name = get_unknown_field_name(problem)
-    if !haskey(first_element, unknown_field_name)
-        warn("Assembling elements for problem $(problem.name): seems that ",
-             "problem is uninitialized. To initialize problem, use ",
-             "`initialize!(problem, time)`.")
-        info("Initializing problem $(problem.name) at time $time automatically.")
-        initialize!(problem, time)
-    end
-
-    assemble_prehook!(problem, time)
-    for (element_type, elements) in group_by_element_type(elements)
-        assemble_elements!(problem, assembly, elements, time)
-    end
-    assemble_posthook!(problem, time)
-    return nothing
-end
+function assemble_posthook!{T<:Number}(::Problem, ::T) end
 
 # will be deprecated
-function assemble!{P}(::Assembly, ::Problem{P}, element::Element, time)
+function assemble!{P}(::Assembly, ::Problem{P}, ::Element, ::Any)
     warn("One must define assemble! function for problem of type $P. ",
          "Not doing anything.")
     return nothing
@@ -85,6 +47,50 @@ function assemble_elements!{E}(problem::Problem, assembly::Assembly,
     assemble!(assembly, problem, elements2, time)
 end
 
+function assemble!(problem::Problem, time)
+
+    assemble_prehook!(problem, time)
+    elements = get_elements(problem)
+    assembly = get_assembly(problem)
+
+    if !isempty(assembly)
+        warn("Assembling elements for problem $(problem.name): problem.assembly ",
+             "is not empty before assembling. This is probably causing unexpected ",
+             "results. To remove old assembly, use `empty!(problem.assembly)`")
+        assemble_posthook!(problem, time)
+        return nothing
+    end
+
+    if isempty(elements)
+        warn("Assembling elements for problem $(problem.name): problem.elements ",
+             "is empty, there is no elements in problem. Before assembling ",
+             "problem, elements must be added using ",
+             "`add_elements!(problem, elements)`.")
+        assemble_posthook!(problem, time)
+        return nothing
+    end
+
+    first_element = first(elements)
+    unknown_field_name = get_unknown_field_name(problem)
+    if !haskey(first_element, unknown_field_name)
+        warn("Assembling elements for problem $(problem.name): seems that ",
+             "problem is uninitialized. To initialize problem, use ",
+             "`initialize!(problem, time)`.")
+        info("Initializing problem $(problem.name) at time $time automatically.")
+        initialize!(problem, time)
+    end
+
+    for (element_type, elements) in group_by_element_type(elements)
+        assemble_elements!(problem, assembly, elements, time)
+    end
+    assemble_posthook!(problem, time)
+    return nothing
+end
+
+function assemble!(problem::Problem)
+    warn("assemble!(problem) will be deprecated. Use assemble!(problem, time)")
+    assemble!(problem, 0.0)
+end
 
 function assemble_mass_matrix!(problem::Problem, time::Float64)
     if !isempty(problem.assembly.M)
@@ -156,7 +162,7 @@ function assemble_mass_matrix!(problem::Problem, elements::Vector{Element{Tet10}
         -6 -4 -6 -4 16 16  8 16 32 16
         -6 -6 -4 -4  8 16 16 16 16 32]
 
-    function is_CM(element::Element{Tet10}, X; rtol=1.0e-6)
+    function is_CM(::Element{Tet10}, X; rtol=1.0e-6)
         isapprox(X[5],  1/2*(X[1]+X[2]); rtol=rtol) || return false
         isapprox(X[6],  1/2*(X[2]+X[3]); rtol=rtol) || return false
         isapprox(X[7],  1/2*(X[3]+X[1]); rtol=rtol) || return false

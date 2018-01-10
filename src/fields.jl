@@ -32,7 +32,7 @@ function getindex{F<:AbstractField}(f::F, i::Int64)
     return getindex(f.data, i)
 end
 
-function interpolate_field(field, time)
+function interpolate_field(field, ::Any)
     return field.data
 end
 

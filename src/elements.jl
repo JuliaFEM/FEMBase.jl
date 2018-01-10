@@ -149,14 +149,14 @@ function interpolate(element::Element, field_name::String, time::Float64)
     end
 end
 
-function get_basis{B}(element::Element{B}, ip, time)
+function get_basis{B}(element::Element{B}, ip, ::Any)
     T = typeof(first(ip))
     N = zeros(T, 1, length(element))
     eval_basis!(B, N, tuple(ip...))
     return N
 end
 
-function get_dbasis{B}(element::Element{B}, ip, time)
+function get_dbasis{B}(element::Element{B}, ip, ::Any)
     T = typeof(first(ip))
     dN = zeros(T, size(element)...)
     eval_dbasis!(B, dN, tuple(ip...))
@@ -221,39 +221,30 @@ end
 
 function interpolate(element::Element, field_name, ip, time)
     field = element[field_name]
-    return interpolate_(element, field, ip, time)
+    return interpolate_field(element, field, ip, time)
 end
 
-@lintpragma("Ignore unused ip")
-@lintpragma("Ignore unused element")
-function interpolate_(element::Element, field::DCTI, ip, time::Float64)
-    return field.data
+function interpolate_field{T<:Union{DCTI,DCTV}}(::Element, field::T, ::Any, time)
+    return interpolate_field(field, time)
 end
 
-function interpolate_(element::Element, field::DCTV, ip, time::Float64)
-    return interpolate_(field, time)
+function interpolate_field{T<:Union{DVTV,DVTI}}(element::Element, field::T, ip, time)
+    data = interpolate_field(field, time)
+    basis = get_basis(element, ip, time)
+    N = length(basis)
+    return sum(data[i]*basis[i] for i=1:N)
 end
 
-function interpolate_(element::Element, field::CVTV, ip, time::Float64)
-    return field(ip, time)
-end
-
-function interpolate_{F<:AbstractField}(element::Element, field::F, ip, time::Float64)
-    field_ = interpolate(field, time)
+function interpolate_field{T<:Union{DVTVd,DVTId}}(element::Element, field::T, ip, time)
+    data = interpolate_field(field, time)
     basis = element(ip, time)
-    n = length(element)
-    if isa(field_, Tuple)
-        m = length(field_)
-        if n != m
-            error("Error when trying to interpolate field $field at coords $ip ",
-                  "and time $time: element length is $n and field length is $m, ",
-                  "f = Nᵢfᵢ makes no sense!")
-        end
-        return sum(field_[i]*basis[i] for i=1:n)
-    else
-        c = get_connectivity(element)
-        return sum(field_[c[i]]*basis[i] for i=1:n)
-    end
+    N = length(element)
+    c = get_connectivity(element)
+    return sum(data[c[i]]*basis[i] for i=1:N)
+end
+
+function interpolate_field(::Element, field::CVTV, ip, time)
+    return field(ip, time)
 end
 
 function size(element::Element, dim)
