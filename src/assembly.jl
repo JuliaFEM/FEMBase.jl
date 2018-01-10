@@ -15,69 +15,88 @@ function assemble_prehook!(::Problem, time) end
 
 function assemble_posthook!(::Problem, time) end
 
-function assemble!(problem::Problem, time=0.0; auto_initialize=true)
-    if !isempty(problem.assembly)
-        warn("Assemble problem $(problem.name): problem.assembly is not empty and assembling, are you sure you know what are you doing?")
-    end
-    if isempty(problem.elements)
-        warn("Assemble problem $(problem.name): problem.elements is empty, no elements in problem?")
-    else
-        first_element = first(problem.elements)
-        unknown_field_name = get_unknown_field_name(problem)
-        if !haskey(first_element, unknown_field_name)
-            warn("Assemble problem $(problem.name): seems that problem is uninitialized.")
-            if auto_initialize
-                info("Initializing problem $(problem.name) at time $time automatically.")
-                initialize!(problem, time)
-            end
-        end
-    end
+function assemble!(problem::Problem, time)
+
+    elements = get_elements(problem)
     assembly = get_assembly(problem)
+
+    if !isempty(assembly)
+        warn("Assembling elements for problem $(problem.name): problem.assembly ",
+             "is not empty before assembling. This is probably causing unexpected ",
+             "results. To remove old assembly, use `empty!(problem.assembly)`")
+        return nothing
+    end
+
+    if isempty(elements)
+        warn("Assembling elements for problem $(problem.name): problem.elements ",
+             "is empty, there is no elements in problem. Before assembling ",
+             "problem, elements must be added using ",
+             "`add_elements!(problem, elements)`.")
+        return nothing
+    end
+
+    first_element = first(elements)
+    unknown_field_name = get_unknown_field_name(problem)
+    if !haskey(first_element, unknown_field_name)
+        warn("Assembling elements for problem $(problem.name): seems that ",
+             "problem is uninitialized. To initialize problem, use ",
+             "`initialize!(problem, time)`.")
+        info("Initializing problem $(problem.name) at time $time automatically.")
+        initialize!(problem, time)
+    end
+
     assemble_prehook!(problem, time)
-    for (element_type, elements) in group_by_element_type(get_elements(problem))
-        assemble!(problem, assembly, elements, time)
+    for (element_type, elements) in group_by_element_type(elements)
+        assemble_elements!(problem, assembly, elements, time)
     end
     assemble_posthook!(problem, time)
-    return true
+    return nothing
 end
 
-function assemble!{P}(::Assembly, ::Problem{P}, element::Element, time::Float64)
+# will be deprecated
+function assemble!{P}(::Assembly, ::Problem{P}, element::Element, time)
     warn("One must define assemble! function for problem of type $P. ",
          "Not doing anything.")
     return nothing
 end
 
-"""
-    assemble!(problem, assembly, elements, time)
-
-This should be overridden with own custom assemble operation.
-"""
-function assemble!{E}(problem::Problem, assembly::Assembly,
-                      elements::Vector{Element{E}}, time::Float64)
-    elements2 = convert(Vector{Element}, elements)
-    assemble!(assembly, problem, elements2, time)
-end
-
+# will be deprecated
 function assemble!{P}(assembly::Assembly, problem::Problem{P},
                       elements::Vector{Element}, time)
     warn("This is default assemble! function. Decreased performance can be ",
-         "expected without preallocation of memory.")
+         "expected without preallocation of memory. One should implement ",
+         "`assemble_elements!(problem, assembly, elements, time)` function.")
     for element in elements
         assemble!(assembly, problem, element, time)
     end
     return nothing
 end
 
-function assemble_mass_matrix!(problem::Problem, time)
+"""
+    assemble_elements!(problem, assembly, elements, time)
+
+Assemble elements for problem.
+
+This should be overridden with own `assemble_elements!`-implementation.
+"""
+function assemble_elements!{E}(problem::Problem, assembly::Assembly,
+                      elements::Vector{Element{E}}, time)
+    elements2 = convert(Vector{Element}, elements)
+    assemble!(assembly, problem, elements2, time)
+end
+
+
+function assemble_mass_matrix!(problem::Problem, time::Float64)
     if !isempty(problem.assembly.M)
-        info("Mass matrix for $(problem.name) is already assembled, skipping assemble routine")
-        return
+        info("Mass matrix for $(problem.name) is already assembled, ",
+             "not assembling.")
+        return nothing
     end
     elements = get_elements(problem)
     for (element_type, elements) in group_by_element_type(get_elements(problem))
         assemble_mass_matrix!(problem::Problem, elements, time)
     end
-    return
+    return nothing
 end
 
 function assemble_mass_matrix!{Basis}(problem::Problem, elements::Vector{Element{Basis}}, time)
