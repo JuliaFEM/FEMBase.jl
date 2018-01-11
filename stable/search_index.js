@@ -9,11 +9,11 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "index.html#FEMBase.jl-documentation-1",
+    "location": "index.html#FEMBase.jl-1",
     "page": "Introduction",
-    "title": "FEMBase.jl documentation",
+    "title": "FEMBase.jl",
     "category": "section",
-    "text": "Pages = [\"index.md\", \"theory.md\", \"api.md\"]"
+    "text": "(Image: Build Status)(Image: Coverage Status)(Image: )(Image: )(Image: Issues)FEMBase.jl is a JuliaFEM base package. It includes all basic data structures so that one can start programming own finite element models."
 },
 
 {
@@ -70,6 +70,46 @@ var documenterSearchIndex = {"docs": [
     "title": "Developing new fields",
     "category": "section",
     "text": "If the default ones are not enough, it's always possible to define new ones. Minimum requirements is that field is a subtype of AbstractField and interpolate has been defined to it."
+},
+
+{
+    "location": "basis.html#",
+    "page": "Basis functions",
+    "title": "Basis functions",
+    "category": "page",
+    "text": ""
+},
+
+{
+    "location": "basis.html#Shape-functions-1",
+    "page": "Basis functions",
+    "title": "Shape functions",
+    "category": "section",
+    "text": "Also known as basis functions, interpolation polynomials and so on. Typically unknown field variable is interpolated from element nodal values using continuous functions. That is, Standard Lagrange polynomials as supported.Linear shape functions:Seg2\nTri3\nQuad4\nTet4\nPyr5\nWedge6\nHex8Quadratic and biquadratic shape functions:Seg3\nTri6, Tri7\nQuad8, Quad9\nTet10\nWedge15\nHex20, Hex27NURBS shape functions:NSeg\nNSurf\nNSolidEvaluating basis and derivative of basis functions with respect to dimensionless coordinates:using FEMBase\nusing FEMBase.FEMBasis: eval_dbasis!, jacobian, grad, interpolate,\n                        get_reference_element_coordinates, create_basis\nB = Quad4()FEMBasis.Quad4()length(B)4size(B)(2, 4)For fast evaluations, one must allocate array outside of the hot loops to get speed.N = zeros(1, 4)\ndN = zeros(2, 4)\nxi = (0.0, 0.0)(0.0, 0.0)eval_basis!(B, N, xi)1×4 Array{Float64,2}:\n 0.25  0.25  0.25  0.25eval_dbasis!(B, dN, xi)2×4 Array{Float64,2}:\n -0.25   0.25  0.25  -0.25\n -0.25  -0.25  0.25   0.25For Langrange interpolation polynomials, by definition, on each node shape function corresponding to that node gets value of 1 and the rest is zero. Node ordering follows the same defined in e.g. in ABAQUS and in many other FEM softwares.get_reference_element_coordinates(Quad4)((-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0))for xi in get_reference_element_coordinates(Quad4)\n    eval_basis!(B, N, xi)\n    println(\"$N at $xi\")\nend[1.0 0.0 0.0 0.0] at (-1.0, -1.0)\n[0.0 1.0 0.0 0.0] at (1.0, -1.0)\n[0.0 0.0 1.0 0.0] at (1.0, 1.0)\n[0.0 0.0 0.0 1.0] at (-1.0, 1.0)"
+},
+
+{
+    "location": "basis.html#Mathematics-1",
+    "page": "Basis functions",
+    "title": "Mathematics",
+    "category": "section",
+    "text": "Without knowing anything about the real shape of domain, eval_dbasis! is calculating gradient with respect to dimensionless coordinates xi_i, i.e.\\begin{equation} \\frac{\\partial\\boldsymbol{N}}{\\partial\\boldsymbol{\\xi}}=\\left[\\begin{array}{cccc} \\frac{\\partial N_{1}}{\\partial\\xi_{1}} & \\frac{\\partial N_{2}}{\\partial\\xi_{1}} & \\cdots & \\frac{\\partial N_{n}}{\\partial\\xi_{1}}\\\n\\frac{\\partial N_{1}}{\\partial\\xi_{2}} & \\frac{\\partial N_{2}}{\\partial\\xi_{2}} & \\cdots & \\frac{\\partial N_{n}}{\\partial\\xi_{2}}\\\n\\frac{\\partial N_{1}}{\\partial\\xi_{3}} & \\frac{\\partial N_{2}}{\\partial\\xi_{3}} & \\cdots & \\frac{\\partial N_{n}}{\\partial\\xi_{3}} \\end{array}\\right] \\end{equation}Usually this is not wanted, but instead gradient of basis functions is calculated with respect to natural coordinates X_i,\\begin{equation} \\frac{\\partial\\boldsymbol{N}}{\\partial\\boldsymbol{X}}=\\left[\\begin{array}{cccc} \\frac{\\partial N_{1}}{\\partial X_{1}} & \\frac{\\partial N_{2}}{\\partial X_{1}} & \\cdots & \\frac{\\partial N_{n}}{\\partial X_{1}}\\\n\\frac{\\partial N_{1}}{\\partial X_{2}} & \\frac{\\partial N_{2}}{\\partial X_{2}} & \\cdots & \\frac{\\partial N_{n}}{\\partial X_{2}}\\\n\\frac{\\partial N_{1}}{\\partial X_{3}} & \\frac{\\partial N_{2}}{\\partial X_{3}} & \\cdots & \\frac{\\partial N_{n}}{\\partial X_{3}} \\end{array}\\right] \\end{equation}To get this, inverse of Jacobian matrix is needed.X = ([0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0])\nxi = (0.0, 0.0)\nJ = jacobian(B, X, xi)2×2 Array{Float64,2}:\n 0.5  0.0\n 0.0  0.5inv(J) * dN2×4 Array{Float64,2}:\n -0.5   0.5  0.5  -0.5\n -0.5  -0.5  0.5   0.5Or directly:dNdX = grad(B, X, xi)2×4 Array{Float64,2}:\n -0.5   0.5  0.5  -0.5\n -0.5  -0.5  0.5   0.5If interpolation domain is manifold, Jacobian is not square and inverse cannot be taken.X2 = ([0.0,0.0,0.0], [1.0, 0.0,1.0], [1.0,1.0,1.0], [0.0,1.0,0.0])\nxi = (0.0, 0.0)\nJ = jacobian(B, X2, xi)2×3 Array{Float64,2}:\n 0.5  0.0  0.5\n 0.0  0.5  0.0One can use Jacobian to calculate surface integral:\\begin{equation} \\iint_{S}f\\,\\mathrm{d}\\Sigma=\\iint_{T}f\\left(\\boldsymbol{x}\\left(s,t\\right)\\right)\\left\\Vert \\frac{\\partial\\boldsymbol{x}}{\\partial s}\\times\\frac{\\partial\\boldsymbol{x}}{\\partial t}\\right\\Vert \\,\\mathrm{d}s\\mathrm{d}t \\end{equation}4*norm(cross(J[1,:], J[2,:])), sqrt(2) # area of manifold(1.4142135623730951, 1.4142135623730951)Gradient of e.g. displacement field or temperature field can be also evaluated:u = ([0.0, 0.0], [1.0, -1.0], [2.0, 3.0], [0.0, 0.0])\nT = (1.0, 2.0, 3.0, 4.0)\ngrad(B, u, X, xi)2×2 Array{Float64,2}:\n 1.5  0.5\n 1.0  2.0grad(B, T, X, xi)1×2 RowVector{Float64,Array{Float64,1}}:\n 0.0  2.0One can interpolate fields using basis:interpolate(B, u, xi)2-element Array{Float64,1}:\n 0.75\n 0.5interpolate(B, T, xi)2.5At last to avoid unnecessary memory allocations, a struct BasisInfo is introduced, containing memory space for calculations.bi = BasisInfo(Quad4)\neval_basis!(bi, X, xi)FEMBasis.BasisInfo{FEMBasis.Quad4,Float64}([0.25 0.25 0.25 0.25], [-0.25 0.25 0.25 -0.25; -0.25 -0.25 0.25 0.25], [-0.5 0.5 0.5 -0.5; -0.5 -0.5 0.5 0.5], [0.5 0.0; 0.0 0.5], [2.0 -0.0; -0.0 2.0], 0.25)bi.J2×2 Array{Float64,2}:\n 0.5  0.0\n 0.0  0.5bi.N1×4 Array{Float64,2}:\n 0.25  0.25  0.25  0.25bi.dN2×4 Array{Float64,2}:\n -0.25   0.25  0.25  -0.25\n -0.25  -0.25  0.25   0.25bi.detJ0.25bi.grad2×4 Array{Float64,2}:\n -0.5   0.5  0.5  -0.5\n -0.5  -0.5  0.5   0.5bi.invJ2×2 Array{Float64,2}:\n  2.0  -0.0\n -0.0   2.0gradu = zeros(2, 2)\ngrad!(bi, gradu, u)2×2 Array{Float64,2}:\n 1.5  0.5\n 1.0  2.0"
+},
+
+{
+    "location": "basis.html#Defining-custom-shape-functions-1",
+    "page": "Basis functions",
+    "title": "Defining custom shape functions",
+    "category": "section",
+    "text": "Depending from the type of shape functions, they can be created more or less automatic way. For Lagrange type interpolation, ones needs only to define polynomial and corner points for domain. For example, if domain is 01^2, one can use create_basis:code = create_basis(\n    :MyQuad,\n    \"My special domain\",\n    (\n        (0.0, 0.0),\n        (1.0, 0.0),\n        (1.0, 1.0),\n        (0.0, 1.0),\n    ),\n    \"1 + u + v + u*v\"\n)\neval(code)B = MyQuad()\nxi = (0.5, 0.5)\neval_basis!(B, N, xi)1×4 Array{Float64,2}:\n 0.25  0.25  0.25  0.25In this case partial derivatives of shape functions are with respect to X, because interpolation polynomials are calculated against real domain and not \"reference domain\":eval_dbasis!(B, dN, xi)2×4 Array{Float64,2}:\n -0.5   0.5  0.5  -0.5\n -0.5  -0.5  0.5   0.5J = jacobian(B, X, xi)2×2 Array{Float64,2}:\n 1.0  0.0\n 0.0  1.0u = ([0.0, 0.0], [1.0, -1.0], [2.0, 3.0], [0.0, 0.0])\ngrad(B, u, X, xi)2×2 Array{Float64,2}:\n 1.5  0.5\n 1.0  2.0Shape functions can be defined manually and calculate partial derivatives automatically. C1-continuous Hermite shape functions can be defined as:code = create_basis(\n    :C1Hermite,\n    \"C1-continuous Hermite shape functions\",\n    (\n        (0.0,),\n        (0.0,),\n        (1.0,),\n        (1.0,)\n    ),\n    (\n        \"2*u^3 - 3*u^2 + 1\",\n        \"u^3 - 2*u^2 + u\",\n        \"-2*u^3 + 3*u^2\",\n        \"u^3 - u^2\"\n    )\n)\neval(code)B = C1Hermite()\nxi = (0.0,)\neval_basis!(B, N, xi)1×4 Array{Float64,2}:\n 1.0  0.0  0.0  0.0dN = zeros(1, 4)\neval_dbasis!(B, dN, xi)1×4 Array{Float64,2}:\n 0.0  1.0  0.0  0.0xi = (1.0,)\neval_basis!(B, N, xi)1×4 Array{Float64,2}:\n 0.0  0.0  1.0  0.0eval_dbasis!(B, dN, xi)1×4 Array{Float64,2}:\n 0.0  0.0  0.0  1.0The last option is to build everything from scratch. For that, one must import and define following functions:Base.size\nBase.length\nFEMBase.FEMBasis.get_reference_element_coordinates\nFEMBase.FEMBasis.eval_basis!\nFEMBase.FEMBasis.eval_dbasis!A simple implementation of P-hierarchical 1d-basis would then beimport Base: size, length\nimport FEMBase: get_reference_element_coordinates,\n                eval_basis!, eval_dbasis!,\n                AbstractBasis\n\ntype PSeg <: AbstractBasis\n    order :: Int\nend\n\nfunction PSeg()\n    return PSeg(1)\nend\n\nfunction length(basis::PSeg)\n    return basis.order+1\nend\n\nfunction size(basis::PSeg)\n    return (1, basis.order+1)\nend\n\nfunction get_reference_element_coordinates(basis::PSeg)\n    return ((-1.0,), (1.0,))\nend\n\n\"\"\"\n    get_legendre_polynomial(n)\n\nReturn Legendgre polynomial of order `n` to inverval ξ ∈ [1, 1].\n\nImplementation uses Bonnet's recursion formula. See\nhttps://en.wikipedia.org/wiki/Legendre_polynomials\n\"\"\"\nfunction get_legendre_polynomial(n)\n    n == 0 && return xi -> 1.0\n    n == 1 && return xi -> xi\n    Pm1 = get_legendre_polynomial(n-1)\n    Pm2 = get_legendre_polynomial(n-2)\n    A(xi) = (2.0*n-1.0)*xi*Pm1(xi)\n    B(xi) = (n-1.0)*Pm2(xi)\n    return xi -> (A(xi)-B(xi))/n\nend\n\n\"\"\"\n    get_legendre_polynomial_derivative(n)\n\nReturn derivative of Legendgre polynomial of order `n` to\ninverval ξ ∈  [-1, 1]\n\"\"\"\nfunction get_legendre_polynomial_derivative(n)\n    n == 0 && return xi -> 0.0\n    n == 1 && return xi -> 1.0\n    Pm1 = get_legendre_polynomial_derivative(n-1)\n    Pm2 = get_legendre_polynomial_derivative(n-2)\n    A(xi) = (2.0*(n-1.0)+1.0)*xi*Pm1(xi)\n    B(xi) = (n+1.0-1.0)*Pm2(xi)\n    return xi -> (A(xi)-B(xi))/(n-1.0)\nend\n\nfunction eval_basis!{T}(basis::PSeg, N::Matrix{T}, xi::Tuple{T})\n    n = length(basis)\n    t = xi[1]\n    N[1] = 0.5*(1-t)\n    N[2] = 0.5*(1+t)\n    n < 3 && return N\n    for i=3:n\n        j = i-1\n        P1 = get_legendre_polynomial(j)\n        P2 = get_legendre_polynomial(j-2)\n        N[i] = 1.0/sqrt(2.0*(2.0*j-1.0))*(P1(t)-P2(t))\n    end\n    return N\nend\n\nfunction eval_dbasis!{T}(basis::PSeg, dN::Matrix{T}, xi::Tuple{T})\n    n = length(basis)\n    t = xi[1]\n    dN[1] = -0.5\n    dN[2] = 0.5\n    n < 3 && return N\n    for i=3:n\n        j = i-1\n        P1 = get_legendre_polynomial_derivative(j)\n        P2 = get_legendre_polynomial_derivative(j-2)\n        dN[i] = 1.0/sqrt(2.0*(2.0*j-1.0))*(P1(t)-P2(t))\n    end\n    return dN\nendeval_dbasis! (generic function with 21 methods)B = PSeg()PSeg(1)N = zeros(1, 2)\neval_basis!(B, N, (0.0,))1×2 Array{Float64,2}:\n 0.5  0.5N = zeros(1, 3)\nB.order = 2\neval_basis!(B, N, (0.0,))1×3 Array{Float64,2}:\n 0.5  0.5  -0.612372using PyPlot\nB.order = 6\nN = zeros(1, length(B))\nn = 50\nxi = linspace(-1, 1, n)\nNN = zeros(n, length(B))\nfor i=1:n\n    eval_basis!(B, N, (xi[i],))\n    NN[i,:] = N[:]\nendplot(NN)\ntitle(\"Hierarchical shape functions to order 6\");(Image: png)"
+},
+
+{
+    "location": "elements.html#",
+    "page": "Elements",
+    "title": "Elements",
+    "category": "page",
+    "text": "In JuliaFEM, elements are \"containers\", combining fields and basis functions described above. Among that, element has information about topology (connectivity) and integration rule. These fundamentals forms a finite element, the backbone of finite element method, as the basic idea after all is just to discretize continuous domain to smaller topological entities like tetrahedrons and perform same operations to each element.using FEMBaseel = Element(Quad4, [1, 2, 3, 4])FEMBase.Element{FEMBasis.Quad4}(-1, [1, 2, 3, 4], FEMBase.Point{FEMBase.IntegrationPoint}[], Dict{String,FEMBase.AbstractField}(), FEMBasis.Quad4())Setting fields to element is done using a command update!, which either creates new field if does not already exist, or updates the old one. Typically, at least field called geometry needs to be defined to element as it's used to calculate Jacobian of element. Fields can be discrete, continuous, time invariant or variant, variable or constant, like described earlier.X = Dict(1 => [0.0,0.0], 2=>[1.0,0.0], 3=>[1.0,1.0], 4=>[0.0,1.0])\nupdate!(el, \"geometry\", X)FEMBase.DVTId{Array{Float64,1}}(Dict(4=>[0.0, 1.0],2=>[1.0, 0.0],3=>[1.0, 1.0],1=>[0.0, 0.0]))el.fieldsDict{String,FEMBase.AbstractField} with 1 entry:\n  \"geometry\" => FEMBase.DVTId{Array{Float64,1}}(Dict(4=>[0.0, 1.0],2=>[1.0, 0.0…u0 = ([0.0,0.0], [0.0,0.0], [0.0,0.0], [0.0,0.0])\nu1 = ([0.0,0.0], [0.0,0.0], [0.5,0.0], [0.0,0.0])\nupdate!(el, \"displacement\", 0.0 => u0)\nupdate!(el, \"displacement\", 1.0 => u1)\nel.fieldsDict{String,FEMBase.AbstractField} with 2 entries:\n  \"geometry\"     => FEMBase.DVTId{Array{Float64,1}}(Dict(4=>[0.0, 1.0],2=>[1.0,…\n  \"displacement\" => FEMBase.DVTV{4,Array{Float64,1}}(Pair{Float64,NTuple{4,Arra…Interpolating of fields goes calling Element(field_name, xi, time). For example, position of material particle X in initial configuration and deformed configuration in the middle of the element at time t=1 can be found asxi = (0.0, 0.0)\ntime = 1.0\nX = el(\"geometry\", xi, time)\nu = el(\"displacement\", xi, time)\nx = X+u\nprintln(\"X = $X, x = $x\")X = [0.5, 0.5], x = [0.625, 0.5]Jacobian, determinant of Jacobian and gradient of field can be calculated adding extra argument Val{:Jacobian}, Val{:detJ}, Val{:Grad} to the above command and not passing field name, i.e.el(xi, time, Val{:Jacobian})2×2 Array{Float64,2}:\n 0.5  0.0\n 0.0  0.5el(xi, time, Val{:detJ})0.25el(xi, time, Val{:Grad})2×4 Array{Float64,2}:\n -0.5   0.5  0.5  -0.5\n -0.5  -0.5  0.5   0.5Usually what the user wants is still a gradient of some field. For example, displacement gradient:gradu = el(\"displacement\", xi, time, Val{:Grad})\ngradu2×2 Array{Float64,2}:\n 0.25  0.25\n 0.0   0.0Or temperature gradient:update!(el, \"temperature\", (1.0, 2.0, 3.0, 4.0))\ngradT = el(\"temperature\", xi, time, Val{:Grad})1×2 RowVector{Float64,Array{Float64,1}}:\n 0.0  2.0Accessing integration points of element is done using command get_integration_points. Combining interpolation and integration one can already calculate local matrices of a single element or, for example area and strain energy:update!(el, \"lambda\", 96.0)\nupdate!(el, \"mu\", 48.0)\n\nA = 0.0\nW = 0.0\nfor ip in get_integration_points(el)\n    detJ = el(ip, time, Val{:detJ})\n    A += ip.weight * detJ\n    ∇u = el(\"displacement\", ip, time, Val{:Grad})\n    E = 1/2*(∇u + ∇u')\n    λ = el(\"lambda\", ip, time)\n    μ = el(\"mu\", ip, time)\n    W += ip.weight * ( λ/2*trace(E*E') + μ*trace(E)^2) * detJ\nend\n\nprintln(\"Area: $A\")\nprintln(\"Strain energy: $W\")Area: 1.0\nStrain energy: 10.0Local stiffness matrix for Poisson problem:K = zeros(4,4)\nupdate!(el, \"coefficient\", 36.0)\nfor ip in get_integration_points(el)\n    dN = el(ip, time, Val{:Grad})\n    detJ = el(ip, time, Val{:detJ})\n    c = el(\"coefficient\", ip, time)\n    K += ip.weight * c*dN'*dN * detJ\nend\nK4×4 Array{Float64,2}:\n  24.0   -6.0  -12.0   -6.0\n  -6.0   24.0   -6.0  -12.0\n -12.0   -6.0   24.0   -6.0\n  -6.0  -12.0   -6.0   24.0"
 },
 
 {
@@ -145,6 +185,14 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "api.html#FEMBase.AbstractField",
+    "page": "API",
+    "title": "FEMBase.AbstractField",
+    "category": "Type",
+    "text": "AbstractField\n\nAbstract supertype for all fields in JuliaFEM.\n\n\n\n"
+},
+
+{
     "location": "api.html#FEMBase.Assembly",
     "page": "API",
     "title": "FEMBase.Assembly",
@@ -157,7 +205,7 @@ var documenterSearchIndex = {"docs": [
     "page": "API",
     "title": "FEMBase.CVTV",
     "category": "Type",
-    "text": "CVTV(f)\n\nContinuous, variable, time variant field.\n\n\n\n"
+    "text": "CVTV <: AbstractField\n\nContinuous, variable, time variant field.\n\nExample\n\njulia> f = CVTV((xi,t) -> xi*t)\nFEMBase.CVTV(#1)\n\n\n\n"
 },
 
 {
@@ -165,7 +213,15 @@ var documenterSearchIndex = {"docs": [
     "page": "API",
     "title": "FEMBase.DCTI",
     "category": "Type",
-    "text": "DCTI(T)\n\nDiscrete, constant, time-invariant field. This field is constant in both spatial direction and time direction, i.e. df/dX = 0 and df/dt = 0.\n\n\n\n"
+    "text": "DCTI{T} <: AbstractField\n\nDiscrete, constant, time-invariant field.\n\nThis field is constant in both spatial direction and time direction, i.e. df/dX = 0 and df/dt = 0.\n\nExample\n\njulia> DCTI(1)\nFEMBase.DCTI{Int64}(1)\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBase.DCTV",
+    "page": "API",
+    "title": "FEMBase.DCTV",
+    "category": "Type",
+    "text": "DCTV{T} <: AbstractField\n\nDiscrete, constant, time variant field. This type of field can change in time direction but not in spatial direction.\n\nExample\n\nField having value 5 at time 0.0 and value 10 at time 1.0:\n\njulia> DCTV(0.0 => 5, 1.0 => 10)\nFEMBase.DCTV{Int64}(Pair{Float64,Int64}[0.0=>5, 1.0=>10])\n\n\n\n"
 },
 
 {
@@ -173,7 +229,7 @@ var documenterSearchIndex = {"docs": [
     "page": "API",
     "title": "FEMBase.DVTI",
     "category": "Type",
-    "text": "Discrete, variable, time-invariant field. This is constant in time direction, but not in spatial direction, i.e. df/dt = 0 but df/dX != 0. The basic structure of data is Vector, and it is implicitly assumed that length of field matches to the number of shape functions, so that interpolation in spatial direction works.\n\n\n\n"
+    "text": "DVTI{N,T} <: AbstractField\n\nDiscrete, variable, time-invariant field.\n\nThis is constant in time direction, but not in spatial direction, i.e. df/dt = 0 but df/dX != 0. The basic structure of data is Tuple, and it is implicitly assumed that length of field matches to the number of shape functions, so that interpolation in spatial direction works.\n\nExample\n\njulia> DVTI(1, 2, 3)\nFEMBase.DVTI{3,Int64}((1, 2, 3))\n\n\n\n"
 },
 
 {
@@ -182,6 +238,14 @@ var documenterSearchIndex = {"docs": [
     "title": "FEMBase.DVTId",
     "category": "Type",
     "text": "DVTId(X::Dict)\n\nDiscrete, variable, time invariant dictionary field.\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBase.DVTV",
+    "page": "API",
+    "title": "FEMBase.DVTV",
+    "category": "Type",
+    "text": "DVTV{N,T} <: AbstractField\n\nDiscrete, variable, time variant field. The most general discrete field can change in both temporal and spatial direction.\n\nExample\n\njulia> DVTV(0.0 => (1, 2), 1.0 => (2, 3))\nFEMBase.DVTV{2,Int64}(Pair{Float64,Tuple{Int64,Int64}}[0.0=>(1, 2), 1.0=>(2, 3)])\n\n\n\n"
 },
 
 {
@@ -273,75 +337,11 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "api.html#FEMBase.field-Tuple{Any}",
+    "location": "api.html#FEMBase.field-Tuple",
     "page": "API",
     "title": "FEMBase.field",
     "category": "Method",
-    "text": "field(x)\n\nCreate new discrete, constant, time invariant field from value x.\n\nExample\n\nf = field(1.0)\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.field-Tuple{Function}",
-    "page": "API",
-    "title": "FEMBase.field",
-    "category": "Method",
-    "text": "field(x::Function)\n\nCreate new, continuous, variable, time variant field from function x.\n\nExample\n\nf = field( (xi,t) -> xi[1]*t )\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.field-Union{Tuple{Dict{Int64,T}}, Tuple{T}} where T",
-    "page": "API",
-    "title": "FEMBase.field",
-    "category": "Method",
-    "text": "field(x::Dict)\n\nCreate new discrete, variable, time invariant dictionary field from dictionary x.\n\nExample\n\nX = Dict(1 => [0.0,0.0], 2 => [1.0,0.0])\nf = field(X)\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.field-Union{Tuple{N}, Tuple{Tuple{Vararg{T,N}}}, Tuple{T}} where T where N",
-    "page": "API",
-    "title": "FEMBase.field",
-    "category": "Method",
-    "text": "field(x::NTuple{N,T})\n\nCreate new discrete, variable, time invariant field from tuple x.\n\nExample\n\nf = field( (1.0, 2.0) )\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.field-Union{Tuple{N}, Tuple{T}, Tuple{Vararg{Pair{Float64,Tuple{Vararg{Pair{Int64,T},N}}},N} where N}} where T where N",
-    "page": "API",
-    "title": "FEMBase.field",
-    "category": "Method",
-    "text": "field(x::Pair{Float64, NTuple{N, Pair{Int64, T}}})\n\nCreate new discrete, variable, time variant dictionary field from x.\n\nExample\n\nX1 = (1 => 1.0, 2 => 2.0)\nX2 = (1 => 2.0, 2 => 3.0)\nf = field(0.0 => X1, 1.0 => X2)\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.field-Union{Tuple{N}, Tuple{T}, Tuple{Vararg{Pair{Float64,Tuple{Vararg{T,N}}},N} where N}} where T where N",
-    "page": "API",
-    "title": "FEMBase.field",
-    "category": "Method",
-    "text": "field(x::Pair{Float64,NTuple{N,T})\n\nCreate new discrete, variable, time variant field from pair x.\n\nExample\n\nf = field(1.0=>(1.0,2.0), 2.0=>(2.0,3.0))\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.field-Union{Tuple{T}, Tuple{Vararg{Pair{Float64,Dict{Int64,T}},N} where N}} where T",
-    "page": "API",
-    "title": "FEMBase.field",
-    "category": "Method",
-    "text": "field(t::Float64 => x::Dict, ...)\n\nCreate new discrete, variable, time variant dictionary field from pair of time and dictionary.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.field-Union{Tuple{T}, Tuple{Vararg{Pair{Float64,T},N} where N}} where T",
-    "page": "API",
-    "title": "FEMBase.field",
-    "category": "Method",
-    "text": "field(x::Pair{Float64,T})\n\nCreate new discrete, constant, time variant field from pair x.\n\nExample\n\nf = field(1.0=>1.0, 2.0=>2.0)\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.field-Union{Tuple{T}, Tuple{Vararg{Pair{Int64,T},N} where N}} where T",
-    "page": "API",
-    "title": "FEMBase.field",
-    "category": "Method",
-    "text": "field(x::Pair{Int64,T})\n\nCreate new discrete, variable, time invariant dictionary field from x.\n\nExample\n\nf = field(1 => 1.0, 2 => 2.0)\n\n\n\n"
+    "text": "field(x)\n\nCreate new field. Field type is deduced from data type.\n\n\n\n"
 },
 
 {
@@ -433,78 +433,6 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "api.html#FEMBase.interpolate-Tuple{Any,Any}",
-    "page": "API",
-    "title": "FEMBase.interpolate",
-    "category": "Method",
-    "text": "interpolate(a, b)\n\nA helper function for interpolate routines. Given iterables a and b, calculate c = aᵢbᵢ. Length of a can be less than b, but not vice versa.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.interpolate-Tuple{FEMBase.DCTI,Vararg{Any,N} where N}",
-    "page": "API",
-    "title": "FEMBase.interpolate",
-    "category": "Method",
-    "text": "interpolate(f::DCTI, args...)\n\nInterpolate constant, time-invariant DCTI field in time direction. That is trivially only the data itself.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.interpolate-Tuple{FEMBase.DCTV,Any}",
-    "page": "API",
-    "title": "FEMBase.interpolate",
-    "category": "Method",
-    "text": "interpolate(f::DCTV, time)\n\nInterpolate constant time variant DCTV field in time direction.\n\nNotes\n\nFirst check that is outside of range -> extrapolate Secondly check is \"exact match\" in time At last, find the correct bin and use linear interpolation\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.interpolate-Tuple{FEMBase.DVTId,Any}",
-    "page": "API",
-    "title": "FEMBase.interpolate",
-    "category": "Method",
-    "text": "interpolate(f::DVTId, time)\n\nInterpolate DVTId, returns trivially the content as this is time invariant field.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.interpolate-Union{Tuple{FEMBase.DVTI{N,T},Any,Any}, Tuple{N}, Tuple{T}} where T where N",
-    "page": "API",
-    "title": "FEMBase.interpolate",
-    "category": "Method",
-    "text": "interpolate(f::DVTI, t, B)\n\nInterpolate variable, time-invariant DVTI field in time and spatial direction.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.interpolate-Union{Tuple{FEMBase.DVTI{N,T},Any}, Tuple{N}, Tuple{T}} where T where N",
-    "page": "API",
-    "title": "FEMBase.interpolate",
-    "category": "Method",
-    "text": "interpolate(f::DVTI, t)\n\nInterpolate variable, time-invariant DVTI field in time direction.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.interpolate-Union{Tuple{FEMBase.DVTVd{T},Any}, Tuple{T}} where T",
-    "page": "API",
-    "title": "FEMBase.interpolate",
-    "category": "Method",
-    "text": "interpolate(f::DVTVd, time)\n\nInterpolate variable, time variant DVTVd dictionary field in time direction.\n\nNotes\n\nFirst check that is outside of range -> extrapolate Secondly check is \"exact match\" in time At last, find the correct bin and use linear interpolation\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.interpolate-Union{Tuple{FEMBase.DVTV{N,T},Any,Any}, Tuple{N}, Tuple{T}} where T where N",
-    "page": "API",
-    "title": "FEMBase.interpolate",
-    "category": "Method",
-    "text": "interpolate(f::DVTV, time, basis)\n\nInterpolate variable, time variant DVTV field in both time and spatial direction.\n\nNotes\n\nFirst check that is outside of range -> extrapolate Secondly check is \"exact match\" in time At last, find the correct bin and use linear interpolation\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.interpolate-Union{Tuple{FEMBase.DVTV{N,T},Any}, Tuple{N}, Tuple{T}} where T where N",
-    "page": "API",
-    "title": "FEMBase.interpolate",
-    "category": "Method",
-    "text": "interpolate(f::DVTV, time)\n\nInterpolate variable, time variant DVTV field in time direction.\n\nNotes\n\nFirst check that is outside of range -> extrapolate Secondly check is \"exact match\" in time At last, find the correct bin and use linear interpolation\n\n\n\n"
-},
-
-{
     "location": "api.html#FEMBase.optimize!-Tuple{FEMBase.SparseMatrixCOO}",
     "page": "API",
     "title": "FEMBase.optimize!",
@@ -529,22 +457,6 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "api.html#FEMBase.update!-Tuple{FEMBase.DCTI,Any}",
-    "page": "API",
-    "title": "FEMBase.update!",
-    "category": "Method",
-    "text": "update!(f::DCTI, data)\n\nUpdate new value to field.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.update!-Tuple{FEMBase.DVTI,Any}",
-    "page": "API",
-    "title": "FEMBase.update!",
-    "category": "Method",
-    "text": "update!(f::DVTI, data)\n\nUpdate new value to field.\n\n\n\n"
-},
-
-{
     "location": "api.html#FEMBase.update!-Tuple{FEMBase.Problem,FEMBase.Assembly,Array{T,1} where T,Array{T,1} where T}",
     "page": "API",
     "title": "FEMBase.update!",
@@ -553,35 +465,11 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "api.html#FEMBase.update!-Union{Tuple{FEMBase.DCTV,Pair{Float64,T}}, Tuple{T}} where T",
+    "location": "api.html#FEMBase.update!-Union{Tuple{F,Any}, Tuple{F}} where F<:FEMBase.AbstractField",
     "page": "API",
     "title": "FEMBase.update!",
     "category": "Method",
-    "text": "update!(f::DCTV, time => data)\n\nUpdate new value to field.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.update!-Union{Tuple{FEMBase.DVTId{T},Dict{Int64,T}}, Tuple{T}} where T",
-    "page": "API",
-    "title": "FEMBase.update!",
-    "category": "Method",
-    "text": "update!(field::DVTId, data::Dict)\n\nUpdate data to field.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.update!-Union{Tuple{FEMBase.DVTV,Pair{Float64,Tuple{Vararg{T,N}}}}, Tuple{N}, Tuple{T}} where T where N",
-    "page": "API",
-    "title": "FEMBase.update!",
-    "category": "Method",
-    "text": "update!(f::DVTV, time => data)\n\nUpdate new value to field.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.update!-Union{Tuple{FEMBase.DVTVd,Pair{Float64,Dict{Int64,T}}}, Tuple{T}} where T",
-    "page": "API",
-    "title": "FEMBase.update!",
-    "category": "Method",
-    "text": "update!(f::DCTVd, time => data)\n\nUpdate new value to dictionary field.\n\n\n\n"
+    "text": "update!(field, data)\n\nUpdate new value to field.\n\n\n\n"
 },
 
 {
@@ -598,6 +486,30 @@ var documenterSearchIndex = {"docs": [
     "title": "FEMBase.update!",
     "category": "Method",
     "text": "update!(problem.properties, attr...)\n\nUpdate properties for a problem.\n\nExample\n\nupdate!(body.properties, \"finite_strain\" => \"false\")\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBasis.interpolate-Tuple{Any,Any}",
+    "page": "API",
+    "title": "FEMBasis.interpolate",
+    "category": "Method",
+    "text": "interpolate(a, b)\n\nA helper function for interpolate routines. Given iterables a and b, calculate c = aᵢbᵢ. Length of a can be less than b, but not vice versa.\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBasis.interpolate-Tuple{FEMBase.Element,String,Float64}",
+    "page": "API",
+    "title": "FEMBasis.interpolate",
+    "category": "Method",
+    "text": "interpolate(element, field_name, time)\n\nInterpolate field field_name from element at given time.\n\nExample\n\nelement = Element(Seg2, [1, 2])\ndata1 = Dict(1 => 1.0, 2 => 2.0)\ndata2 = Dict(1 => 2.0, 2 => 3.0)\nupdate!(element, \"my field\", 0.0 => data1)\nupdate!(element, \"my field\", 1.0 => data2)\ninterpolate(element, \"my field\", 0.5)\n\n# output\n\n(1.5, 2.5)\n\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBasis.interpolate-Union{Tuple{F,Any}, Tuple{F}} where F<:FEMBase.AbstractField",
+    "page": "API",
+    "title": "FEMBasis.interpolate",
+    "category": "Method",
+    "text": "interpolate(field, time)\n\nInterpolate field in time direction.\n\nExamples\n\nFor time invariant fields DCTI, DVTI, DVTId solution is trivially the data inside field as fields does not depend from the time:\n\njulia> a = field(1.0)\nFEMBase.DCTI{Float64}(1.0)\n\njulia> interpolate(a, 0.0)\n1.0\n\njulia> a = field((1.0, 2.0))\nFEMBase.DVTI{2,Float64}((1.0, 2.0))\n\njulia> interpolate(a, 0.0)\n(1.0, 2.0)\n\njulia> a = field(1=>1.0, 2=>2.0)\nFEMBase.DVTId{Float64}(Dict(2=>2.0,1=>1.0))\n\njulia> interpolate(a, 0.0)\nDict{Int64,Float64} with 2 entries:\n  2 => 2.0\n  1 => 1.0\n\nDVTId trivial solution is returned. For time variant fields DCTV, DVTV, DVTVd linear interpolation is performed.\n\nOther notes\n\nFirst algorithm checks that is time out of range, i.e. time is smaller than time of first frame or larger than last frame. If that is the case, return first or last frame. Secondly algorithm finds is given time exact match to time of some frame and return that frame. At last, we find correct bin so that t0 < time < t1 and use linear interpolation.\n\n\n\n"
 },
 
 {
@@ -625,11 +537,27 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "api.html#Base.length-Union{Tuple{B}, Tuple{FEMBase.Element{B}}} where B",
+    "location": "api.html#Base.length-Tuple{FEMBase.Element}",
     "page": "API",
     "title": "Base.length",
     "category": "Method",
-    "text": "length(element::Element)\n\nReturn the number of nodes in element.\n\n\n\n"
+    "text": "length(element)\n\nReturn the length of basis (number of nodes).\n\n\n\n"
+},
+
+{
+    "location": "api.html#Base.size-Tuple{FEMBase.Element}",
+    "page": "API",
+    "title": "Base.size",
+    "category": "Method",
+    "text": "size(element)\n\nReturn the size of basis (dim, nnodes).\n\n\n\n"
+},
+
+{
+    "location": "api.html#FEMBase.assemble_elements!-Union{Tuple{E}, Tuple{FEMBase.Problem,FEMBase.Assembly,Array{FEMBase.Element{E},1},Any}} where E",
+    "page": "API",
+    "title": "FEMBase.assemble_elements!",
+    "category": "Method",
+    "text": "assemble_elements!(problem, assembly, elements, time)\n\nAssemble elements for problem.\n\nThis should be overridden with own assemble_elements!-implementation.\n\n\n\n"
 },
 
 {
@@ -705,6 +633,14 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "api.html#FEMBasis.jacobian-Tuple{Any,Any,Any}",
+    "page": "API",
+    "title": "FEMBasis.jacobian",
+    "category": "Method",
+    "text": "jacobian(B, X, xi)\n\nGiven basis B, calculate jacobian at xi.\n\nExample\n\nB = Quad4()\nX = ([0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0])\njacobian(B, X, (0.0, 0.0))\n\n# output\n\n2×2 Array{Float64,2}:\n 0.5  0.0\n 0.0  0.5\n\n\n\n\n"
+},
+
+{
     "location": "api.html#FEMBasis.calculate_basis_coefficients-Tuple{Expr,Tuple}",
     "page": "API",
     "title": "FEMBasis.calculate_basis_coefficients",
@@ -726,14 +662,6 @@ var documenterSearchIndex = {"docs": [
     "title": "FEMBasis.calculate_interpolation_polynomials",
     "category": "Method",
     "text": "\n\n"
-},
-
-{
-    "location": "api.html#FEMBasis.jacobian-Tuple{Any,Any,Any}",
-    "page": "API",
-    "title": "FEMBasis.jacobian",
-    "category": "Method",
-    "text": "jacobian(B, X, xi)\n\nGiven basis B, calculate jacobian at xi.\n\nExample\n\nB = Quad4()\nX = ([0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0])\njacobian(B, X, (0.0, 0.0))\n\n# output\n\n2×2 Array{Float64,2}:\n 0.5  0.0\n 0.0  0.5\n\n\n\n\n"
 },
 
 {
