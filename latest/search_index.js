@@ -2,18 +2,58 @@ var documenterSearchIndex = {"docs": [
 
 {
     "location": "index.html#",
-    "page": "Introduction",
-    "title": "Introduction",
+    "page": "Home",
+    "title": "Home",
     "category": "page",
     "text": ""
 },
 
 {
     "location": "index.html#FEMBase.jl-1",
-    "page": "Introduction",
+    "page": "Home",
     "title": "FEMBase.jl",
     "category": "section",
     "text": "(Image: Build Status)(Image: Coverage Status)(Image: )(Image: )(Image: Issues)FEMBase.jl is a JuliaFEM base package. It includes all basic data structures so that one can start programming own finite element models."
+},
+
+{
+    "location": "mesh.html#",
+    "page": "Mesh",
+    "title": "Mesh",
+    "category": "page",
+    "text": ""
+},
+
+{
+    "location": "mesh.html#Mesh-1",
+    "page": "Mesh",
+    "title": "Mesh",
+    "category": "section",
+    "text": "CurrentModule = FEMBase\nDocTestSetup = quote\n    using FEMBase\nend"
+},
+
+{
+    "location": "mesh.html#Mesh-structure-1",
+    "page": "Mesh",
+    "title": "Mesh structure",
+    "category": "section",
+    "text": ""
+},
+
+{
+    "location": "mesh.html#Modifying-mesh-1",
+    "page": "Mesh",
+    "title": "Modifying mesh",
+    "category": "section",
+    "text": ""
+},
+
+{
+    "location": "mesh.html#Defining-new-mesh-parsers-1",
+    "page": "Mesh",
+    "title": "Defining new mesh parsers",
+    "category": "section",
+    "text": "Whould work somehow like this:type DemoReader <: AbstractMeshReader\n    handle :: String\nend\n\nfunction read_mesh!(m::Mesh, r::DemoReader)\n    # parse file and insert results to `m`.\nend\n\nmesh = Mesh()\nreader = DemoReader(\"file.inp\")\nread_mesh!(mesh, reader)"
 },
 
 {
@@ -21,15 +61,23 @@ var documenterSearchIndex = {"docs": [
     "page": "Fields",
     "title": "Fields",
     "category": "page",
-    "text": "using FEMBaseFrom the beginning a clear concept: \"everything is a field\". We think that constant is just a special case of field which does not vary in temporal and spatial direction. Fields can vary in spatial direction (constant or variable) and in temporal direction (time variant and in-variant).From here we can deduct for types of (discrete) fields:discrete, constant, time invariant (DCTI)\ndiscrete, variable, time invariant (DVTI)\ndiscrete, constant, time variant (DCTV)\ndiscrete, variable, time variant (DVTV)Field itself can be anything. However, usually either scalar, vector or tensor (matrix)."
+    "text": ""
 },
 
 {
-    "location": "fields.html#Creating-fields-1",
+    "location": "fields.html#Fields-1",
     "page": "Fields",
-    "title": "Creating fields",
+    "title": "Fields",
     "category": "section",
-    "text": "For discrete fields that are varying in spatial direction, value for each discrete point is defined using NTuple. The order of points is implicitly assumed to be same than node ordering in ABAQUS. Usual use case for variable field is that the field is interpolated to the element volume using interpolation polynomials, i.e. u(xi) = u_i N_i(xi), where N_i is the basis function for that node and u_i is the discrete value.For example, (1, 2, 3, 4) is a scalar field having length of 4 and ([1,2],[2,3],[3,4],[4,5]) is a vector field having length of 4.For fields that are varying in temporal direction, time => value syntax is used. The first item in pair is time and second item is value attached to that time. For example, 0.0 => 1.0 is a time-dependent scalar field having value 1.0 at time 0.0.The most simple field is a field that is constant in both time and spatial direction. Discrete, constant, time invariant (DCTI):a = DCTI(1.0)FEMBase.DCTI{Float64}(1.0)Then we have discrete, variable, time invariant fields (DVTI). Note the use of NTuple when defining field.b = DVTI( (1.0, 2.0) )FEMBase.DVTI{2,Float64}((1.0, 2.0))Discrete, constant, time variant field (DCTV) is constant in spatial direction but can vary in temporal direction. Here, => syntax is used. New values can be added to field using update!. If there already exists value for that particular time, it will be overridden. It is assumed that content of field in time direction is monotonically increasing, i.e. t_i-1  t_i  t_i+1. For the sake of clarity let's also mention that update! works for time invariant fields as well if content needs to be updated.c = DCTV(0.0 => 1.0, 1.0 => 2.0)\nupdate!(c, 2.0 => 3.0)\ncFEMBase.DCTV{Float64}(Pair{Float64,Float64}[0.0=>1.0, 1.0=>2.0, 2.0=>3.0])Discrete, variable, time variant (DVTV) field is the most general one, allowing values of field to vary in both spatial and time direction.d = DVTV(0.0 => (1.0, 2.0), 1.0 => (2.0, 3.0))\nupdate!(d, 2.0 => (3.0, 4.0))3-element Array{Pair{Float64,Tuple{Float64,Float64}},1}:\n 0.0=>(1.0, 2.0)\n 1.0=>(2.0, 3.0)\n 2.0=>(3.0, 4.0)In examples above, all fields was scalar fields. Defining vector or tensor fields goes in the same spirit. Only difference is that now we define vectors and tensors, not a single scalar value. They can vary in spatial and time direction in the same way than scalar fields. Here is example of defining the abovementioned vector fields:a = DCTI([1.0, 2.0])\nb = DVTI(([1.0, 2.0], [2.0, 3.0]))\nc = DCTV(0.0 => [1.0, 2.0], 1.0 => [2.0, 3.0])\nd = DVTV(0.0 => ([1.0, 2.0], [2.0, 3.0]), 1.0 => ([2.0, 3.0], [3.0, 4.0]))FEMBase.DVTV{2,Array{Float64,1}}(Pair{Float64,Tuple{Array{Float64,1},Array{Float64,1}}}[0.0=>([1.0, 2.0], [2.0, 3.0]), 1.0=>([2.0, 3.0], [3.0, 4.0])])"
+    "text": "using FEMBaseFrom the beginning of a project we had a clear concept in our mind: \"everything is a field\". That is, everything can vary temporally and spatially. We think that constant is just a special case of field which does not vary in temporal nor spatial direction. Fields can vary in spatial direction, i.e. can be either constant or variable, and in temporal direction, i.e. can be time variant or time invariant. From this pondering we can think that there exists four kind of (discrete) fields:discrete, constant, time invariant (DCTI)\ndiscrete, variable, time invariant (DVTI)\ndiscrete, constant, time variant (DCTV)\ndiscrete, variable, time variant (DVTV)Discrete, in this context, means that field is defined in point-wise in 1 ldots n locations, from where it is then interpolated to whole domain using some interpolation polynomials, i.e. \\begin{equation}     u(\\xi, t) = \\sum_{i} u_i[t] N_{i}(\\xi,t), \\end{equation} where     N_i(xi t) is the basis function or interpolation polymial corresponding to i^{th} discrete value and      u_i is the discrete value.Then we have continuous fields, which are defined in whole domain, or at least not point-wise. By following the already used abbreviations, we have four more fields:continuous, constant, time invariant (CCTI)\ncontinuous, variable, time invariant (CVTI)\ncontinuous, constant, time variant (DCTV)\ncontinuous, variable, time variant (CVTV)Continuous, again in this context, does not mean that field has to be defined everywhere. It's enough that it's defined in function of spatial and/or temporal coordinates, i.e. we have u equiv u(xi t), without a some spesific basis needed to interpolate from discrete values. Field itself can be in principle anything. However, usually either scalar, vector or tensor (matrix). Time does not to have be real, it can be for example angle of some rotating machine or even complex value. From these starting points, we assume that the mentioned field system can describe all imaginable situations."
+},
+
+{
+    "location": "fields.html#Creating-new-fields-1",
+    "page": "Fields",
+    "title": "Creating new fields",
+    "category": "section",
+    "text": "For discrete fields that are varying in spatial direction, value for each discrete point is defined using NTuple. The order of points is implicitly assumed to be same than node ordering in ABAQUS. That is, first corner nodes in anti-clockwise direction and after that middle nodes.For example, (1, 2, 3, 4) is a scalar field having length of 4 and ([1,2],[2,3],[3,4],[4,5]) is a vector field having length of 4.For fields that are varying in temporal direction, time => value syntax is used. The first item in pair is time (or similar) and second item is value  assigned to that time. For example, 0.0 => 1.0 is a time-dependent scalar field having value 1.0 at time 0.0.The most simple field is a field that is constant in both time and spatial direction. Discrete, constant, time invariant DCTI:a = DCTI(1.0)Then we have discrete, variable, time invariant fields DVTI. Notice the use of Tuple when defining field.b = DVTI( (1.0, 2.0) )Discrete, constant, time variant field DCTV is constant in spatial direction partial upartial x = 0 but can vary in temporal direction, partial upartial tneq 0. Here, => syntax is used. New values can be added to field using function update!. If there already exists a value for that particular time, it will be overridden. It is assumed that content of field in time direction is monotonically increasing, i.e. \\begin{equation}     t_{i-1} < t_i < t_{i+1}. \\end{equation}For the sake of clarity let's also mention that update! works for time invariant fields as well if content needs to be updated.c = DCTV(0.0 => 1.0, 1.0 => 2.0)\nupdate!(c, 2.0 => 3.0)Discrete, variable, time variant DVTV field is the most general one, allowing values of field to vary in both spatial and time direction.d = DVTV(0.0 => (1.0, 2.0), 1.0 => (2.0, 3.0))\nupdate!(d, 2.0 => (3.0, 4.0))In examples above, all fields defined was scalar fields. Defining vector or tensor fields goes in the same way. The only difference is that now we define vectors and tensors instead of a single scalar value. They can vary in spatial and time direction in the same way than scalar fields. Here is example of defining the abovementioned vector fields:a = DCTI([1.0, 2.0])\nb = DVTI(([1.0, 2.0], [2.0, 3.0]))\nc = DCTV(0.0 => [1.0, 2.0], 1.0 => [2.0, 3.0])\nd = DVTV(0.0 => ([1.0, 2.0], [2.0, 3.0]), 1.0 => ([2.0, 3.0], [3.0, 4.0]))"
 },
 
 {
@@ -37,7 +85,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Fields",
     "title": "Accessing fields",
     "category": "section",
-    "text": "Accessing fields is done using a single command: interpolate. For time varying fields, one can interpolate in time direction. For example, if we have (constant) 12 at time t=00 and 34 at time t=10, linear interpolation yieldsc = DCTV(0.0 => [1.0,2.0], 1.0 => [3.0,4.0])\ninterpolate(c, 0.5)2-element Array{Float64,1}:\n 2.0\n 3.0If field is spatially varying, a Tuple will be returned, typically having one value for each \"node\". This can then be interpolated in spatial direction, typically using basis functions defined on element, e.g. u = N_i u_i:d = DVTV(0.0 => (1.0,2.0), 1.0 => (3.0,4.0))\ninterpolate(d, 0.5)(2.0, 3.0)Although the two fields above looks quite same, the key difference is that in DCTV field we have a constant vectorial value (defined using square brackets []) and in latter DVTV field we have a scalar value (defined using round brackets) changing in spatial direction from 1.0 to 2.0 at time t=00 and changing from 3.0 to 4.0 at time t=10.One should be always able to interpolate in time direction, even if field is time invariant, to get trivial solution:interpolate(a, 0.5), interpolate(b, 0.5),\ninterpolate(c, 0.5), interpolate(d, 0.5)([1.0, 2.0], ([1.0, 2.0], [2.0, 3.0]), [2.0, 3.0], (2.0, 3.0))For spatially varying fields, one can access to ith element using getindex:getindex(a, 1), getindex(b, 1), getindex(b, 2)([1.0, 2.0], [1.0, 2.0], [2.0, 3.0])First time interpolation, then spatial lookup, i.e.getindex(interpolate(d, 0.5), 1)2.0By passing already evaluated basis functions to interpolate, field is intepolated in both temporal and spatial direction.d = DVTV(0.0 => (1.0,2.0), 1.0 => (3.0,4.0))\nxi = 0.0\nN = [1/2*(1-xi) 1/2*(1+xi)] # evaluated basis functions, linear interpolation\nt = 1.0 # time\ninterpolate(d, t, N)3.5Internally, each field is a subtype of AbstractField. Internally each field has a data which be accessed directly for hacking.d.data2-element Array{Pair{Float64,Tuple{Float64,Float64}},1}:\n 0.0=>(1.0, 2.0)\n 1.0=>(3.0, 4.0)"
+    "text": "Accessing fields in time direction is done using a function interpolate. For example, if we have (constant) 12 at time t=00 and 34 at time t=10, linear interpolation in time direction yieldsc = DCTV(0.0 => [1.0,2.0], 1.0 => [3.0,4.0])\ninterpolate(c, 0.5)If field is spatially varying, a Tuple will be returned, having one value for each \"node\". This can then be interpolated in spatial direction, typically using basis functions defined on element, i.e. u = N_i u_i:d = DVTV(0.0 => (1.0,2.0), 1.0 => (3.0,4.0))\ninterpolate(d, 0.5)Although the two fields above looks quite same, the key difference is that in DCTV field we have a constant vectorial value (defined using square brackets []) and in latter DVTV field we have a scalar value (defined using round brackets) changing in spatial direction from 1.0 to 2.0 at time t=00 and changing from 3.0 to 4.0 at time t=10.If a field is time invariant, interpolation in time direction returns a trivial solution:interpolate(DCTI(1.0), 0.5)\ninterpolate(DVTI((1.0,2.0)), 0.5)For spatially varying fields, one can access to ith element using getindex:a = DVTI((1.0,2.0))\ngetindex(a, 1)For field varying both temporally and spatially, one has first to interpolate in time direction to get iterable tuple:d = DVTV(0.0 => (1.0,2.0), 1.0 => (3.0,4.0))\nresult = interpolate(d, 0.5)\ngetindex(result, 1)Internally, each field is a subtype of AbstractField having a field data, which be accessed directly for hacking purposes.d.data"
 },
 
 {
@@ -45,7 +93,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Fields",
     "title": "Continuous fields",
     "category": "section",
-    "text": "Then we have continuous fields which may be useful when defining analytical boundary conditions. For that we have CVTV, where \"C\" stands for continuous.f(xi,t) = xi[1]*xi[2]*t\ng = CVTV(f)\ng([1.0,2.0],3.0)6.0"
+    "text": "Continuous fields may be useful when defining analytical boundary conditions. For that we have CVTV, where \"C\" stands for continuous.f(xi,t) = xi[1]*xi[2]*t\ng = CVTV(f)\ng((1.0,2.0), 3.0)"
 },
 
 {
@@ -53,7 +101,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Fields",
     "title": "Dictionary fields",
     "category": "section",
-    "text": "Usually it is assumed that discrete field has values number of nodes or degrees of freedom in element, typically something small like 1-30. There might be cases where it is more practical to define field in a sense that indexing is not continuous or starting from 1. For example, we might want to define field common for a set of elements. In that case it's natural to think that each index in field corresponds to the certain id-number of node. For example, if we have triangle element connecting nodes 1, 1000 and 100000, we still want to access to that field naturally using getindex, e.g. f[1], f[1000] and f[100000]. In that case, more appropriate internal structure for field is based on dictionary.It only makes sense to define dictionary fields for spatially varying fields. Two new fields are introduced: DVTId and DVTVd, where last \"d\" stands for \"dictionary\".Keep on mind, that this type of field has one restriction. If and when this field is typically defined on nodes of several elements, field must be continuous between elements. That is, if field value in node 1000 is for example 1.0, then it's 1.0 in all elements connecting to that node. To define jumps on field, one must define field element-wise. # Define eg. \"geometry\" for nodes 1,2,3,4.\nX = Dict(1=>[0.0,0.0], 1000=>[1.0,0.0], 100000=>[1.0,1.0])\nG = DVTId(X)\nG[1], G[1000], G[100000]([0.0, 0.0], [1.0, 0.0], [1.0, 1.0])Y = Dict(1=>[1.0,1.0], 1000=>[2.0,1.0], 100000=>[2.0,2.0])\nF = DVTVd(0.0 => X, 1.0 => Y)\ninterpolate(F,0.5)[100000]2-element Array{Float64,1}:\n 1.5\n 1.5"
+    "text": "Usually it is assumed that size of length of discrete field matches to the number of basis functions of a single element, typically something small like 1-10.However, there might be cases where it is more practical to define field in a sense that indexing is not continuous or starting from 1. For example, we might want to define field common for a set of elements. In that case it's natural to think that each index in field corresponds to the certain id-number of node. For example, if we have a triangle element connecting nodes 1, 1000 and 100000, we still want to access that field naturally using getindex, e.g. f[1], f[1000] and f[100000]. In that case, more appropriate internal structure for field is based on a dictionary, not tuple.It only makes sense to define dictionary fields for spatially varying fields. Two new fields are introduced: DVTId and DVTVd, where the last character \"d\" stands for \"dictionary\".Keep on mind, that this type of field has one restriction. If and when this field is typically defined on nodes of several elements, field must be continuous between elements. That is, if field value in node 1000 is for example 1.0, then it's 1.0 in all elements connecting to that node. To define jumps on field, one must define field element-wise. Define eg. \"geometry\" for nodes 1,1000,100000:X = Dict(1=>[0.0,0.0], 1000=>[1.0,0.0], 100000=>[1.0,1.0])\nG = DVTId(X)\nG[1], G[1000], G[100000]Interpolation in time directions works in a same way than with other fields depends from time.Y = Dict(1=>[1.0,1.0], 1000=>[2.0,1.0], 100000=>[2.0,2.0])\nF = DVTVd(0.0 => X, 1.0 => Y)\ninterpolate(F,0.5)[100000]"
 },
 
 {
@@ -61,7 +109,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Fields",
     "title": "Using common constructor field",
     "category": "section",
-    "text": "Now we have introduced total of 7 fields: DCTI, DCTV, DVTI, DVTV, CVTV, DVTId, DVTVd. A good question arises that how to remember all this stuff and is it even necessary? Luckily not, because one can use a single constructor called field to create all kind of fields. Type of field is inspected from data type. You really don't have to know about this technical stuff, just declare new field using intuition and field command.f1 = field(1.0)\ntypeof(f1)FEMBase.DCTI{Float64}f2 = field((1.0, 2.0))\ntypeof(f2)FEMBase.DVTI{2,Float64}f3 = field(0.0 => 1.0)\ntypeof(f3)FEMBase.DCTV{Float64}f4 = field(0.0 => (1.0, 2.0), 1.0 => (2.0, 3.0))\ntypeof(f4)FEMBase.DVTV{2,Float64}f5 = field((xi,t) -> xi[1]*t)\ntypeof(f5)FEMBase.CVTVf6 = field(1 => 1.0, 2 => 2.0)\ntypeof(f6)FEMBase.DVTId{Float64}f7 = field(0.0 => (1=>1.0,10=>2.0), 1.0 => (1=>2.0,10=>3.0))\ntypeof(f7)FEMBase.DVTVd{Float64}"
+    "text": "Now we have introduced total of 7 fields: DCTI, DCTV, DVTI, DVTV, CVTV, DVTId, DVTVd. A good question arises that how to remember all this stuff and is it even necessary? Luckily not, because one can use a single constructor called field to create all kind of fields. Type of field is inspected from data type. It's not necessary to remember all this technical stuff, just declare new field using more of less intuitive syntax and field-function.f1 = field(1)\nf2 = field(1, 2)\nf3 = field(0.0 => 1)\nf4 = field(0.0 => (1, 2), 1.0 => (2, 3))\nf5 = field((xi,t) -> xi[1]*t)\nf6 = field(1 => 1, 2 => 2)\nf7 = field(0.0 => (1=>1, 10=>2), 1.0 => (1=>2,10=>3))"
 },
 
 {
@@ -69,7 +117,127 @@ var documenterSearchIndex = {"docs": [
     "page": "Fields",
     "title": "Developing new fields",
     "category": "section",
-    "text": "If the default ones are not enough, it's always possible to define new ones. Minimum requirements is that field is a subtype of AbstractField and interpolate has been defined to it."
+    "text": "If the FEMBase ones are not enough, it's always possible to define new ones. Minimum requirements is that field is a subtype of AbstractField and interpolate, getindex, has been defined to it. Field can, for example fetch data from random.org or market stocks, read data from hard drive or add some stochastics behavior to it."
+},
+
+{
+    "location": "fields.html#Functions-and-types-related-to-fields-1",
+    "page": "Fields",
+    "title": "Functions and types related to fields",
+    "category": "section",
+    "text": "CurrentModule = FEMBase\nDocTestSetup = quote\n    using FEMBase\nend"
+},
+
+{
+    "location": "fields.html#FEMBase.AbstractField",
+    "page": "Fields",
+    "title": "FEMBase.AbstractField",
+    "category": "Type",
+    "text": "AbstractField\n\nAbstract supertype for all fields in JuliaFEM.\n\n\n\n"
+},
+
+{
+    "location": "fields.html#FEMBase.DCTI",
+    "page": "Fields",
+    "title": "FEMBase.DCTI",
+    "category": "Type",
+    "text": "DCTI{T} <: AbstractField\n\nDiscrete, constant, time-invariant field.\n\nThis field is constant in both spatial direction and time direction, i.e. df/dX = 0 and df/dt = 0.\n\nExample\n\njulia> DCTI(1)\nFEMBase.DCTI{Int64}(1)\n\n\n\n"
+},
+
+{
+    "location": "fields.html#FEMBase.DVTI",
+    "page": "Fields",
+    "title": "FEMBase.DVTI",
+    "category": "Type",
+    "text": "DVTI{N,T} <: AbstractField\n\nDiscrete, variable, time-invariant field.\n\nThis is constant in time direction, but not in spatial direction, i.e. df/dt = 0 but df/dX != 0. The basic structure of data is Tuple, and it is implicitly assumed that length of field matches to the number of shape functions, so that interpolation in spatial direction works.\n\nExample\n\njulia> DVTI(1, 2, 3)\nFEMBase.DVTI{3,Int64}((1, 2, 3))\n\n\n\n"
+},
+
+{
+    "location": "fields.html#FEMBase.DCTV",
+    "page": "Fields",
+    "title": "FEMBase.DCTV",
+    "category": "Type",
+    "text": "DCTV{T} <: AbstractField\n\nDiscrete, constant, time variant field. This type of field can change in time direction but not in spatial direction.\n\nExample\n\nField having value 5 at time 0.0 and value 10 at time 1.0:\n\njulia> DCTV(0.0 => 5, 1.0 => 10)\nFEMBase.DCTV{Int64}(Pair{Float64,Int64}[0.0=>5, 1.0=>10])\n\n\n\n"
+},
+
+{
+    "location": "fields.html#FEMBase.DVTV",
+    "page": "Fields",
+    "title": "FEMBase.DVTV",
+    "category": "Type",
+    "text": "DVTV{N,T} <: AbstractField\n\nDiscrete, variable, time variant field. The most general discrete field can change in both temporal and spatial direction.\n\nExample\n\njulia> DVTV(0.0 => (1, 2), 1.0 => (2, 3))\nFEMBase.DVTV{2,Int64}(Pair{Float64,Tuple{Int64,Int64}}[0.0=>(1, 2), 1.0=>(2, 3)])\n\n\n\n"
+},
+
+{
+    "location": "fields.html#FEMBase.CVTV",
+    "page": "Fields",
+    "title": "FEMBase.CVTV",
+    "category": "Type",
+    "text": "CVTV <: AbstractField\n\nContinuous, variable, time variant field.\n\nExample\n\njulia> f = CVTV((xi,t) -> xi*t)\nFEMBase.CVTV(#1)\n\n\n\n"
+},
+
+{
+    "location": "fields.html#FEMBase.DVTId",
+    "page": "Fields",
+    "title": "FEMBase.DVTId",
+    "category": "Type",
+    "text": "DVTId(X::Dict)\n\nDiscrete, variable, time invariant dictionary field.\n\n\n\n"
+},
+
+{
+    "location": "fields.html#FEMBase.DVTVd",
+    "page": "Fields",
+    "title": "FEMBase.DVTVd",
+    "category": "Type",
+    "text": "DVTVd(time => data::Dict)\n\nDiscrete, variable, time variant dictionary field.\n\n\n\n"
+},
+
+{
+    "location": "fields.html#Types-1",
+    "page": "Fields",
+    "title": "Types",
+    "category": "section",
+    "text": "AbstractField\nDCTI\nDVTI\nDCTV\nDVTV\nCVTV\nDVTId\nDVTVd"
+},
+
+{
+    "location": "fields.html#Functions-(internal)-1",
+    "page": "Fields",
+    "title": "Functions (internal)",
+    "category": "section",
+    "text": "These functions needs to be defined when developing new fields:new_field\nupdate_field!\ninterpolate_field"
+},
+
+{
+    "location": "fields.html#FEMBase.field-Tuple{Any}",
+    "page": "Fields",
+    "title": "FEMBase.field",
+    "category": "Method",
+    "text": "field(x)\n\nCreate new field. Field type is deduced from data type.\n\n\n\n"
+},
+
+{
+    "location": "fields.html#FEMBase.update!-Union{Tuple{F,Any}, Tuple{F}} where F<:FEMBase.AbstractField",
+    "page": "Fields",
+    "title": "FEMBase.update!",
+    "category": "Method",
+    "text": "update!(field, data)\n\nUpdate new value to field.\n\n\n\n"
+},
+
+{
+    "location": "fields.html#FEMBasis.interpolate-Union{Tuple{F,Any}, Tuple{F}} where F<:FEMBase.AbstractField",
+    "page": "Fields",
+    "title": "FEMBasis.interpolate",
+    "category": "Method",
+    "text": "interpolate(field, time)\n\nInterpolate field in time direction.\n\nExamples\n\nFor time invariant fields DCTI, DVTI, DVTId solution is trivially the data inside field as fields does not depend from the time:\n\njulia> a = field(1.0)\nFEMBase.DCTI{Float64}(1.0)\n\njulia> interpolate(a, 0.0)\n1.0\n\njulia> a = field((1.0, 2.0))\nFEMBase.DVTI{2,Float64}((1.0, 2.0))\n\njulia> interpolate(a, 0.0)\n(1.0, 2.0)\n\njulia> a = field(1=>1.0, 2=>2.0)\nFEMBase.DVTId{Float64}(Dict(2=>2.0,1=>1.0))\n\njulia> interpolate(a, 0.0)\nDict{Int64,Float64} with 2 entries:\n  2 => 2.0\n  1 => 1.0\n\nDVTId trivial solution is returned. For time variant fields DCTV, DVTV, DVTVd linear interpolation is performed.\n\nOther notes\n\nFirst algorithm checks that is time out of range, i.e. time is smaller than time of first frame or larger than last frame. If that is the case, return first or last frame. Secondly algorithm finds is given time exact match to time of some frame and return that frame. At last, we find correct bin so that t0 < time < t1 and use linear interpolation.\n\n\n\n"
+},
+
+{
+    "location": "fields.html#Functions-(public)-1",
+    "page": "Fields",
+    "title": "Functions (public)",
+    "category": "section",
+    "text": "field(x)\nupdate!(field::F, data) where {F<:AbstractField}\ninterpolate(field::F, time) where {F<:AbstractField}"
 },
 
 {
@@ -81,11 +249,11 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "basis.html#Shape-functions-1",
+    "location": "basis.html#Basis-functions-1",
     "page": "Basis functions",
-    "title": "Shape functions",
+    "title": "Basis functions",
     "category": "section",
-    "text": "Also known as basis functions, interpolation polynomials and so on. Typically unknown field variable is interpolated from element nodal values using continuous functions. That is, Standard Lagrange polynomials as supported.Linear shape functions:Seg2\nTri3\nQuad4\nTet4\nPyr5\nWedge6\nHex8Quadratic and biquadratic shape functions:Seg3\nTri6, Tri7\nQuad8, Quad9\nTet10\nWedge15\nHex20, Hex27NURBS shape functions:NSeg\nNSurf\nNSolidEvaluating basis and derivative of basis functions with respect to dimensionless coordinates:using FEMBase\nusing FEMBase.FEMBasis: eval_dbasis!, jacobian, grad, interpolate,\n                        get_reference_element_coordinates, create_basis\nB = Quad4()FEMBasis.Quad4()length(B)4size(B)(2, 4)For fast evaluations, one must allocate array outside of the hot loops to get speed.N = zeros(1, 4)\ndN = zeros(2, 4)\nxi = (0.0, 0.0)(0.0, 0.0)eval_basis!(B, N, xi)1×4 Array{Float64,2}:\n 0.25  0.25  0.25  0.25eval_dbasis!(B, dN, xi)2×4 Array{Float64,2}:\n -0.25   0.25  0.25  -0.25\n -0.25  -0.25  0.25   0.25For Langrange interpolation polynomials, by definition, on each node shape function corresponding to that node gets value of 1 and the rest is zero. Node ordering follows the same defined in e.g. in ABAQUS and in many other FEM softwares.get_reference_element_coordinates(Quad4)((-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0))for xi in get_reference_element_coordinates(Quad4)\n    eval_basis!(B, N, xi)\n    println(\"$N at $xi\")\nend[1.0 0.0 0.0 0.0] at (-1.0, -1.0)\n[0.0 1.0 0.0 0.0] at (1.0, -1.0)\n[0.0 0.0 1.0 0.0] at (1.0, 1.0)\n[0.0 0.0 0.0 1.0] at (-1.0, 1.0)"
+    "text": "using FEMBase\nusing FEMBase.FEMBasis: eval_dbasis!, jacobian, grad, interpolate,\n                        get_reference_element_coordinates, create_basis\nusing FEMBasisShape functions, also known as basis functions, interpolation polynomials and so on. Typically unknown field variable is interpolated from element nodal values using continuous functions. That is, \\begin{equation} u(\\xi,t) = \\sum_{i} N(\\xi,t) u_{i}[t] \\end{equation}Standard Lagrange shape functions are implemented.Linear shape functions:Seg2 (2-node segment)\nTri3 (3-node triangle)\nQuad4 (4-node quadrangle)\nTet4 (4-node tetrahedron)\nPyr5 (5-node pyramid)\nWedge6 (6-node wedge)\nHex8 (8-node hexahedra)Quadratic and biquadratic shape functions:Seg3\nTri6, Tri7\nQuad8, Quad9\nTet10\nWedge15\nHex20, Hex27NURBS shape functions:NSeg\nNSurf\nNSolidCreating new basis is done simply by calling that constructor, without any arguments:Seg2()\nTri3()\nQuad4()The dimensions of basis functions can be determined by size and length. In JuliaFEM, we have a convention that arrays grow on right according to number of nodes and down according to the spatial index. So if we have a column vector boldsymbol N and a row vector boldsymbol u, interpolation goes u = boldsymbol N boldsymbol u:N = [1 2 3] # evaluated basis functions\nu = [1, 2, 3] # field value at discrete points\nN*uFor example, Quad4 is defined in two dimensions and it has 4 nodes, soB = Quad4()\nsize(B)\nlength(B)Evaluating basis functions and they partial derivatives with respect to some xi is done efficiently using eval_basis! and eval_dbasis!. For these commands one needs to allocate array outside of the hot loops to get speed.N = zeros(1, length(B))\ndN = zeros(size(B)...)\nxi = (0.0, 0.0)\neval_basis!(B, N, xi)\neval_dbasis!(B, dN, xi)For Langrange interpolation polynomials, by definition, on each node shape function corresponding to that node gets value of 1 and the rest is zero. Node ordering follows the same defined in e.g. in ABAQUS and in many other FEM softwares. The actual shape of domain can be inspected using command get_reference_element_coordinates:get_reference_element_coordinates(Quad4)for xi in get_reference_element_coordinates(Quad4)\n    eval_basis!(B, N, xi)\n    println(\"$N at $xi\")\nend"
 },
 
 {
@@ -93,7 +261,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Basis functions",
     "title": "Mathematics",
     "category": "section",
-    "text": "Without knowing anything about the real shape of domain, eval_dbasis! is calculating gradient with respect to dimensionless coordinates xi_i, i.e.\\begin{equation} \\frac{\\partial\\boldsymbol{N}}{\\partial\\boldsymbol{\\xi}}=\\left[\\begin{array}{cccc} \\frac{\\partial N_{1}}{\\partial\\xi_{1}} & \\frac{\\partial N_{2}}{\\partial\\xi_{1}} & \\cdots & \\frac{\\partial N_{n}}{\\partial\\xi_{1}}\\\n\\frac{\\partial N_{1}}{\\partial\\xi_{2}} & \\frac{\\partial N_{2}}{\\partial\\xi_{2}} & \\cdots & \\frac{\\partial N_{n}}{\\partial\\xi_{2}}\\\n\\frac{\\partial N_{1}}{\\partial\\xi_{3}} & \\frac{\\partial N_{2}}{\\partial\\xi_{3}} & \\cdots & \\frac{\\partial N_{n}}{\\partial\\xi_{3}} \\end{array}\\right] \\end{equation}Usually this is not wanted, but instead gradient of basis functions is calculated with respect to natural coordinates X_i,\\begin{equation} \\frac{\\partial\\boldsymbol{N}}{\\partial\\boldsymbol{X}}=\\left[\\begin{array}{cccc} \\frac{\\partial N_{1}}{\\partial X_{1}} & \\frac{\\partial N_{2}}{\\partial X_{1}} & \\cdots & \\frac{\\partial N_{n}}{\\partial X_{1}}\\\n\\frac{\\partial N_{1}}{\\partial X_{2}} & \\frac{\\partial N_{2}}{\\partial X_{2}} & \\cdots & \\frac{\\partial N_{n}}{\\partial X_{2}}\\\n\\frac{\\partial N_{1}}{\\partial X_{3}} & \\frac{\\partial N_{2}}{\\partial X_{3}} & \\cdots & \\frac{\\partial N_{n}}{\\partial X_{3}} \\end{array}\\right] \\end{equation}To get this, inverse of Jacobian matrix is needed.X = ([0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0])\nxi = (0.0, 0.0)\nJ = jacobian(B, X, xi)2×2 Array{Float64,2}:\n 0.5  0.0\n 0.0  0.5inv(J) * dN2×4 Array{Float64,2}:\n -0.5   0.5  0.5  -0.5\n -0.5  -0.5  0.5   0.5Or directly:dNdX = grad(B, X, xi)2×4 Array{Float64,2}:\n -0.5   0.5  0.5  -0.5\n -0.5  -0.5  0.5   0.5If interpolation domain is manifold, Jacobian is not square and inverse cannot be taken.X2 = ([0.0,0.0,0.0], [1.0, 0.0,1.0], [1.0,1.0,1.0], [0.0,1.0,0.0])\nxi = (0.0, 0.0)\nJ = jacobian(B, X2, xi)2×3 Array{Float64,2}:\n 0.5  0.0  0.5\n 0.0  0.5  0.0One can use Jacobian to calculate surface integral:\\begin{equation} \\iint_{S}f\\,\\mathrm{d}\\Sigma=\\iint_{T}f\\left(\\boldsymbol{x}\\left(s,t\\right)\\right)\\left\\Vert \\frac{\\partial\\boldsymbol{x}}{\\partial s}\\times\\frac{\\partial\\boldsymbol{x}}{\\partial t}\\right\\Vert \\,\\mathrm{d}s\\mathrm{d}t \\end{equation}4*norm(cross(J[1,:], J[2,:])), sqrt(2) # area of manifold(1.4142135623730951, 1.4142135623730951)Gradient of e.g. displacement field or temperature field can be also evaluated:u = ([0.0, 0.0], [1.0, -1.0], [2.0, 3.0], [0.0, 0.0])\nT = (1.0, 2.0, 3.0, 4.0)\ngrad(B, u, X, xi)2×2 Array{Float64,2}:\n 1.5  0.5\n 1.0  2.0grad(B, T, X, xi)1×2 RowVector{Float64,Array{Float64,1}}:\n 0.0  2.0One can interpolate fields using basis:interpolate(B, u, xi)2-element Array{Float64,1}:\n 0.75\n 0.5interpolate(B, T, xi)2.5At last to avoid unnecessary memory allocations, a struct BasisInfo is introduced, containing memory space for calculations.bi = BasisInfo(Quad4)\neval_basis!(bi, X, xi)FEMBasis.BasisInfo{FEMBasis.Quad4,Float64}([0.25 0.25 0.25 0.25], [-0.25 0.25 0.25 -0.25; -0.25 -0.25 0.25 0.25], [-0.5 0.5 0.5 -0.5; -0.5 -0.5 0.5 0.5], [0.5 0.0; 0.0 0.5], [2.0 -0.0; -0.0 2.0], 0.25)bi.J2×2 Array{Float64,2}:\n 0.5  0.0\n 0.0  0.5bi.N1×4 Array{Float64,2}:\n 0.25  0.25  0.25  0.25bi.dN2×4 Array{Float64,2}:\n -0.25   0.25  0.25  -0.25\n -0.25  -0.25  0.25   0.25bi.detJ0.25bi.grad2×4 Array{Float64,2}:\n -0.5   0.5  0.5  -0.5\n -0.5  -0.5  0.5   0.5bi.invJ2×2 Array{Float64,2}:\n  2.0  -0.0\n -0.0   2.0gradu = zeros(2, 2)\ngrad!(bi, gradu, u)2×2 Array{Float64,2}:\n 1.5  0.5\n 1.0  2.0"
+    "text": "Without knowing anything about the shape of the real domain (after all, basis is usually defined on dimensionless, reference domain), eval_dbasis! is calculating gradient with respect to dimensionless coordinates xi_i, i.e.\\begin{equation} \\left(\\frac{\\partial\\boldsymbol{N}}{\\partial\\boldsymbol{\\xi}}\\right)_{ij}=\\frac{\\partial N_{j}}{\\partial\\xi_{i}} \\end{equation}Usually this is not wanted, but instead gradient of basis functions is calculated with respect to natural coordinates X_i,\\begin{equation} \\left(\\frac{\\partial\\boldsymbol{N}}{\\partial\\boldsymbol{X}}\\right)_{ij}=\\frac{\\partial N_{j}}{\\partial X_{i}} \\end{equation}Without going into the mathematical details, to transform partial derivatives from reference element to natural coordinates, inverse of Jacobian matrix is needed.X = ([0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0])\nxi = (0.0, 0.0)\nJ = jacobian(B, X, xi)\ninv(J) * dNOr directly, using grad:dNdX = grad(B, X, xi)If interpolation domain is a manifold, i.e. space having lower dimension than the actual space (read: surface in 3d), Jacobian is not square and inverse cannot be taken.X2 = ([0.0,0.0,0.0], [1.0, 0.0,1.0], [1.0,1.0,1.0], [0.0,1.0,0.0])\nxi = (0.0, 0.0)\nJ = jacobian(B, X2, xi)One can use Jacobian to calculate surface integral:\\begin{equation} \\iint_{S}f\\,\\mathrm{d}\\Sigma=\\iint_{T}f\\left(\\boldsymbol{x}\\left(s,t\\right)\\right)\\left\\Vert \\frac{\\partial\\boldsymbol{x}}{\\partial s}\\times\\frac{\\partial\\boldsymbol{x}}{\\partial t}\\right\\Vert \\,\\mathrm{d}s\\mathrm{d}t \\end{equation}4*norm(cross(J[1,:], J[2,:])), sqrt(2) # area of manifoldGradient of e.g. displacement field or temperature field can be also evaluated, with the same grad function, by adding field u:u = ([0.0, 0.0], [1.0, -1.0], [2.0, 3.0], [0.0, 0.0])\nT = (1.0, 2.0, 3.0, 4.0)\ngrad(B, u, X, xi)\ngrad(B, T, X, xi)One can interpolate fields using basis, i.e. calculate u = boldsymbolNboldsymbolu as described before:interpolate(B, u, xi)\ninterpolate(B, T, xi)In \"hot loops\", it's absolutely necessary that no unnecessary memory allcations happen as it is reducing the performance dramatically from C speed. To avoid unnecessary memory allocations, a struct BasisInfo is introduced, containing workspace for calculations.bi = BasisInfo(Quad4)\neval_basis!(bi, X, xi)\nbi.J       # Jacobian\nbi.N       # shape functions\nbi.dN      # shape function derivatives, with respect to xi\nbi.detJ    # determinant of Jacobian\nbi.grad    # shape function derivatives, with respect to X\nbi.invJ    # inverse of JacobianCalculating gradient of some field u can be done memory efficiently using this BasisInfo structure:gradu = zeros(2, 2)\ngrad!(bi, gradu, u)"
 },
 
 {
@@ -101,7 +269,23 @@ var documenterSearchIndex = {"docs": [
     "page": "Basis functions",
     "title": "Defining custom shape functions",
     "category": "section",
-    "text": "Depending from the type of shape functions, they can be created more or less automatic way. For Lagrange type interpolation, ones needs only to define polynomial and corner points for domain. For example, if domain is 01^2, one can use create_basis:code = create_basis(\n    :MyQuad,\n    \"My special domain\",\n    (\n        (0.0, 0.0),\n        (1.0, 0.0),\n        (1.0, 1.0),\n        (0.0, 1.0),\n    ),\n    \"1 + u + v + u*v\"\n)\neval(code)B = MyQuad()\nxi = (0.5, 0.5)\neval_basis!(B, N, xi)1×4 Array{Float64,2}:\n 0.25  0.25  0.25  0.25In this case partial derivatives of shape functions are with respect to X, because interpolation polynomials are calculated against real domain and not \"reference domain\":eval_dbasis!(B, dN, xi)2×4 Array{Float64,2}:\n -0.5   0.5  0.5  -0.5\n -0.5  -0.5  0.5   0.5J = jacobian(B, X, xi)2×2 Array{Float64,2}:\n 1.0  0.0\n 0.0  1.0u = ([0.0, 0.0], [1.0, -1.0], [2.0, 3.0], [0.0, 0.0])\ngrad(B, u, X, xi)2×2 Array{Float64,2}:\n 1.5  0.5\n 1.0  2.0Shape functions can be defined manually and calculate partial derivatives automatically. C1-continuous Hermite shape functions can be defined as:code = create_basis(\n    :C1Hermite,\n    \"C1-continuous Hermite shape functions\",\n    (\n        (0.0,),\n        (0.0,),\n        (1.0,),\n        (1.0,)\n    ),\n    (\n        \"2*u^3 - 3*u^2 + 1\",\n        \"u^3 - 2*u^2 + u\",\n        \"-2*u^3 + 3*u^2\",\n        \"u^3 - u^2\"\n    )\n)\neval(code)B = C1Hermite()\nxi = (0.0,)\neval_basis!(B, N, xi)1×4 Array{Float64,2}:\n 1.0  0.0  0.0  0.0dN = zeros(1, 4)\neval_dbasis!(B, dN, xi)1×4 Array{Float64,2}:\n 0.0  1.0  0.0  0.0xi = (1.0,)\neval_basis!(B, N, xi)1×4 Array{Float64,2}:\n 0.0  0.0  1.0  0.0eval_dbasis!(B, dN, xi)1×4 Array{Float64,2}:\n 0.0  0.0  0.0  1.0The last option is to build everything from scratch. For that, one must import and define following functions:Base.size\nBase.length\nFEMBase.FEMBasis.get_reference_element_coordinates\nFEMBase.FEMBasis.eval_basis!\nFEMBase.FEMBasis.eval_dbasis!A simple implementation of P-hierarchical 1d-basis would then beimport Base: size, length\nimport FEMBase: get_reference_element_coordinates,\n                eval_basis!, eval_dbasis!,\n                AbstractBasis\n\ntype PSeg <: AbstractBasis\n    order :: Int\nend\n\nfunction PSeg()\n    return PSeg(1)\nend\n\nfunction length(basis::PSeg)\n    return basis.order+1\nend\n\nfunction size(basis::PSeg)\n    return (1, basis.order+1)\nend\n\nfunction get_reference_element_coordinates(basis::PSeg)\n    return ((-1.0,), (1.0,))\nend\n\n\"\"\"\n    get_legendre_polynomial(n)\n\nReturn Legendgre polynomial of order `n` to inverval ξ ∈ [1, 1].\n\nImplementation uses Bonnet's recursion formula. See\nhttps://en.wikipedia.org/wiki/Legendre_polynomials\n\"\"\"\nfunction get_legendre_polynomial(n)\n    n == 0 && return xi -> 1.0\n    n == 1 && return xi -> xi\n    Pm1 = get_legendre_polynomial(n-1)\n    Pm2 = get_legendre_polynomial(n-2)\n    A(xi) = (2.0*n-1.0)*xi*Pm1(xi)\n    B(xi) = (n-1.0)*Pm2(xi)\n    return xi -> (A(xi)-B(xi))/n\nend\n\n\"\"\"\n    get_legendre_polynomial_derivative(n)\n\nReturn derivative of Legendgre polynomial of order `n` to\ninverval ξ ∈  [-1, 1]\n\"\"\"\nfunction get_legendre_polynomial_derivative(n)\n    n == 0 && return xi -> 0.0\n    n == 1 && return xi -> 1.0\n    Pm1 = get_legendre_polynomial_derivative(n-1)\n    Pm2 = get_legendre_polynomial_derivative(n-2)\n    A(xi) = (2.0*(n-1.0)+1.0)*xi*Pm1(xi)\n    B(xi) = (n+1.0-1.0)*Pm2(xi)\n    return xi -> (A(xi)-B(xi))/(n-1.0)\nend\n\nfunction eval_basis!{T}(basis::PSeg, N::Matrix{T}, xi::Tuple{T})\n    n = length(basis)\n    t = xi[1]\n    N[1] = 0.5*(1-t)\n    N[2] = 0.5*(1+t)\n    n < 3 && return N\n    for i=3:n\n        j = i-1\n        P1 = get_legendre_polynomial(j)\n        P2 = get_legendre_polynomial(j-2)\n        N[i] = 1.0/sqrt(2.0*(2.0*j-1.0))*(P1(t)-P2(t))\n    end\n    return N\nend\n\nfunction eval_dbasis!{T}(basis::PSeg, dN::Matrix{T}, xi::Tuple{T})\n    n = length(basis)\n    t = xi[1]\n    dN[1] = -0.5\n    dN[2] = 0.5\n    n < 3 && return N\n    for i=3:n\n        j = i-1\n        P1 = get_legendre_polynomial_derivative(j)\n        P2 = get_legendre_polynomial_derivative(j-2)\n        dN[i] = 1.0/sqrt(2.0*(2.0*j-1.0))*(P1(t)-P2(t))\n    end\n    return dN\nendeval_dbasis! (generic function with 21 methods)B = PSeg()PSeg(1)N = zeros(1, 2)\neval_basis!(B, N, (0.0,))1×2 Array{Float64,2}:\n 0.5  0.5N = zeros(1, 3)\nB.order = 2\neval_basis!(B, N, (0.0,))1×3 Array{Float64,2}:\n 0.5  0.5  -0.612372using PyPlot\nB.order = 6\nN = zeros(1, length(B))\nn = 50\nxi = linspace(-1, 1, n)\nNN = zeros(n, length(B))\nfor i=1:n\n    eval_basis!(B, N, (xi[i],))\n    NN[i,:] = N[:]\nendplot(NN)\ntitle(\"Hierarchical shape functions to order 6\");(Image: png)"
+    "text": "Depending from the type of shape functions, they can be created more or less automatic way. An ultimate goal is to create all kind of shape functions just by defining the general principles and let computer handle the all boring things and create shape functions automatically using metaprogramming to get efficient code.For Lagrange type interpolation, ones needs only to define polynomial and corner points for domain. For example, if domain is 01^2, one can use create_basis, and give polynomial with degree matching to the number of point to interpolate.code = create_basis(\n    :MyQuad,\n    \"My special domain\",\n    (\n        (0.0, 0.0),\n        (1.0, 0.0),\n        (1.0, 1.0),\n        (0.0, 1.0),\n    ),\n    \"1 + u + v + u*v\"\n);\n\neval(code)What we have defined is a interpolation polynomial and \"corner points\". As a result, we have a new basis MyQuad, working just like expected. All Lagrange polynomials are done like this.B = MyQuad()\nxi = (0.5, 0.5)\neval_basis!(B, N, xi)In this case, and considering domain, partial derivatives of shape functions are with respect to X, because interpolation polynomials are calculated against real domain and not \"reference domain\". That is, partial derivatives should match to what already calcualated.eval_dbasis!(B, dN, xi)Jacobian should be identity matrix:J = jacobian(B, X, xi)And taking gradient with respect to X should return also same result than before:u = ([0.0, 0.0], [1.0, -1.0], [2.0, 3.0], [0.0, 0.0])\ngrad(B, u, X, xi)Shape functions can be defined manually and calculate partial derivatives automatically. For example, for pyramid elements typical ansatz approach is not applicable. Some other degenerated elements exists in fracture mechanics.For example, C1-continuous Hermite shape functions ready to approximate Euler-Bernoulli beam equations can be defined as:code = create_basis(\n    :C1Hermite,\n    \"C1-continuous Hermite shape functions\",\n    (\n        (0.0,),\n        (0.0,),\n        (1.0,),\n        (1.0,)\n    ),\n    (\n        \"2*u^3 - 3*u^2 + 1\",\n        \"u^3 - 2*u^2 + u\",\n        \"-2*u^3 + 3*u^2\",\n        \"u^3 - u^2\"\n    )\n);\neval(code)Again, we should have 1.0 in corresponding nodal point or it's derivative, according to that order we have u(0) u(0) u(1) u(1), soB = C1Hermite()\nN = zeros(1, 4)\ndN = zeros(1, 4)\neval_basis!(B, N, (0.0,))\neval_dbasis!(B, dN, (0.0,))\neval_basis!(B, N, (1.0,))\neval_dbasis!(B, dN, (1.0,))The last option is to build everything from scratch. For that, one must import and define following functions:Base.size\nBase.length\nFEMBase.get_reference_element_coordinates\nFEMBase.eval_basis!\nFEMBase.eval_dbasis!As an examples, a simple implementation of P-hierarchical 1d-basis would then be the following:import Base: size, length\nimport FEMBase: get_reference_element_coordinates,\n                eval_basis!, eval_dbasis!,\n                AbstractBasis\n\ntype PSeg <: AbstractBasis\n    order :: Int\nend\n\nfunction PSeg()\n    return PSeg(1)\nend\n\nfunction length(basis::PSeg)\n    return basis.order+1\nend\n\nfunction size(basis::PSeg)\n    return (1, basis.order+1)\nend\n\nfunction get_reference_element_coordinates(basis::PSeg)\n    return ((-1.0,), (1.0,))\nend\n\nnothing # hideNext, define Legengre polynomials:\"\"\"\n    get_legendre_polynomial(n)\n\nReturn Legendgre polynomial of order `n` to inverval ξ ∈ [1, 1].\n\nImplementation uses Bonnet's recursion formula. See\nhttps://en.wikipedia.org/wiki/Legendre_polynomials\n\"\"\"\nfunction get_legendre_polynomial(n)\n    n == 0 && return xi -> 1.0\n    n == 1 && return xi -> xi\n    Pm1 = get_legendre_polynomial(n-1)\n    Pm2 = get_legendre_polynomial(n-2)\n    A(xi) = (2.0*n-1.0)*xi*Pm1(xi)\n    B(xi) = (n-1.0)*Pm2(xi)\n    return xi -> (A(xi)-B(xi))/n\nend\n\n\"\"\"\n    get_legendre_polynomial_derivative(n)\n\nReturn derivative of Legendgre polynomial of order `n` to\ninverval ξ ∈  [-1, 1]\n\"\"\"\nfunction get_legendre_polynomial_derivative(n)\n    n == 0 && return xi -> 0.0\n    n == 1 && return xi -> 1.0\n    Pm1 = get_legendre_polynomial_derivative(n-1)\n    Pm2 = get_legendre_polynomial_derivative(n-2)\n    A(xi) = (2.0*(n-1.0)+1.0)*xi*Pm1(xi)\n    B(xi) = (n+1.0-1.0)*Pm2(xi)\n    return xi -> (A(xi)-B(xi))/(n-1.0)\nend\n\nnothing # hideAnd finally implement eval_basis! and eval_dbasis! functions:function eval_basis!{T}(basis::PSeg, N::Matrix{T}, xi::Tuple{T})\n    n = length(basis)\n    t = xi[1]\n    N[1] = 0.5*(1-t)\n    N[2] = 0.5*(1+t)\n    n < 3 && return N\n    for i=3:n\n        j = i-1\n        P1 = get_legendre_polynomial(j)\n        P2 = get_legendre_polynomial(j-2)\n        N[i] = 1.0/sqrt(2.0*(2.0*j-1.0))*(P1(t)-P2(t))\n    end\n    return N\nend\n\nfunction eval_dbasis!{T}(basis::PSeg, dN::Matrix{T}, xi::Tuple{T})\n    n = length(basis)\n    t = xi[1]\n    dN[1] = -0.5\n    dN[2] = 0.5\n    n < 3 && return N\n    for i=3:n\n        j = i-1\n        P1 = get_legendre_polynomial_derivative(j)\n        P2 = get_legendre_polynomial_derivative(j-2)\n        dN[i] = 1.0/sqrt(2.0*(2.0*j-1.0))*(P1(t)-P2(t))\n    end\n    return dN\nend\n\nnothing # hideLet's try it:B = PSeg()\nN = zeros(1, length(B))\neval_basis!(B, N, (0.0,))\nB.order = 2\nN = zeros(1, length(B))\neval_basis!(B, N, (0.0,))(Image: Hierarchical shape functions up to order 6)"
+},
+
+{
+    "location": "integration.html#",
+    "page": "Integration",
+    "title": "Integration",
+    "category": "page",
+    "text": ""
+},
+
+{
+    "location": "integration.html#Integration-1",
+    "page": "Integration",
+    "title": "Integration",
+    "category": "section",
+    "text": ""
 },
 
 {
@@ -109,823 +293,215 @@ var documenterSearchIndex = {"docs": [
     "page": "Elements",
     "title": "Elements",
     "category": "page",
-    "text": "In JuliaFEM, elements are \"containers\", combining fields and basis functions described above. Among that, element has information about topology (connectivity) and integration rule. These fundamentals forms a finite element, the backbone of finite element method, as the basic idea after all is just to discretize continuous domain to smaller topological entities like tetrahedrons and perform same operations to each element.using FEMBaseel = Element(Quad4, [1, 2, 3, 4])FEMBase.Element{FEMBasis.Quad4}(-1, [1, 2, 3, 4], FEMBase.Point{FEMBase.IntegrationPoint}[], Dict{String,FEMBase.AbstractField}(), FEMBasis.Quad4())Setting fields to element is done using a command update!, which either creates new field if does not already exist, or updates the old one. Typically, at least field called geometry needs to be defined to element as it's used to calculate Jacobian of element. Fields can be discrete, continuous, time invariant or variant, variable or constant, like described earlier.X = Dict(1 => [0.0,0.0], 2=>[1.0,0.0], 3=>[1.0,1.0], 4=>[0.0,1.0])\nupdate!(el, \"geometry\", X)FEMBase.DVTId{Array{Float64,1}}(Dict(4=>[0.0, 1.0],2=>[1.0, 0.0],3=>[1.0, 1.0],1=>[0.0, 0.0]))el.fieldsDict{String,FEMBase.AbstractField} with 1 entry:\n  \"geometry\" => FEMBase.DVTId{Array{Float64,1}}(Dict(4=>[0.0, 1.0],2=>[1.0, 0.0…u0 = ([0.0,0.0], [0.0,0.0], [0.0,0.0], [0.0,0.0])\nu1 = ([0.0,0.0], [0.0,0.0], [0.5,0.0], [0.0,0.0])\nupdate!(el, \"displacement\", 0.0 => u0)\nupdate!(el, \"displacement\", 1.0 => u1)\nel.fieldsDict{String,FEMBase.AbstractField} with 2 entries:\n  \"geometry\"     => FEMBase.DVTId{Array{Float64,1}}(Dict(4=>[0.0, 1.0],2=>[1.0,…\n  \"displacement\" => FEMBase.DVTV{4,Array{Float64,1}}(Pair{Float64,NTuple{4,Arra…Interpolating of fields goes calling Element(field_name, xi, time). For example, position of material particle X in initial configuration and deformed configuration in the middle of the element at time t=1 can be found asxi = (0.0, 0.0)\ntime = 1.0\nX = el(\"geometry\", xi, time)\nu = el(\"displacement\", xi, time)\nx = X+u\nprintln(\"X = $X, x = $x\")X = [0.5, 0.5], x = [0.625, 0.5]Jacobian, determinant of Jacobian and gradient of field can be calculated adding extra argument Val{:Jacobian}, Val{:detJ}, Val{:Grad} to the above command and not passing field name, i.e.el(xi, time, Val{:Jacobian})2×2 Array{Float64,2}:\n 0.5  0.0\n 0.0  0.5el(xi, time, Val{:detJ})0.25el(xi, time, Val{:Grad})2×4 Array{Float64,2}:\n -0.5   0.5  0.5  -0.5\n -0.5  -0.5  0.5   0.5Usually what the user wants is still a gradient of some field. For example, displacement gradient:gradu = el(\"displacement\", xi, time, Val{:Grad})\ngradu2×2 Array{Float64,2}:\n 0.25  0.25\n 0.0   0.0Or temperature gradient:update!(el, \"temperature\", (1.0, 2.0, 3.0, 4.0))\ngradT = el(\"temperature\", xi, time, Val{:Grad})1×2 RowVector{Float64,Array{Float64,1}}:\n 0.0  2.0Accessing integration points of element is done using command get_integration_points. Combining interpolation and integration one can already calculate local matrices of a single element or, for example area and strain energy:update!(el, \"lambda\", 96.0)\nupdate!(el, \"mu\", 48.0)\n\nA = 0.0\nW = 0.0\nfor ip in get_integration_points(el)\n    detJ = el(ip, time, Val{:detJ})\n    A += ip.weight * detJ\n    ∇u = el(\"displacement\", ip, time, Val{:Grad})\n    E = 1/2*(∇u + ∇u')\n    λ = el(\"lambda\", ip, time)\n    μ = el(\"mu\", ip, time)\n    W += ip.weight * ( λ/2*trace(E*E') + μ*trace(E)^2) * detJ\nend\n\nprintln(\"Area: $A\")\nprintln(\"Strain energy: $W\")Area: 1.0\nStrain energy: 10.0Local stiffness matrix for Poisson problem:K = zeros(4,4)\nupdate!(el, \"coefficient\", 36.0)\nfor ip in get_integration_points(el)\n    dN = el(ip, time, Val{:Grad})\n    detJ = el(ip, time, Val{:detJ})\n    c = el(\"coefficient\", ip, time)\n    K += ip.weight * c*dN'*dN * detJ\nend\nK4×4 Array{Float64,2}:\n  24.0   -6.0  -12.0   -6.0\n  -6.0   24.0   -6.0  -12.0\n -12.0   -6.0   24.0   -6.0\n  -6.0  -12.0   -6.0   24.0"
+    "text": ""
 },
 
 {
-    "location": "developing.html#",
-    "page": "Developing",
-    "title": "Developing",
+    "location": "elements.html#Elements-1",
+    "page": "Elements",
+    "title": "Elements",
+    "category": "section",
+    "text": "In JuliaFEM, elements can be considered as \"containers\", combining fields and basis functions described above. Among that, element has information about topology (connectivity) and numerical integration rule. These fundamentals forms a finite element, the backbone of finite element method.using FEMBaseNew elements are constructed by passing basis type (e.g. Seg2, Quad4, Tet10, ...) to Element and list of id numbers to where element is topologically connected.el = Element(Quad4, [1, 2, 3, 4])Setting fields to element is done using a command update!, which either creates a new field if field with that name does not already exist, or updates the old one. Typically, at least field called geometry needs to be defined to element as it's used to calculate Jacobian of element. Fields can be discrete, continuous, time invariant or variant, variable or constant, or anything else that is subclassed from AbstractField.X = Dict(1 => [0.0,0.0], 2=>[1.0,0.0], 3=>[1.0,1.0], 4=>[0.0,1.0])\nupdate!(el, \"geometry\", X)Internally, fields are stored in a Dict:el.fieldsThe command update! is automatically inspecting field type based in input. For example, to define temporal field varying spatially:u0 = ([0.0,0.0], [0.0,0.0], [0.0,0.0], [0.0,0.0])\nu1 = ([0.0,0.0], [0.0,0.0], [0.5,0.0], [0.0,0.0])\nupdate!(el, \"displacement\", 0.0 => u0)\nupdate!(el, \"displacement\", 1.0 => u1)\nel.fieldsInterpolating of fields can be done using syntax Element(field_name, xi, time). For example, position of material particle X in initial configuration and deformed configuration in the middle of the element at time t=1 can be found asxi = (0.0, 0.0)\ntime = 1.0\nX = el(\"geometry\", xi, time)\nu = el(\"displacement\", xi, time)\nx = X+uJacobian, determinant of Jacobian and gradient of field can be calculated adding extra argument Val{:Jacobian}, Val{:detJ}, Val{:Grad} to the above command and not passing field name, i.e.el(xi, time, Val{:Jacobian})\nel(xi, time, Val{:detJ})\nel(xi, time, Val{:Grad})Usually what is needed when calculating local stiffness matrices is a gradient of some field. For example, displacement gradient and temperature gradient can be obtained following way:gradu = el(\"displacement\", xi, time, Val{:Grad})\nupdate!(el, \"temperature\", (1.0, 2.0, 3.0, 4.0))\ngradT = el(\"temperature\", xi, time, Val{:Grad})Accessing integration points of element is done using function get_integration_points. Combining interpolation and integration one can already calculate local matrices of a single element or, for example area and strain energy:update!(el, \"lambda\", 96.0)\nupdate!(el, \"mu\", 48.0)\n\nA = 0.0\nW = 0.0\nfor ip in get_integration_points(el)\n    detJ = el(ip, time, Val{:detJ})\n    A += ip.weight * detJ\n    ∇u = el(\"displacement\", ip, time, Val{:Grad})\n    E = 1/2*(∇u + ∇u')\n    λ = el(\"lambda\", ip, time)\n    μ = el(\"mu\", ip, time)\n    W += ip.weight * ( λ/2*trace(E*E') + μ*trace(E)^2) * detJ\nend\n\nprintln(\"Area: $A\")\nprintln(\"Strain energy: $W\")To calculate local stiffness matrix for Poisson problem:K = zeros(4,4)\nupdate!(el, \"coefficient\", 36.0)\nfor ip in get_integration_points(el)\n    dN = el(ip, time, Val{:Grad})\n    detJ = el(ip, time, Val{:detJ})\n    c = el(\"coefficient\", ip, time)\n    K += ip.weight * c*dN'*dN * detJ\nend\nKFor more memory efficient code it's a good idea to use BasisInfo and element_info! which allocates working memory to calculate all \"basic stuff\" for a single integration point, like Jacobian, determinant of Jacobian, basis and it's partial derivatives with respect to reference configuration X.bi = BasisInfo(Quad4)\nfill!(K, 0.0)\nfor ip in get_integration_points(el)\n    J, detJ, N, dN = element_info!(bi, el, ip, time)\n    c = el(\"coefficient\", ip, time)\n    K += ip.weight * c*dN'*dN * detJ\nend\nK"
+},
+
+{
+    "location": "elements.html#Using-analytical-fields-1",
+    "page": "Elements",
+    "title": "Using analytical fields",
+    "category": "section",
+    "text": ""
+},
+
+{
+    "location": "elements.html#Creating-fields-depending-from-other-fields-1",
+    "page": "Elements",
+    "title": "Creating fields depending from other fields",
+    "category": "section",
+    "text": ""
+},
+
+{
+    "location": "problems.html#",
+    "page": "Problems",
+    "title": "Problems",
     "category": "page",
     "text": ""
 },
 
 {
-    "location": "developing.html#Developing-new-input/output-interfaces-1",
-    "page": "Developing",
-    "title": "Developing new input/output interfaces",
+    "location": "problems.html#Problems-1",
+    "page": "Problems",
+    "title": "Problems",
     "category": "section",
-    "text": "E.g. mesh reader or results writer.type MeshReader <: AbstractMeshReader\nend\n\n\"\"\"\n    read_mesh(mesh::MeshReader, data)\n\nReads mesh from disk/memory/cloud/sql/etc. and returns Mesh object\n\"\"\"\nfunction read_mesh(mesh::MeshReader, filename::String)\n    # do something ...\nendtype ResultsWriter <: AbstractResultsWriter\nend\n\n\"\"\"\n    write_results!(results::ResultsWriter, data)\n\nGiven data, write calculation results back to disk/memory/cloud/sql/etc.\n\"\"\"\nfunction write_results!(results::ResultsWriter, data)\n    # write results ...\nend"
+    "text": "The role of problems in JuliaFEM is to work as a container for a set of elements. They contain elements and an information how the elements are assembled to the global assembly. The key point is that thanks to multiple dispatch, each problem defines also the physics behind discretization and all problems are assembled using a command assemble_elements!. As an example, a heat equation in two dimensions is discretized. Mathematically known also as Poisson problem. Strong form of the problem is       -k nabla^2 u = f    text in  Omega \n                   u = u_0  text on  Gamma_mathrmD \nfracupartial n = g    text on  Gamma_mathrmNand corresponding variational problem is to find uinmathcalU such that for all vinmathcalVint_Omegaknabla ucdotnabla vmathrmdx=int_Omegafvmathrmdx+int_Gamma_mathrmNgvmathrmdsLet's call k thermal conductivity, f heat source and g heat flux.using FEMBase\nimport FEMBase: assemble_elements!, get_unknown_field_nameEach new problem must be a subtype of FieldProblem or BoundaryProblem. The main difference between these two are that FieldProblem is assembling local matrices for domain Omega whereas BoundaryProblem is creating (in general) constraint matrices for boundary Gamma_mathrmD. The general structure to solve in JuliaFEM is currently described by four different matrices and two vectors, i.e.beginbmatrix\nboldsymbolK  boldsymbolC_1\nboldsymbolC_2  boldsymbolD\nendbmatrix\nbeginbmatrix\nboldsymbolu\nboldsymbollambda\nendbmatrix =\nbeginbmatrix\nboldsymbolf\nboldsymbolg\nendbmatrixWe believe that this construction is general enough to describe all possible situations in future. Quite often boldsymbolC_1 = boldsymbolC_2^mathrmT and boldsymbolD = boldsymbol0 so that we have a typical saddle point problembeginbmatrixboldsymbolK  boldsymbolC^mathrmT\nboldsymbolC  boldsymbol0\nendbmatrixbeginbmatrixboldsymbolu\nboldsymbollambda\nendbmatrix=beginbmatrixboldsymbolf\nboldsymbolg\nendbmatrixwhich is equivalent to minimization problemmin_boldsymbolCboldsymbolu = boldsymbolg\nfrac12 boldsymbolu^mathrmT boldsymbolK boldsymbolu -\nboldsymbolu^mathrmT boldsymbolf"
 },
 
 {
-    "location": "developing.html#Developing-new-physical-models-1",
-    "page": "Developing",
-    "title": "Developing new physical models",
+    "location": "problems.html#Discretizing-field-problem-1",
+    "page": "Problems",
+    "title": "Discretizing field problem",
     "category": "section",
-    "text": "Starting point is a weak formulation, which is then discretized to elements.type Heat <: AbstractProblem\nend\n\n\"\"\"\n    assemble!(settings::Heat, problem::Problem, assembly::Assembly, elements::Vector{Element}, time::Float64)\n\nGiven `problem` spesification, assemble `elements` to global stiffness matrix and force\nvector defined in `assembly` for some given `time`.\n\"\"\"\nfunction assemble!(settings::Heat, problem::Problem, assembly::Assembly,\n                   elements::Vector{Element}, time::Float64)\n    # integrate local matrices and add them to assembly\nend"
+    "text": "So, first we must define a new type, e.g. Heat, which is a subclass of FieldProblem. Problem-wide parameters can be defined into struct if needed.type Heat <: FieldProblem\nendIn principle it's possible to assemble one element at a time, but way more memory efficient is to assemble all elements with same kind (basis) at same time and preallocate memory only one time before looping through element list. Implementation for assembling local stiffness matrix isfunction assemble_elements!{B}(problem::Problem{Heat}, assembly::Assembly,\n                               elements::Vector{Element{B}}, time::Float64)\n\n    println(\"Assembling elements of kind $B\")\n    bi = BasisInfo(B)\n    ndofs = length(B)\n    Ke = zeros(ndofs, ndofs)\n\n    for element in elements\n        fill!(Ke, 0.0)\n        for ip in get_integration_points(element)\n            J, detJ, N, dN = element_info!(bi, element, ip, time)\n            k = element(\"thermal conductivity\", ip, time)\n            Ke += ip.weight * k*dN'*dN * detJ\n        end\n        gdofs = get_gdofs(problem, element)\n        add!(assembly.K, gdofs, gdofs, Ke)\n    end\n\nend\n\nnothing # hideHere, first some memory is allocated to calculate Jacobian, gradients etc. to BasisInfo. Ke is used to store local stiffness matrix. Then iterate over all elements and integration points, evaluate basis and add contribution to local stiffness matrix. Finally, get global degrees of freedom for element by using command get_gdofs and finally add contribution to global stiffness matrix K.From performance point of view, it's important that memory allocations inside at least the innermost loop is minimized, although assembling global stiffness matrix can be parallelized (at least almost) perfectly and is not considered as a bottleneck when models get big enough. It's anyway a good idea to pay attention to the memory allocations.Let's create some test problem and test our implementation:el1 = Element(Quad4, [1, 2, 3, 4])\nX = Dict(1 => [0.0,0.0], 2 => [1.0,0.0], 3 => [1.0,1.0], 4 => [0.0,1.0])\nupdate!(el1, \"geometry\", X)\nupdate!(el1, \"thermal conductivity\", 6.0)\nelements = [el1]\nassembly = Assembly()\nproblem = Problem(Heat, \"test problem\", 1)Now the struct Heat is empty. If we need to store some problem-wide settings to that struct, they can be found from problem.properties. When creating a new Problem, the syntax is Problem(type, name, field_dimension), where two first arguments are self descriptive. The third one is the information, how many degrees of freedom is in this problem. As Poisson problem is scalar equation, there is only 1 degrees of freedom per node. For example in continuum mechanics, where the unknown field is displacement, there is usually 2-6 degrees of freedom per node, depending on problem type. Next we do the actual assembling of elements into global stiffness matrix:time = 0.0\nassemble_elements!(problem, assembly, elements, time)full(assembly.K)There is actually one Assembly inside Problem and elements are defined to problem using add_elements!, so a more realistic use case to create global assembly would be to use assemble!(problem, time) as shown below:el2 = Element(Tri3, [3, 2, 5])\nX[5] = [2.0, 1.0]\nelements = [el1, el2]\nupdate!(elements, \"geometry\", X)\nupdate!(elements, \"thermal conductivity\", 6.0)\nproblem = Problem(Heat, \"test problem\", 1)\nadd_elements!(problem, elements)\nassemble!(problem, time)full(problem.assembly.K)Now, function defined above is actually executed two times, first for elements using Tri3 basis and after that for Quad4. That is, assemble!(problem, time) is grouping elements by their type and calling function for each element type separately. It also does some initializations and gives possibility to mangle matrices before and after assembly. These hacks may be useful if one needs to add some discrete values to the matrices after assembly or e.g. save matrices to disk for later diagnoses.We also need to deal with the integrals on the right hand side. The first integral is done over the domain and can be included to the same assemble_elements!-function than stiffness matrix. Boundary term can be handled in different ways. One option is to define it yet in same function and search for fields like surface traction S1, where S1 is one side of the element. This is how it is done in ABAQUS. Another way is to use lower dimensional \"boundary element\" in assembly and add surface term to that element. This is how it is done in Code Aster.assembly_elements!-function defined above can be overridden by restricting the type of elements list, elements::Vector{Element{B}} to a some spesific elements. This allows, for example, to optimize assembly for some certain element type what is commonly used. Another use case is to define different assembly function for boundary elements. In 2d setting, voluminal elements like Tet3, Tet6, Quad4, Quad8, Quad9 are integrated over volume and they one dimensional counterparts Seg2, Seg3 can be used to assign boundary fluxes.The updated assemble_elements!-function, which can also handle volume load from right hand side of the equation, i.e. int fvmathrmdxlooks like following:function assemble_elements!{B}(problem::Problem{Heat}, assembly::Assembly,\n                               elements::Vector{Element{B}}, time::Float64)\n\n    println(\"Assembling volume elements of kind $B\")\n    bi = BasisInfo(B)\n    ndofs = length(B)\n    Ke = zeros(ndofs, ndofs)\n    fe = zeros(ndofs)\n\n    for element in elements\n        fill!(Ke, 0.0)\n        fill!(fe, 0.0)\n        for ip in get_integration_points(element)\n            J, detJ, N, dN = element_info!(bi, element, ip, time)\n            k = element(\"thermal conductivity\", ip, time)\n            Ke += ip.weight * k*dN'*dN * detJ\n            if haskey(element, \"heat source\")\n                f = element(\"heat source\", ip, time)\n                fe += ip.weight * N'*f * detJ\n            end\n        end\n        gdofs = get_gdofs(problem, element)\n        add!(assembly.K, gdofs, gdofs, Ke)\n        add!(assembly.f, gdofs, fe)\n    end\n\nend\n\nnothing # hideAt last, implement boundary elements to handle heat flux. To choose what elements should use this assembly function, elements::Vector{Element{B}} must be restricted only to group where B<:Union{Seg2, Seg}.function assemble_elements!{B<:Union{Seg2,Seg3}}(problem::Problem{Heat},\n                                                 assembly::Assembly,\n                                                 elements::Vector{Element{B}},\n                                                 time::Float64)\n\n    println(\"Assembling boundary elements of kind $B\")\n    bi = BasisInfo(B)\n    ndofs = length(B)\n    fe = zeros(ndofs)\n\n    for element in elements\n        haskey(element, \"heat flux\") || continue\n        fill!(fe, 0.0)\n        for ip in get_integration_points(element)\n            J, detJ, N, dN = element_info!(bi, element, ip, time)\n            g = element(\"heat flux\", ip, time)\n            fe += ip.weight * N'*g * detJ\n        end\n        gdofs = get_gdofs(problem, element)\n        add!(assembly.f, gdofs, fe)\n    end\n\nend\n\nnothing # hideTo test everything implemented, create some small test problem:el1 = Element(Quad4, [1, 2, 3, 4])\nel2 = Element(Tri3, [3, 2, 5])\nel3 = Element(Seg2, [3, 5])\nX = Dict(1 => [0.0, 0.0],\n         2 => [1.0, 0.0],\n         3 => [1.0, 1.0],\n         4 => [0.0, 1.0],\n         5 => [2.0, 1.0])\nelements = [el1, el2, el3]\nupdate!(elements, \"geometry\", X)\nupdate!(elements, \"thermal conductivity\", 6.0)\nupdate!(el3, \"heat flux\", 264.0)\nupdate!(el1, \"heat source\", 132.0)\nproblem = Problem(Heat, \"test problem\", 1)\nadd_elements!(problem, elements)\nassemble!(problem, time)Global stiffness matrix boldsymbolK and force vector boldsymbolf areK = full(problem.assembly.K)\nf = full(problem.assembly.f)To get unique solution, some essential boundary condition must be given, e.g. set dofs 1 and 4 fixed, u_1 = u_4 = 0.u = zeros(5)\nall_dofs = collect(1:5)\nfixed_dofs = [1, 4]\nfree_dofs = setdiff(all_dofs, fixed_dofs)\nu[free_dofs] = K[free_dofs,free_dofs] \\ f[free_dofs]\nu"
 },
 
 {
-    "location": "developing.html#Developing-new-material-model-1",
-    "page": "Developing",
-    "title": "Developing new material model",
+    "location": "problems.html#Discretizing-boundary-problem-1",
+    "page": "Problems",
+    "title": "Discretizing boundary problem",
     "category": "section",
-    "text": "Aim is to define material response given data.type LinearIsotropic <: AbstractMaterial\nend\n\n\"\"\"\n    calculate_material_response!(material::LinearIsotropic, data)\n\nGiven strain tensor and some other quantities, calculate material response\n\"\"\"\nfunction calculate_response!(material::LinearIsotropic, data)\n    # given strain tensor and some other quantities, calculate stress\nend"
+    "text": "Can be e.g. Dirichlet boundary, contact / mesh tie problem between two domains, BEM formulation, kinematic coupling (MPC) and so on.A good question is to determine how to map element local degrees of freedom with global ones. As the plan is to develop a multiphysical FEM platform, it's a hard question how to create this kind of mapping in a dynamic way. Yet another question is how to set boundary conditions for different type of physics. For now, these questions are answered by defining the name of unknown field using function get_unknown_field_name and giving the dimension of unknown field when creating a problem, so that change of information between two problem is possible. This solution has already identified shortcomings and can be expected to change in future.function get_unknown_field_name(::Problem{Heat})\n    return \"temperature\"\nend\n\nnothing # hidetype DirichletBC <: BoundaryProblem\nendOur implementation to handle boundary condition u = u_0 looks following:function assemble_elements!{E}(problem::Problem{DirichletBC},\n                               assembly::Assembly,\n                               elements::Vector{Element{E}},\n                               time::Float64)\n\n    name = get_parent_field_name(problem)\n    dim = get_unknown_field_dimension(problem)\n\n    println(\"Assembling Dirichlet boundary condition\")\n    println(\"Field name = $name, dofs/node = $dim\")\n\n    data = Dict{Int64,Float64}()\n    for element in elements\n        for i=1:dim\n            haskey(element, \"$name $dim\") || continue\n            gdofs = get_gdofs(problem, element)\n            ldofs = gdofs[i:dim:end]\n            xis = get_reference_element_coordinates(E)\n            for (ldof, xi) in zip(ldofs, xis)\n                data[ldof] = interpolate(element, \"$name $dim\", xi, time)\n            end\n        end\n    end\n\n    for (dof, val) in data\n        add!(assembly.C1, dof, dof, 1.0)\n        add!(assembly.C2, dof, dof, 1.0)\n        add!(assembly.g, dof, val)\n    end\n\nendTo fix dofs 1 and 4 like before:bel1 = Element(Seg2, [1, 4])\nupdate!(bel1, \"geometry\", X)\nupdate!(bel1, \"temperature 1\", 0.0)\nbc = Problem(DirichletBC, \"fixed\", 1, \"temperature\")\nadd_elements!(bc, [bel1])\nassemble!(bc, time)Now we have all matrices needed:C1 = full(bc.assembly.C1, 5, 5)\nC2 = full(bc.assembly.C2, 5, 5)\nD = full(bc.assembly.D, 5, 5)\ng = full(bc.assembly.g, 5, 1)Together with already calculated matrices, we can now form saddle point problem boldsymbolAboldsymbolx = boldsymbolb:A = [K C1; C2 D]\nb = [f; g]Solution:nz = [1, 2, 3, 4, 5, 6, 9]\nx = zeros(10)\nx[nz] = A[nz,nz] \\ b[nz]As a result we have found boldsymbolu and boldsymbollambda:u = x[1:5]\nla = x[6:10]\nu' * laBoth field problem and boundary problems can of course have all four matrices and two vectors. For example, in finite sliding contact algorithms all four matrices are used as algorithms are contributing to stiffness matrix also when linearized properly."
 },
 
 {
-    "location": "developing.html#Developing-new-interpolation-functions-1",
-    "page": "Developing",
-    "title": "Developing new interpolation functions",
+    "location": "problems.html#Assembling-mass-matrices-1",
+    "page": "Problems",
+    "title": "Assembling mass matrices",
     "category": "section",
-    "text": "E.g. basis functionstype LinQuad4Basis <: AbstractBasis\nend\n\n\"\"\"\n    evaluate_basis!(basis::LinQuad4Basis, element::Element, xi, time, N::Matrix{Float64})\n\nEvaluate basis functions at some point $\\xi$ and store results to `N`.\n\"\"\"\nfunction evaluate_basis!(basis::LinQuad4Basis, element::Element, xi, time, N::Matrix{Float64})\n    # populate N with new basis\nend"
+    "text": ""
 },
 
 {
-    "location": "developing.html#Developing-new-integration-rules-1",
-    "page": "Developing",
-    "title": "Developing new integration rules",
+    "location": "problems.html#Using-problem-wide-fields-1",
+    "page": "Problems",
+    "title": "Using problem-wide fields",
     "category": "section",
-    "text": "type Quad4PointGaussLegendre <: AbstractIntegrationRule\nend\n\n\"\"\"\n    get_integration_points(q::Quad4PointQaussLegendre)\n\nReturn integration point locations and weights.\n\"\"\"\nfunction get_integration_points(q::Quad4PointGaussLegendre)\n    # return integration points\nend"
+    "text": ""
 },
 
 {
-    "location": "developing.html#Developing-new-solver-1",
-    "page": "Developing",
-    "title": "Developing new solver",
+    "location": "problems.html#Discretizing-mixed-problems-1",
+    "page": "Problems",
+    "title": "Discretizing mixed problems",
     "category": "section",
-    "text": "type ImplicitTimeSolver <: AbstractSolver\nend\n\n\"\"\"\n    solve!(settings::ImplicitTimeSolver, solver::Solver, time)\n\nAssemble problems, solve problem, update problems, write results and so on.\n\"\"\"\nfunction solve!(settings::ImplicitTimeSolver, solver::Solver, time)\n    # do solution\nend"
+    "text": ""
+},
+
+{
+    "location": "problems.html#Using-automatic-differentiation-to-linearize-non-linear-problem-1",
+    "page": "Problems",
+    "title": "Using automatic differentiation to linearize non-linear problem",
+    "category": "section",
+    "text": ""
+},
+
+{
+    "location": "solvers.html#",
+    "page": "Solvers",
+    "title": "Solvers",
+    "category": "page",
+    "text": ""
+},
+
+{
+    "location": "solvers.html#Solvers-1",
+    "page": "Solvers",
+    "title": "Solvers",
+    "category": "section",
+    "text": ""
+},
+
+{
+    "location": "postprocessing.html#",
+    "page": "Postprocessing",
+    "title": "Postprocessing",
+    "category": "page",
+    "text": ""
+},
+
+{
+    "location": "postprocessing.html#Postprocessing-1",
+    "page": "Postprocessing",
+    "title": "Postprocessing",
+    "category": "section",
+    "text": ""
+},
+
+{
+    "location": "results.html#",
+    "page": "Results",
+    "title": "Results",
+    "category": "page",
+    "text": ""
+},
+
+{
+    "location": "results.html#Results-1",
+    "page": "Results",
+    "title": "Results",
+    "category": "section",
+    "text": ""
+},
+
+{
+    "location": "materials.html#",
+    "page": "Materials",
+    "title": "Materials",
+    "category": "page",
+    "text": ""
+},
+
+{
+    "location": "materials.html#Materials-1",
+    "page": "Materials",
+    "title": "Materials",
+    "category": "section",
+    "text": ""
 },
 
 {
     "location": "api.html#",
-    "page": "API",
-    "title": "API",
+    "page": "API Documentation",
+    "title": "API Documentation",
     "category": "page",
     "text": ""
 },
 
 {
-    "location": "api.html#API-documentation-1",
-    "page": "API",
-    "title": "API documentation",
+    "location": "api.html#API-Documentation-1",
+    "page": "API Documentation",
+    "title": "API Documentation",
+    "category": "section",
+    "text": "CurrentModule = FEMBase\nDocTestSetup = quote\n    using FEMBase\nend"
+},
+
+{
+    "location": "api.html#Fields-1",
+    "page": "API Documentation",
+    "title": "Fields",
     "category": "section",
     "text": ""
 },
 
 {
-    "location": "api.html#FEMBase.AbstractField",
-    "page": "API",
-    "title": "FEMBase.AbstractField",
-    "category": "Type",
-    "text": "AbstractField\n\nAbstract supertype for all fields in JuliaFEM.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.Assembly",
-    "page": "API",
-    "title": "FEMBase.Assembly",
-    "category": "Type",
-    "text": "General linearized problem to solve     (K₁+K₂)Δu  +   C1'Δλ = f₁+f₂          C2Δu  +     DΔλ = g\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.CVTV",
-    "page": "API",
-    "title": "FEMBase.CVTV",
-    "category": "Type",
-    "text": "CVTV <: AbstractField\n\nContinuous, variable, time variant field.\n\nExample\n\njulia> f = CVTV((xi,t) -> xi*t)\nFEMBase.CVTV(#1)\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.DCTI",
-    "page": "API",
-    "title": "FEMBase.DCTI",
-    "category": "Type",
-    "text": "DCTI{T} <: AbstractField\n\nDiscrete, constant, time-invariant field.\n\nThis field is constant in both spatial direction and time direction, i.e. df/dX = 0 and df/dt = 0.\n\nExample\n\njulia> DCTI(1)\nFEMBase.DCTI{Int64}(1)\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.DCTV",
-    "page": "API",
-    "title": "FEMBase.DCTV",
-    "category": "Type",
-    "text": "DCTV{T} <: AbstractField\n\nDiscrete, constant, time variant field. This type of field can change in time direction but not in spatial direction.\n\nExample\n\nField having value 5 at time 0.0 and value 10 at time 1.0:\n\njulia> DCTV(0.0 => 5, 1.0 => 10)\nFEMBase.DCTV{Int64}(Pair{Float64,Int64}[0.0=>5, 1.0=>10])\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.DVTI",
-    "page": "API",
-    "title": "FEMBase.DVTI",
-    "category": "Type",
-    "text": "DVTI{N,T} <: AbstractField\n\nDiscrete, variable, time-invariant field.\n\nThis is constant in time direction, but not in spatial direction, i.e. df/dt = 0 but df/dX != 0. The basic structure of data is Tuple, and it is implicitly assumed that length of field matches to the number of shape functions, so that interpolation in spatial direction works.\n\nExample\n\njulia> DVTI(1, 2, 3)\nFEMBase.DVTI{3,Int64}((1, 2, 3))\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.DVTId",
-    "page": "API",
-    "title": "FEMBase.DVTId",
-    "category": "Type",
-    "text": "DVTId(X::Dict)\n\nDiscrete, variable, time invariant dictionary field.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.DVTV",
-    "page": "API",
-    "title": "FEMBase.DVTV",
-    "category": "Type",
-    "text": "DVTV{N,T} <: AbstractField\n\nDiscrete, variable, time variant field. The most general discrete field can change in both temporal and spatial direction.\n\nExample\n\njulia> DVTV(0.0 => (1, 2), 1.0 => (2, 3))\nFEMBase.DVTV{2,Int64}(Pair{Float64,Tuple{Int64,Int64}}[0.0=>(1, 2), 1.0=>(2, 3)])\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.DVTVd",
-    "page": "API",
-    "title": "FEMBase.DVTVd",
-    "category": "Type",
-    "text": "DVTVd(time => data::Dict)\n\nDiscrete, variable, time variant dictionary field.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.Element-Union{Tuple{E}, Tuple{Type{E},Array{Int64,1}}} where E<:FEMBasis.AbstractBasis",
-    "page": "API",
-    "title": "FEMBase.Element",
-    "category": "Method",
-    "text": "Element(element_type, connectivity_vector)\n\nConstruct a new element where element_type is the type of the element and connectivity_vector is the vector of nodes that the element is connected to.\n\nExamples\n\nIn the example a new element (E in the figure below) of type Tri3 is created. This spesific element connects to nodes 89, 43, 12 in the finite element mesh.\n\nelement = Element(Tri3, [89, 43, 12])\n\n(Image: img)\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.Problem",
-    "page": "API",
-    "title": "FEMBase.Problem",
-    "category": "Type",
-    "text": "Defines types for Problem variables.\n\nExamples\n\nThe type of 'elements' is Vector{Element}\n\nAdd elements into the Problem element list.\n\na = [1, 2, 3]\nProblem.elements = a\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.Problem-Union{Tuple{P}, Tuple{Type{P},AbstractString,Int64}} where P<:FEMBase.FieldProblem",
-    "page": "API",
-    "title": "FEMBase.Problem",
-    "category": "Method",
-    "text": "Problem(problem_type, problem_name::String, problem_dimension)\n\nConstruct a new field problem where problem_type is the type of the problem (Elasticity, Dirichlet, etc.), problem_name is the name of the problem and problem_dimension is the number of DOF:s in one node (2 in a 2D problem, 3 in an elastic 3D problem, 6 in a 3D beam problem, etc.).\n\nExamples\n\nCreate a vector-valued (dim=3) elasticity problem:\n\nprob1 = Problem(Elasticity, \"this is my problem\", 3)\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.Problem-Union{Tuple{P}, Tuple{Type{P},Any,Any,Any}} where P<:FEMBase.BoundaryProblem",
-    "page": "API",
-    "title": "FEMBase.Problem",
-    "category": "Method",
-    "text": "Construct a new boundary problem.\n\nExamples\n\nCreate a Dirichlet boundary problem for a vector-valued (dim=3) elasticity problem.\n\njulia> bc1 = Problem(Dirichlet, \"support\", 3, \"displacement\") solver.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.add!",
-    "page": "API",
-    "title": "FEMBase.add!",
-    "category": "Function",
-    "text": "Add new data to COO Sparse vector. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.add!-Tuple{FEMBase.SparseMatrixCOO,Array{Int64,1},Array{Int64,1},Array{T,2} where T}",
-    "page": "API",
-    "title": "FEMBase.add!",
-    "category": "Method",
-    "text": "Add local element matrix to sparse matrix. This basically does:\n\nA[dofs1, dofs2] = A[dofs1, dofs2] + data\n\nExample\n\nS = [3, 4] M = [6, 7, 8] data = Float64[5 6 7; 8 9 10] A = SparseMatrixCOO() add!(A, S, M, data) full(A)\n\n4x8 Array{Float64,2}:  0.0  0.0  0.0  0.0  0.0  0.0  0.0   0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0   0.0  0.0  0.0  0.0  0.0  0.0  5.0  6.0   7.0  0.0  0.0  0.0  0.0  0.0  8.0  9.0  10.0\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.add!-Tuple{FEMBase.SparseMatrixCOO,SparseMatrixCSC}",
-    "page": "API",
-    "title": "FEMBase.add!",
-    "category": "Method",
-    "text": "Add sparse matrix of CSC to COO. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.add!-Tuple{FEMBase.SparseMatrixCOO,SparseVector}",
-    "page": "API",
-    "title": "FEMBase.add!",
-    "category": "Method",
-    "text": "Add SparseVector to SparseVectorCOO. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.add_elements!-Tuple{FEMBase.Problem,Any}",
-    "page": "API",
-    "title": "FEMBase.add_elements!",
-    "category": "Method",
-    "text": "add_elements!(problem::Problem, elements)\n\nAdd new elements into the problem.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.assemble_mass_matrix!-Tuple{FEMBase.Problem,Array{FEMBase.Element{FEMBasis.Tet10},1},Any}",
-    "page": "API",
-    "title": "FEMBase.assemble_mass_matrix!",
-    "category": "Method",
-    "text": "assemble_mass_matrix!(problem, elements::Vector{Element{Tet10}}, time)\n\nAssemble Tet10 mass matrices using special method. If Tet10 has constant metric if can be integrated analytically to gain performance.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.field-Tuple",
-    "page": "API",
-    "title": "FEMBase.field",
-    "category": "Method",
-    "text": "field(x)\n\nCreate new field. Field type is deduced from data type.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.get_gdofs-Tuple{FEMBase.Problem,FEMBase.Element}",
-    "page": "API",
-    "title": "FEMBase.get_gdofs",
-    "category": "Method",
-    "text": "Return global degrees of freedom for element.\n\nNotes\n\nFirst look dofs from problem.dofmap, it not found, update dofmap from element.element connectivity using formula gdofs = [dim*(nid-1)+j for j=1:dim]\n\nlook element dofs from problem.dofmap\nif not found, use element.connectivity to update dofmap and 1.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.get_integration_points-Union{Tuple{E}, Tuple{FEMBase.Element{E},Int64}} where E",
-    "page": "API",
-    "title": "FEMBase.get_integration_points",
-    "category": "Method",
-    "text": "This is a special case, temporarily change order of integration scheme mainly for mass matrix.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.get_local_coordinates-Tuple{FEMBase.Element,Array{T,1} where T,Float64}",
-    "page": "API",
-    "title": "FEMBase.get_local_coordinates",
-    "category": "Method",
-    "text": "Find inverse isoparametric mapping of element. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.get_nonzero_rows-Tuple{SparseMatrixCSC}",
-    "page": "API",
-    "title": "FEMBase.get_nonzero_rows",
-    "category": "Method",
-    "text": "Find all nonzero rows from sparse matrix.\n\nReturns\n\nOrdered list of row indices.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.get_parent_field_name-Union{Tuple{FEMBase.Problem{P}}, Tuple{P}} where P<:FEMBase.BoundaryProblem",
-    "page": "API",
-    "title": "FEMBase.get_parent_field_name",
-    "category": "Method",
-    "text": "Return the name of the parent field of this (boundary) problem. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.get_unknown_field_dimension-Tuple{FEMBase.Problem}",
-    "page": "API",
-    "title": "FEMBase.get_unknown_field_dimension",
-    "category": "Method",
-    "text": "get_unknown_field_dimension(problem)\n\nReturn the dimension of the unknown field of this problem.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.get_unknown_field_name-Union{Tuple{FEMBase.Problem{P}}, Tuple{P}} where P",
-    "page": "API",
-    "title": "FEMBase.get_unknown_field_name",
-    "category": "Method",
-    "text": "Return the name of the unknown field of this problem. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.get_unknown_field_name-Union{Tuple{P}, Tuple{P}} where P<:FEMBase.AbstractProblem",
-    "page": "API",
-    "title": "FEMBase.get_unknown_field_name",
-    "category": "Method",
-    "text": "get_unknown_field_name(problem)\n\nDefault function if unknown field name is not defined for some problem.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.group_by_element_type-Tuple{Array{FEMBase.Element,1}}",
-    "page": "API",
-    "title": "FEMBase.group_by_element_type",
-    "category": "Method",
-    "text": "group_by_element_type(elements::Vector{Element})\n\nGiven a vector of elements, group elements by element type to several vectors. Returns a dictionary, where key is the element type and value is a vector containing all elements of type element_type.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.initialize!-Tuple{FEMBase.Problem,FEMBase.Element,Float64}",
-    "page": "API",
-    "title": "FEMBase.initialize!",
-    "category": "Method",
-    "text": "function initialize!(problem_type, element_name, time)\n\nInitialize the element ready for calculation, where problem_type is the type of the problem (Elasticity, Dirichlet, etc.), element_name is the name of a constructed element (see Element(element_type, connectivity_vector)) and time is the starting time of the initializing process.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.inside-Union{Tuple{E}, Tuple{FEMBase.Element{E},Any,Any}} where E",
-    "page": "API",
-    "title": "FEMBase.inside",
-    "category": "Method",
-    "text": "Test is X inside element. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.optimize!-Tuple{FEMBase.SparseMatrixCOO}",
-    "page": "API",
-    "title": "FEMBase.optimize!",
-    "category": "Method",
-    "text": "Combine (I,J,V) values if possible to reduce memory usage. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.resize_sparse-Tuple{Any,Any,Any}",
-    "page": "API",
-    "title": "FEMBase.resize_sparse",
-    "category": "Method",
-    "text": "Resize sparse matrix A to (higher) dimension n x m. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.resize_sparsevec-Tuple{Any,Any}",
-    "page": "API",
-    "title": "FEMBase.resize_sparsevec",
-    "category": "Method",
-    "text": "Resize sparse vector b to (higher) dimension n. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.update!-Tuple{FEMBase.Problem,FEMBase.Assembly,Array{T,1} where T,Array{T,1} where T}",
-    "page": "API",
-    "title": "FEMBase.update!",
-    "category": "Method",
-    "text": "update!(problem, assembly, u, la)\n\nUpdate the problem solution vector for assembly.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.update!-Union{Tuple{F,Any}, Tuple{F}} where F<:FEMBase.AbstractField",
-    "page": "API",
-    "title": "FEMBase.update!",
-    "category": "Method",
-    "text": "update!(field, data)\n\nUpdate new value to field.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.update!-Union{Tuple{FEMBase.Problem{P},FEMBase.Assembly,Array{FEMBase.Element,1},Float64}, Tuple{P}} where P<:FEMBase.FieldProblem",
-    "page": "API",
-    "title": "FEMBase.update!",
-    "category": "Method",
-    "text": "update!(problem, assembly, elements, time)\n\nUpdate a solution from the assebly to elements.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.update!-Union{Tuple{P,Vararg{Pair{String,String},N} where N}, Tuple{P}} where P<:FEMBase.AbstractProblem",
-    "page": "API",
-    "title": "FEMBase.update!",
-    "category": "Method",
-    "text": "update!(problem.properties, attr...)\n\nUpdate properties for a problem.\n\nExample\n\nupdate!(body.properties, \"finite_strain\" => \"false\")\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBasis.interpolate-Tuple{Any,Any}",
-    "page": "API",
-    "title": "FEMBasis.interpolate",
-    "category": "Method",
-    "text": "interpolate(a, b)\n\nA helper function for interpolate routines. Given iterables a and b, calculate c = aᵢbᵢ. Length of a can be less than b, but not vice versa.\n\n\n\n"
-},
-
-{
     "location": "api.html#FEMBasis.interpolate-Tuple{FEMBase.Element,String,Float64}",
-    "page": "API",
+    "page": "API Documentation",
     "title": "FEMBasis.interpolate",
     "category": "Method",
     "text": "interpolate(element, field_name, time)\n\nInterpolate field field_name from element at given time.\n\nExample\n\nelement = Element(Seg2, [1, 2])\ndata1 = Dict(1 => 1.0, 2 => 2.0)\ndata2 = Dict(1 => 2.0, 2 => 3.0)\nupdate!(element, \"my field\", 0.0 => data1)\nupdate!(element, \"my field\", 1.0 => data2)\ninterpolate(element, \"my field\", 0.5)\n\n# output\n\n(1.5, 2.5)\n\n\n\n\n"
 },
 
 {
-    "location": "api.html#FEMBasis.interpolate-Union{Tuple{F,Any}, Tuple{F}} where F<:FEMBase.AbstractField",
-    "page": "API",
-    "title": "FEMBasis.interpolate",
-    "category": "Method",
-    "text": "interpolate(field, time)\n\nInterpolate field in time direction.\n\nExamples\n\nFor time invariant fields DCTI, DVTI, DVTId solution is trivially the data inside field as fields does not depend from the time:\n\njulia> a = field(1.0)\nFEMBase.DCTI{Float64}(1.0)\n\njulia> interpolate(a, 0.0)\n1.0\n\njulia> a = field((1.0, 2.0))\nFEMBase.DVTI{2,Float64}((1.0, 2.0))\n\njulia> interpolate(a, 0.0)\n(1.0, 2.0)\n\njulia> a = field(1=>1.0, 2=>2.0)\nFEMBase.DVTId{Float64}(Dict(2=>2.0,1=>1.0))\n\njulia> interpolate(a, 0.0)\nDict{Int64,Float64} with 2 entries:\n  2 => 2.0\n  1 => 1.0\n\nDVTId trivial solution is returned. For time variant fields DCTV, DVTV, DVTVd linear interpolation is performed.\n\nOther notes\n\nFirst algorithm checks that is time out of range, i.e. time is smaller than time of first frame or larger than last frame. If that is the case, return first or last frame. Secondly algorithm finds is given time exact match to time of some frame and return that frame. At last, we find correct bin so that t0 < time < t1 and use linear interpolation.\n\n\n\n"
+    "location": "api.html#Elements-1",
+    "page": "API Documentation",
+    "title": "Elements",
+    "category": "section",
+    "text": "interpolate(element::Element, field_name::String, time::Float64)"
 },
 
 {
-    "location": "api.html#Base.SparseArrays.sparse-Tuple{FEMBase.SparseMatrixCOO}",
-    "page": "API",
-    "title": "Base.SparseArrays.sparse",
-    "category": "Method",
-    "text": "Convert from COO format to CSC.\n\nParameters\n\ntol     used to drop near zero values less than tol.\n\n\n\n"
-},
-
-{
-    "location": "api.html#Base.haskey-Tuple{FEMBase.Element,Any}",
-    "page": "API",
-    "title": "Base.haskey",
-    "category": "Method",
-    "text": "Check existence of field. \n\n\n\n"
-},
-
-{
-    "location": "api.html#Base.isapprox-Tuple{FEMBase.SparseMatrixCOO,FEMBase.SparseMatrixCOO}",
-    "page": "API",
-    "title": "Base.isapprox",
-    "category": "Method",
-    "text": "Approximative comparison of two matricse A and B. \n\n\n\n"
-},
-
-{
-    "location": "api.html#Base.length-Tuple{FEMBase.Element}",
-    "page": "API",
-    "title": "Base.length",
-    "category": "Method",
-    "text": "length(element)\n\nReturn the length of basis (number of nodes).\n\n\n\n"
-},
-
-{
-    "location": "api.html#Base.size-Tuple{FEMBase.Element}",
-    "page": "API",
-    "title": "Base.size",
-    "category": "Method",
-    "text": "size(element)\n\nReturn the size of basis (dim, nnodes).\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBase.assemble_elements!-Union{Tuple{E}, Tuple{FEMBase.Problem,FEMBase.Assembly,Array{FEMBase.Element{E},1},Any}} where E",
-    "page": "API",
+    "location": "api.html#FEMBase.assemble_elements!",
+    "page": "API Documentation",
     "title": "FEMBase.assemble_elements!",
-    "category": "Method",
+    "category": "Function",
     "text": "assemble_elements!(problem, assembly, elements, time)\n\nAssemble elements for problem.\n\nThis should be overridden with own assemble_elements!-implementation.\n\n\n\n"
 },
 
 {
-    "location": "api.html#FEMBase.get_global_solution-Tuple{FEMBase.Problem,FEMBase.Assembly}",
-    "page": "API",
-    "title": "FEMBase.get_global_solution",
-    "category": "Method",
-    "text": "get_global_solution(problem, assembly)\n\nReturn a global solution (u, la) for a problem.\n\nNotes\n\nIf the length of solution vector != number of nodes, i.e. the field dimension is something else than 1, reshape vectors so that their length matches to the number of nodes. This helps to get nodal results easily.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBasis.BasisInfo",
-    "page": "API",
-    "title": "FEMBasis.BasisInfo",
-    "category": "Type",
-    "text": "Data type for fast FEM.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBasis.BasisInfo-Union{Tuple{B}, Tuple{Type{B},Any}, Tuple{Type{B}}} where B<:FEMBasis.AbstractBasis",
-    "page": "API",
-    "title": "FEMBasis.BasisInfo",
-    "category": "Method",
-    "text": "Initialization of data type BasisInfo.\n\nExamples\n\n\nBasisInfo(Tri3)\n\n# output\n\nFEMBasis.BasisInfo{FEMBasis.Tri3,Float64}([0.0 0.0 0.0], [0.0 0.0 0.0; 0.0 0.0 0.0], [0.0 0.0 0.0; 0.0 0.0 0.0], [0.0 0.0; 0.0 0.0], [0.0 0.0; 0.0 0.0], 0.0)\n\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBasis.NSeg",
-    "page": "API",
-    "title": "FEMBasis.NSeg",
-    "category": "Type",
-    "text": "NURBS segment. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBasis.eval_basis!-Union{Tuple{B}, Tuple{FEMBasis.BasisInfo{B,T} where T,Any,Any}} where B",
-    "page": "API",
-    "title": "FEMBasis.eval_basis!",
-    "category": "Method",
-    "text": "Evaluate basis, gradient and so on for some point xi.\n\nExamples\n\n\nb = BasisInfo(Quad4)\nX = ((0.0,0.0), (1.0,0.0), (1.0,1.0), (0.0,1.0))\nxi = (0.0, 0.0)\neval_basis!(b, X, xi)\n\n# output\n\nFEMBasis.BasisInfo{FEMBasis.Quad4,Float64}([0.25 0.25 0.25 0.25], [-0.25 0.25 0.25 -0.25; -0.25 -0.25 0.25 0.25], [-0.5 0.5 0.5 -0.5; -0.5 -0.5 0.5 0.5], [0.5 0.0; 0.0 0.5], [2.0 -0.0; -0.0 2.0], 0.25)\n\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBasis.grad!-Union{Tuple{B}, Tuple{FEMBasis.BasisInfo{B,T} where T,Any,Any}} where B",
-    "page": "API",
-    "title": "FEMBasis.grad!",
-    "category": "Method",
-    "text": "grad!(bi, gradu, u)\n\nEvalute gradient ∂u/∂X and store result to matrix gradu. It is assumed that eval_basis! has been already run to bi so it already contains all necessary matrices evaluated with some X and xi.\n\nExample\n\nFirst setup and evaluate basis using eval_basis!:\n\nB = BasisInfo(Quad4)\nX = ((0.0,0.0), (1.0,0.0), (1.0,1.0), (0.0,1.0))\nxi = (0.0, 0.0)\neval_basis!(B, X, xi)\n\n# output\n\nFEMBasis.BasisInfo{FEMBasis.Quad4,Float64}([0.25 0.25 0.25 0.25], [-0.25 0.25 0.25 -0.25; -0.25 -0.25 0.25 0.25], [-0.5 0.5 0.5 -0.5; -0.5 -0.5 0.5 0.5], [0.5 0.0; 0.0 0.5], [2.0 -0.0; -0.0 2.0], 0.25)\n\n\nNext, calculate gradient of u:\n\nu = ((0.0, 0.0), (1.0, -1.0), (2.0, 3.0), (0.0, 0.0))\ngradu = zeros(2, 2)\ngrad!(B, gradu, u)\n\n# output\n\n2×2 Array{Float64,2}:\n 1.5  0.5\n 1.0  2.0\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBasis.grad-NTuple{4,Any}",
-    "page": "API",
-    "title": "FEMBasis.grad",
-    "category": "Method",
-    "text": "grad(B, T, X, xi)\n\nCalculate gradient of T with respect to X in point xi using basis B.\n\nExample\n\nB = Quad4()\nX = ([0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0])\nu = ([0.0, 0.0], [1.0, -1.0], [2.0, 3.0], [0.0, 0.0])\ngrad(B, u, X, (0.0, 0.0))\n\n# output\n\n2×2 Array{Float64,2}:\n 1.5  0.5\n 1.0  2.0\n\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBasis.grad-Tuple{Any,Any,Any}",
-    "page": "API",
-    "title": "FEMBasis.grad",
-    "category": "Method",
-    "text": "grad(B, X, xi)\n\nGiven basis B, calculate gradient dB/dX at xi.\n\nExample\n\nB = Quad4()\nX = ([0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0])\ngrad(B, X, (0.0, 0.0))\n\n# output\n\n2×4 Array{Float64,2}:\n -0.5   0.5  0.5  -0.5\n -0.5  -0.5  0.5   0.5\n\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBasis.interpolate-Tuple{Any,Any,Any}",
-    "page": "API",
-    "title": "FEMBasis.interpolate",
-    "category": "Method",
-    "text": "interpolate(B, T, xi)\n\nGiven basis B, interpolate T at xi.\n\nExample\n\nB = Quad4()\nX = ((0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0))\nT = (1.0, 2.0, 3.0, 4.0)\ninterpolate(B, T, (0.0, 0.0))\n\n# output\n\n2.5\n\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBasis.jacobian-Tuple{Any,Any,Any}",
-    "page": "API",
-    "title": "FEMBasis.jacobian",
-    "category": "Method",
-    "text": "jacobian(B, X, xi)\n\nGiven basis B, calculate jacobian at xi.\n\nExample\n\nB = Quad4()\nX = ([0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0])\njacobian(B, X, (0.0, 0.0))\n\n# output\n\n2×2 Array{Float64,2}:\n 0.5  0.0\n 0.0  0.5\n\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBasis.calculate_basis_coefficients-Tuple{Expr,Tuple}",
-    "page": "API",
-    "title": "FEMBasis.calculate_basis_coefficients",
-    "category": "Method",
-    "text": "function calculate_basis_coefficients(polynomial::String, coordinates::Vararg{Tuple})\n\nCalculate \"interpolate coefficient matrix\" for some polynomial p.\n\nExamples\n\nThat is, if we have polynomial p = 1 + u + v and coordinates (0,0), (1,0), (0,1), we find A*p such that first row is the first coordinate, second row is second coordinate and so on:\n\njulia> p = \"1 + u + w\"\njulia> X = ((0.0,0.0), (1.0,0.0), (0.0,1.0))\njulia> calculate_basis_coefficient(p, X)\n[1.0 0.0 0.0 # <-- p(0.0,0.0) = 1.0     = [1.0 0.0 0.0] * [1.0, u, v]\n 1.0 1.0 0.0 # <-- p(1.0,0.0) = 1.0 + u = [1.0 1.0 0.0] * [1.0, u, v]\n 1.0 0.0 1.0] # <- p(0.0,1.0) = 1.0 + v = [1.0 0.0 1.0] * [1.0, u, v]\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBasis.calculate_interpolation_polynomial_derivatives-Tuple{Array{T,1} where T,Int64}",
-    "page": "API",
-    "title": "FEMBasis.calculate_interpolation_polynomial_derivatives",
-    "category": "Method",
-    "text": "Calculate derivatives of basis functions with respect to parameters u, v, w.\n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMBasis.calculate_interpolation_polynomials-Tuple{Expr,Array{T,2} where T}",
-    "page": "API",
-    "title": "FEMBasis.calculate_interpolation_polynomials",
-    "category": "Method",
-    "text": "\n\n"
-},
-
-{
-    "location": "api.html#FEMQuad.get_quadrature_points-Tuple{Type{Val{:GLHEX1}}}",
-    "page": "API",
-    "title": "FEMQuad.get_quadrature_points",
-    "category": "Method",
-    "text": "Gauss-Legendre quadrature, 1 point rule on hexahedron. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMQuad.get_quadrature_points-Tuple{Type{Val{:GLHEX243}}}",
-    "page": "API",
-    "title": "FEMQuad.get_quadrature_points",
-    "category": "Method",
-    "text": "Gauss-Legendre quadrature, 243 point rule on quadrilateral. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMQuad.get_quadrature_points-Tuple{Type{Val{:GLHEX27}}}",
-    "page": "API",
-    "title": "FEMQuad.get_quadrature_points",
-    "category": "Method",
-    "text": "Gauss-Legendre quadrature, 27 point rule on hexahedron. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMQuad.get_quadrature_points-Tuple{Type{Val{:GLHEX81}}}",
-    "page": "API",
-    "title": "FEMQuad.get_quadrature_points",
-    "category": "Method",
-    "text": "Gauss-Legendre quadrature, 81 point rule on hexahedron. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMQuad.get_quadrature_points-Tuple{Type{Val{:GLHEX8}}}",
-    "page": "API",
-    "title": "FEMQuad.get_quadrature_points",
-    "category": "Method",
-    "text": "Gauss-Legendre quadrature, 8 point rule on hexahedron. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMQuad.get_quadrature_points-Tuple{Type{Val{:GLPYR5B}}}",
-    "page": "API",
-    "title": "FEMQuad.get_quadrature_points",
-    "category": "Method",
-    "text": "Gauss-Legendre quadrature, 5 point rule on pyramid. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMQuad.get_quadrature_points-Tuple{Type{Val{:GLPYR5}}}",
-    "page": "API",
-    "title": "FEMQuad.get_quadrature_points",
-    "category": "Method",
-    "text": "Gauss-Legendre quadrature, 5 point rule on pyramid. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMQuad.get_quadrature_points-Tuple{Type{Val{:GLQUAD16}}}",
-    "page": "API",
-    "title": "FEMQuad.get_quadrature_points",
-    "category": "Method",
-    "text": "Gauss-Legendre quadrature, 16 point rule on quadrilateral. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMQuad.get_quadrature_points-Tuple{Type{Val{:GLQUAD1}}}",
-    "page": "API",
-    "title": "FEMQuad.get_quadrature_points",
-    "category": "Method",
-    "text": "Gauss-Legendre quadrature, 1 point rule on quadrilateral. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMQuad.get_quadrature_points-Tuple{Type{Val{:GLQUAD25}}}",
-    "page": "API",
-    "title": "FEMQuad.get_quadrature_points",
-    "category": "Method",
-    "text": "Gauss-Legendre quadrature, 25 point rule on quadrilateral. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMQuad.get_quadrature_points-Tuple{Type{Val{:GLQUAD4}}}",
-    "page": "API",
-    "title": "FEMQuad.get_quadrature_points",
-    "category": "Method",
-    "text": "Gauss-Legendre quadrature, 4 point rule on quadrilateral. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMQuad.get_quadrature_points-Tuple{Type{Val{:GLQUAD9}}}",
-    "page": "API",
-    "title": "FEMQuad.get_quadrature_points",
-    "category": "Method",
-    "text": "Gauss-Legendre quadrature, 9 point rule on quadrilateral. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMQuad.get_quadrature_points-Tuple{Type{Val{:GLSEG1}}}",
-    "page": "API",
-    "title": "FEMQuad.get_quadrature_points",
-    "category": "Method",
-    "text": "Gauss-Legendre quadrature, 1 point rule on segment. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMQuad.get_quadrature_points-Tuple{Type{Val{:GLSEG2}}}",
-    "page": "API",
-    "title": "FEMQuad.get_quadrature_points",
-    "category": "Method",
-    "text": "Gauss-Legendre quadrature, 2 point rule on segment. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMQuad.get_quadrature_points-Tuple{Type{Val{:GLSEG3}}}",
-    "page": "API",
-    "title": "FEMQuad.get_quadrature_points",
-    "category": "Method",
-    "text": "Gauss-Legendre quadrature, 3 point rule on segment. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMQuad.get_quadrature_points-Tuple{Type{Val{:GLSEG4}}}",
-    "page": "API",
-    "title": "FEMQuad.get_quadrature_points",
-    "category": "Method",
-    "text": "Gauss-Legendre quadrature, 4 point rule on segment. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMQuad.get_quadrature_points-Tuple{Type{Val{:GLSEG5}}}",
-    "page": "API",
-    "title": "FEMQuad.get_quadrature_points",
-    "category": "Method",
-    "text": "Gauss-Legendre quadrature, 5 point rule on segment. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMQuad.get_quadrature_points-Tuple{Type{Val{:GLTET15}}}",
-    "page": "API",
-    "title": "FEMQuad.get_quadrature_points",
-    "category": "Method",
-    "text": "Gauss-Legendre quadrature, 15 point rule on tetrahedron. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMQuad.get_quadrature_points-Tuple{Type{Val{:GLTET1}}}",
-    "page": "API",
-    "title": "FEMQuad.get_quadrature_points",
-    "category": "Method",
-    "text": "Gauss-Legendre quadrature, 1 point rule on tetrahedron. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMQuad.get_quadrature_points-Tuple{Type{Val{:GLTET4}}}",
-    "page": "API",
-    "title": "FEMQuad.get_quadrature_points",
-    "category": "Method",
-    "text": "Gauss-Legendre quadrature, 4 point rule on tetrahedron. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMQuad.get_quadrature_points-Tuple{Type{Val{:GLTET5}}}",
-    "page": "API",
-    "title": "FEMQuad.get_quadrature_points",
-    "category": "Method",
-    "text": "Gauss-Legendre quadrature, 5 point rule on tetrahedron. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMQuad.get_quadrature_points-Tuple{Type{Val{:GLTRI12}}}",
-    "page": "API",
-    "title": "FEMQuad.get_quadrature_points",
-    "category": "Method",
-    "text": "Gauss-Legendre quadrature, 12 point rule on triangle. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMQuad.get_quadrature_points-Tuple{Type{Val{:GLTRI1}}}",
-    "page": "API",
-    "title": "FEMQuad.get_quadrature_points",
-    "category": "Method",
-    "text": "Gauss-Legendre quadrature, 1 point rule on triangle. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMQuad.get_quadrature_points-Tuple{Type{Val{:GLTRI3B}}}",
-    "page": "API",
-    "title": "FEMQuad.get_quadrature_points",
-    "category": "Method",
-    "text": "Gauss-Legendre quadrature, 3 point rule on triangle. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMQuad.get_quadrature_points-Tuple{Type{Val{:GLTRI3}}}",
-    "page": "API",
-    "title": "FEMQuad.get_quadrature_points",
-    "category": "Method",
-    "text": "Gauss-Legendre quadrature, 3 point rule on triangle. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMQuad.get_quadrature_points-Tuple{Type{Val{:GLTRI4B}}}",
-    "page": "API",
-    "title": "FEMQuad.get_quadrature_points",
-    "category": "Method",
-    "text": "Gauss-Legendre quadrature, 4 point rule on triangle. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMQuad.get_quadrature_points-Tuple{Type{Val{:GLTRI4}}}",
-    "page": "API",
-    "title": "FEMQuad.get_quadrature_points",
-    "category": "Method",
-    "text": "Gauss-Legendre quadrature, 4 point rule on triangle. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMQuad.get_quadrature_points-Tuple{Type{Val{:GLTRI6}}}",
-    "page": "API",
-    "title": "FEMQuad.get_quadrature_points",
-    "category": "Method",
-    "text": "Gauss-Legendre quadrature, 6 point rule on triangle. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMQuad.get_quadrature_points-Tuple{Type{Val{:GLTRI7}}}",
-    "page": "API",
-    "title": "FEMQuad.get_quadrature_points",
-    "category": "Method",
-    "text": "Gauss-Legendre quadrature, 7 point rule on triangle. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMQuad.get_quadrature_points-Tuple{Type{Val{:GLWED21}}}",
-    "page": "API",
-    "title": "FEMQuad.get_quadrature_points",
-    "category": "Method",
-    "text": "Gauss-Legendre quadrature, 21 point rule on wedge. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMQuad.get_quadrature_points-Tuple{Type{Val{:GLWED6B}}}",
-    "page": "API",
-    "title": "FEMQuad.get_quadrature_points",
-    "category": "Method",
-    "text": "Gauss-Legendre quadrature, 6 point rule on wedge. \n\n\n\n"
-},
-
-{
-    "location": "api.html#FEMQuad.get_quadrature_points-Tuple{Type{Val{:GLWED6}}}",
-    "page": "API",
-    "title": "FEMQuad.get_quadrature_points",
-    "category": "Method",
-    "text": "Gauss-Legendre quadrature, 6 point rule on wedge. \n\n\n\n"
-},
-
-{
-    "location": "api.html#Index-1",
-    "page": "API",
-    "title": "Index",
+    "location": "api.html#Problems-1",
+    "page": "API Documentation",
+    "title": "Problems",
     "category": "section",
-    "text": "DocTestSetup = quote\n    using FEMBase\n    using FEMBasis\n    using FEMQuad\nendModules = [FEMBase, FEMBasis, FEMQuad]"
+    "text": "assemble_elements!"
 },
 
 ]}
