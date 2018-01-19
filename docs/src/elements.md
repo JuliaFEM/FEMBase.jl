@@ -1,53 +1,43 @@
+# Elements
 
-In JuliaFEM, elements are "containers", combining fields and basis functions described above. Among that, element has information about topology (connectivity) and integration rule. These fundamentals forms a finite element, the backbone of finite element method, as the basic idea after all is just to discretize continuous domain to smaller topological entities like tetrahedrons and perform same operations to each element.
+In JuliaFEM, elements can be considered as "containers", combining fields and
+basis functions described above. Among that, element has information about
+topology (connectivity) and numerical integration rule. These fundamentals
+forms a finite element, the backbone of finite element method.
 
-
-```julia
+```@setup FEMBase
 using FEMBase
 ```
 
+New elements are constructed by passing basis type (e.g. Seg2, Quad4, Tet10, ...)
+to `Element` and list of id numbers to where element is topologically connected.
 
-```julia
+```@repl FEMBase
 el = Element(Quad4, [1, 2, 3, 4])
 ```
 
+Setting fields to element is done using a command `update!`, which either
+creates a new field if field with that name does not already exist, or updates
+the old one. Typically, at least field called `geometry` needs to be defined to
+element as it's used to calculate Jacobian of element. Fields can be discrete,
+continuous, time invariant or variant, variable or constant, or anything else
+that is subclassed from `AbstractField`.
 
-
-
-    FEMBase.Element{FEMBasis.Quad4}(-1, [1, 2, 3, 4], FEMBase.Point{FEMBase.IntegrationPoint}[], Dict{String,FEMBase.AbstractField}(), FEMBasis.Quad4())
-
-
-
-Setting fields to element is done using a command `update!`, which either creates new field if does not already exist, or updates the old one. Typically, at least field called `geometry` needs to be defined to element as it's used to calculate Jacobian of element. Fields can be discrete, continuous, time invariant or variant, variable or constant, like described earlier.
-
-
-```julia
+```@repl FEMBase
 X = Dict(1 => [0.0,0.0], 2=>[1.0,0.0], 3=>[1.0,1.0], 4=>[0.0,1.0])
 update!(el, "geometry", X)
 ```
 
+Internally, fields are stored in a `Dict`:
 
-
-
-    FEMBase.DVTId{Array{Float64,1}}(Dict(4=>[0.0, 1.0],2=>[1.0, 0.0],3=>[1.0, 1.0],1=>[0.0, 0.0]))
-
-
-
-
-```julia
+```@repl FEMBase
 el.fields
 ```
 
+The command `update!` is automatically inspecting field type based in input.
+For example, to define temporal field varying spatially:
 
-
-
-    Dict{String,FEMBase.AbstractField} with 1 entry:
-      "geometry" => FEMBase.DVTId{Array{Float64,1}}(Dict(4=>[0.0, 1.0],2=>[1.0, 0.0…
-
-
-
-
-```julia
+```@repl FEMBase
 u0 = ([0.0,0.0], [0.0,0.0], [0.0,0.0], [0.0,0.0])
 u1 = ([0.0,0.0], [0.0,0.0], [0.5,0.0], [0.0,0.0])
 update!(el, "displacement", 0.0 => u0)
@@ -55,109 +45,44 @@ update!(el, "displacement", 1.0 => u1)
 el.fields
 ```
 
+Interpolating of fields can be done using syntax `Element(field_name, xi, time)`.
+For example, position of material particle $X$ in initial configuration and
+deformed configuration in the middle of the element at time $t=1$ can be found as
 
-
-
-    Dict{String,FEMBase.AbstractField} with 2 entries:
-      "geometry"     => FEMBase.DVTId{Array{Float64,1}}(Dict(4=>[0.0, 1.0],2=>[1.0,…
-      "displacement" => FEMBase.DVTV{4,Array{Float64,1}}(Pair{Float64,NTuple{4,Arra…
-
-
-
-Interpolating of fields goes calling `Element(field_name, xi, time)`. For example, position of material particle $X$ in initial configuration and deformed configuration in the middle of the element at time $t=1$ can be found as
-
-
-```julia
+```@repl FEMBase
 xi = (0.0, 0.0)
 time = 1.0
 X = el("geometry", xi, time)
 u = el("displacement", xi, time)
 x = X+u
-println("X = $X, x = $x")
 ```
 
-    X = [0.5, 0.5], x = [0.625, 0.5]
-    
+Jacobian, determinant of Jacobian and gradient of field can be calculated adding
+extra argument `Val{:Jacobian}`, `Val{:detJ}`, `Val{:Grad}` to the above command
+and not passing field name, i.e.
 
-Jacobian, determinant of Jacobian and gradient of field can be calculated adding extra argument `Val{:Jacobian}`, `Val{:detJ}`, `Val{:Grad}` to the above command and not passing field name, i.e.
-
-
-```julia
+```@repl FEMBase
 el(xi, time, Val{:Jacobian})
-```
-
-
-
-
-    2×2 Array{Float64,2}:
-     0.5  0.0
-     0.0  0.5
-
-
-
-
-```julia
 el(xi, time, Val{:detJ})
-```
-
-
-
-
-    0.25
-
-
-
-
-```julia
 el(xi, time, Val{:Grad})
 ```
 
+Usually what is needed when calculating local stiffness matrices is a gradient
+of some field. For example, displacement gradient and temperature gradient can
+be obtained following way:
 
-
-
-    2×4 Array{Float64,2}:
-     -0.5   0.5  0.5  -0.5
-     -0.5  -0.5  0.5   0.5
-
-
-
-Usually what the user wants is still a gradient of some field. For example, displacement gradient:
-
-
-```julia
+```@repl FEMBase
 gradu = el("displacement", xi, time, Val{:Grad})
-gradu
-```
-
-
-
-
-    2×2 Array{Float64,2}:
-     0.25  0.25
-     0.0   0.0 
-
-
-
-Or temperature gradient:
-
-
-```julia
 update!(el, "temperature", (1.0, 2.0, 3.0, 4.0))
 gradT = el("temperature", xi, time, Val{:Grad})
 ```
 
+Accessing integration points of element is done using function
+`get_integration_points`. Combining interpolation and integration one can
+already calculate local matrices of a single element or, for example area and
+strain energy:
 
-
-
-    1×2 RowVector{Float64,Array{Float64,1}}:
-     0.0  2.0
-
-
-
-Accessing integration points of element is done using command `get_integration_points`. Combining interpolation and integration one can already calculate local matrices of a single element or, for example area and strain energy:
-
-
-```julia
+```@example FEMBase
 update!(el, "lambda", 96.0)
 update!(el, "mu", 48.0)
 
@@ -177,14 +102,9 @@ println("Area: $A")
 println("Strain energy: $W")
 ```
 
-    Area: 1.0
-    Strain energy: 10.0
-    
+To calculate local stiffness matrix for Poisson problem:
 
-Local stiffness matrix for Poisson problem:
-
-
-```julia
+```@example FEMBase
 K = zeros(4,4)
 update!(el, "coefficient", 36.0)
 for ip in get_integration_points(el)
@@ -196,13 +116,22 @@ end
 K
 ```
 
+For more memory efficient code it's a good idea to use `BasisInfo` and
+`element_info!` which allocates working memory to calculate all "basic stuff"
+for a single integration point, like Jacobian, determinant of Jacobian, basis
+and it's partial derivatives with respect to reference configuration $X$.
 
+```@example FEMBase
+bi = BasisInfo(Quad4)
+fill!(K, 0.0)
+for ip in get_integration_points(el)
+    J, detJ, N, dN = element_info!(bi, el, ip, time)
+    c = el("coefficient", ip, time)
+    K += ip.weight * c*dN'*dN * detJ
+end
+K
+```
 
+## Using analytical fields
 
-    4×4 Array{Float64,2}:
-      24.0   -6.0  -12.0   -6.0
-      -6.0   24.0   -6.0  -12.0
-     -12.0   -6.0   24.0   -6.0
-      -6.0  -12.0   -6.0   24.0
-
-
+## Creating fields depending from other fields
