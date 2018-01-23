@@ -259,6 +259,10 @@ function update!(element::Element, field_name, data)
     end
 end
 
+function update!{F<:AbstractField}(element::Element, field_name, field_::F)
+    element.fields[field_name] = field_
+end
+
 function update!(element::Element, field_name, data::Function)
     if method_exists(data, Tuple{Element, Any, Any})
         element.fields[field_name] = field((ip, time) -> data(element, ip, time))
