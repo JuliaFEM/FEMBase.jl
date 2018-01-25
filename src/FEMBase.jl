@@ -37,6 +37,9 @@ include("problems.jl")
 include("assembly.jl")
 export assemble_prehook!, assemble_posthook!
 
+include("solvers.jl")
+export LinearSystem, AbstractLinearSystemSolver, solve!
+
 export FieldProblem, BoundaryProblem, Problem, Element, Assembly
 export Poi1, Seg2, Seg3, Tri3, Tri6, Tri7, Quad4, Quad8, Quad9,
        Tet4, Tet10, Pyr5, Wedge6, Wedge15, Hex8, Hex20, Hex27
