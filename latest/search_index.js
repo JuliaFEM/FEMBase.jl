@@ -397,7 +397,15 @@ var documenterSearchIndex = {"docs": [
     "page": "Solvers",
     "title": "Solvers",
     "category": "section",
-    "text": ""
+    "text": "After global assembly for each problem is ready, they must somehow put together, construct linear system boldsymbolAboldsymbolx = boldsymbolb , solve it and update solution back to problems / elements.Just like problems are \"containers\" for a set of elements, solvers are containers for a set of problems. Typical solver structure for nonlinear quasistatic analysis is:initialize problems (if needed)\nassemble problems\ncombine assemblies to construct a linear system boldsymbolAboldsymbolx = boldsymbolb\nsolve linear system, as effectively as possible\nupdate solution back to problems or elements\npostprocess fields\nwrite requested results to file\ncheck convergence, if not converged, go back to 2."
+},
+
+{
+    "location": "solvers.html#Developing-solver-for-LinearSystem-1",
+    "page": "Solvers",
+    "title": "Developing solver for LinearSystem",
+    "category": "section",
+    "text": "When models gets big enough, step 3. is dominating in a solution process. For that reason we have abstracit type AbstractLinearSystemSolver which can be subclassed to construct own solution strategy. This strategy can be, for example to use Julia's build-in solvers, MUMPS, iterative solvers and so on. And to make this as standard as possible, we have LinearSystem containing all the relevant matrices, i.e.beginbmatrix\nboldsymbolK  boldsymbolC_1\nboldsymbolC_2  boldsymbolD\nendbmatrix\nbeginbmatrix\nboldsymbolu\nboldsymbollambda\nendbmatrix =\nbeginbmatrix\nboldsymbolf\nboldsymbolg\nendbmatrixusing FEMBase: LinearSystem, AbstractLinearSystemSolver\nimport FEMBase: solve! # hideFirst setup linear system from [Problems]:K = sparse([  4.0  -1.0  -2.0  -1.0   0.0\n	     -1.0   7.0  -4.0  -2.0   0.0\n	     -2.0  -4.0  10.0  -1.0  -3.0\n	     -1.0  -2.0  -1.0   4.0   0.0\n	      0.0   0.0  -3.0   0.0   3.0])\nC1 = sparse([ 1.0  0.0  0.0  0.0  0.0\n	      0.0  0.0  0.0  0.0  0.0\n	      0.0  0.0  0.0  0.0  0.0\n	      0.0  0.0  0.0  1.0  0.0\n	      0.0  0.0  0.0  0.0  0.0])\nC2 = C1\nD = spzeros(5, 5)\nf = sparsevec([33.0, 33.0, 165.0, 33.0, 132.0])\ng = spzeros(5)\nu = spzeros(5)\nla = spzeros(5)\nls = LinearSystem(K, C1, C2, D, f, g, u, la)\nnothing # hideFor example, a simple solver for small problems would be to use lufact from UMFPACK:\ntype LUSolver <: AbstractLinearSystemSolver\n    # may contain some solver-spesific settings\nend\n\n\"\"\"\n    solve!(solver::LUSolver, ls::LinearSystem)\n\nSolve linear system using LU factorization. If final system has zero rows,\nadd 1 to diagonal to make matrix non-singular.\n\"\"\"\nfunction solve!(solver::LUSolver, ls::LinearSystem)\n    A = [ls.K ls.C1; ls.C2 ls.D]\n    b = [ls.f; ls.g]\n\n    # add 1.0 to diagonal for any zero rows in system\n    p = ones(length(b))\n    p[unique(rowvals(A))] = 0.0\n    A += spdiagm(p)\n\n    # solve A*x = b using LU factorization and update solution vectors\n    x = lufact(A) \\ full(b)\n    ndofs = length(f)\n    ls.u = x[1:ndofs]\n    ls.la = x[ndofs+1:end]\n\n    return nothing\nend\n\nnothing # hideTo test it:solver = LUSolver()\nsolve!(solver, ls)\nfull(ls.u)\nfull(ls.la)"
 },
 
 {

@@ -137,8 +137,8 @@ update!(el1, &quot;heat source&quot;, 132.0)
 problem = Problem(Heat, &quot;test problem&quot;, 1)
 add_elements!(problem, elements)
 assemble!(problem, time)</code></pre><pre><code class="language-none">Assembling volume elements of kind FEMBasis.Quad4
-Assembling volume elements of kind FEMBasis.Tri3
-Assembling boundary elements of kind FEMBasis.Seg2</code></pre></div><p>Global stiffness matrix <span>$\boldsymbol{K}$</span> and force vector <span>$\boldsymbol{f}$</span> are</p><pre><code class="language-julia-repl">julia&gt; K = full(problem.assembly.K)
+Assembling boundary elements of kind FEMBasis.Seg2
+Assembling volume elements of kind FEMBasis.Tri3</code></pre></div><p>Global stiffness matrix <span>$\boldsymbol{K}$</span> and force vector <span>$\boldsymbol{f}$</span> are</p><pre><code class="language-julia-repl">julia&gt; K = full(problem.assembly.K)
 5×5 Array{Float64,2}:
   4.0  -1.0  -2.0  -1.0   0.0
  -1.0   7.0  -4.0  -2.0   0.0
