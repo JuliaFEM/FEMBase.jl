@@ -366,3 +366,10 @@ end
     @test isapprox(el("f", (0.5, 0.5), 2.0), 1.0)
     @test isapprox(el("g", (0.0, 0.0), 2.0), [1.0, 1.0])
 end
+
+@testset "add field to element using update!" begin
+    el = Element(Seg2, [1, 2])
+    f = field(1)
+    update!(el, "f", f)
+    @test f === el.fields["f"]
+end
