@@ -141,7 +141,6 @@ end
     el = Element(Seg2, [1, 2])
     X = Dict(1 => [0.0, 0.0], 2 => [1.0, 0.0], 3 => [0.5, 0.5])
     f = field(X)
-    debug("field = $f")
     #update!(el, "geometry", X)
     el["geometry"] = f
     @test isapprox(el("geometry")[1], [0.0, 0.0])
