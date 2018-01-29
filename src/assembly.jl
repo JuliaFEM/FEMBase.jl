@@ -73,10 +73,12 @@ function assemble!(problem::Problem, time)
     first_element = first(elements)
     unknown_field_name = get_unknown_field_name(problem)
     if !haskey(first_element, unknown_field_name)
+        #=
         warn("Assembling elements for problem $(problem.name): seems that ",
              "problem is uninitialized. To initialize problem, use ",
              "`initialize!(problem, time)`.")
         info("Initializing problem $(problem.name) at time $time automatically.")
+        =#
         initialize!(problem, time)
     end
 
