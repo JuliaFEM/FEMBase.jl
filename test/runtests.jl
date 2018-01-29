@@ -13,6 +13,7 @@ push!(test_files, "test_integrate.jl")
 push!(test_files, "test_problems.jl")
 push!(test_files, "test_sparse.jl")
 push!(test_files, "test_solvers.jl")
+push!(test_files, "test_analysis.jl")
 push!(test_files, "test_types.jl")
 
 @testset "FEMBase.jl" begin
