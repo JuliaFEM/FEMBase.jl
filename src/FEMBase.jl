@@ -14,13 +14,6 @@ import Base: getindex, setindex!, convert, length, size, isapprox,
 using TimerOutputs
 export @timeit, print_timer
 
-using Logging
-Logging.configure(level=INFO)
-if haskey(ENV, "JULIAFEM_LOGLEVEL")
-    Logging.configure(level=LogLevel(ENV["JULIAFEM_LOGLEVEL"]))
-end
-export info, debug
-
 using FEMBasis
 using FEMBasis: AbstractBasis, jacobian, get_reference_element_coordinates
 import FEMBasis: interpolate

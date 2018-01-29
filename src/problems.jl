@@ -203,7 +203,6 @@ update!(body.properties, "finite_strain" => "false")
 """
 function update!{P<:AbstractProblem}(problem::P, attr::Pair{String, String}...)
     for (name, value) in attr
-        debug("$P: set $name to $value")
         setfield!(problem, parse(name), parse(value))
     end
 end
