@@ -4,29 +4,35 @@
 using FEMBase
 using Base.Test
 
-import FEMBase: solve!
+import FEMBase: solve!, can_solve
 
-type LSSolver1 <: AbstractLinearSystemSolver end
-type LSSolver2 <: AbstractLinearSystemSolver end
+type LSSolver1 <: AbstractLinearSystemSolver
+    a :: Int64
+end
 
-function solve!(s::LSSolver2, ls::LinearSystem)
+type LSSolver2 <: AbstractLinearSystemSolver
+end
+
+function LSSolver1()
+    return LSSolver1(1)
+end
+
+function can_solve(ls::LinearSystem, solver::LSSolver1)
+    return (false, "don't know how to do")
+end
+
+function solve!(ls::LinearSystem, solver::LSSolver2)
     fill!(ls.u, 1.0)
 end
 
 @testset "test creating new linear system solver" begin
-    K = sparse(rand(3,3))
-    C1 = sparse(rand(3,3))
-    C2 = sparse(rand(3,3))
-    D = sparse(rand(3,3))
-    f = sparse(rand(3))
-    g = sparse(rand(3))
-    u = spzeros(3)
-    la = spzeros(3)
-    ls = LinearSystem(K, C1, C2, D, f, g, u, la)
-    s1 = LSSolver1()
-    s2 = LSSolver2()
-    solve!(s1, ls)
-    @test isapprox(u, spzeros(3))
-    solve!(s2, ls)
-    @test isapprox(u, sparse(ones(3)))
+    ls = LinearSystem(3)
+    ls.u = spzeros(3)
+    solver1 = LSSolver1()
+    solver2 = LSSolver2()
+    solve!(ls, solver1)
+    @test can_solve(ls, solver1)[1] == false
+    solve!(ls, [solver1, solver2])
+    @test isapprox(ls.u, sparse(ones(3)))
+    @test_throws ErrorException solve!(ls, [solver1])
 end
