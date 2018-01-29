@@ -9,9 +9,9 @@ using a command [`assemble_elements!`](@ref).
 As an example, a heat equation in two dimensions is discretized. Mathematically
 known also as Poisson problem. Strong form of the problem is
 ```math
-       -k \nabla^2 u = f    \text{ in } \Omega, \\
-                   u = u_0  \text{ on } \Gamma_\mathrm{D}, \\
-\frac{u}{\partial n} = g    \text{ on } \Gamma_\mathrm{N},
+ \nabla \cdot (-\nabla u ) = f    \text{ in } \Omega, \\
+                         u = u_0  \text{ on } \Gamma_\mathrm{D}, \\
+      \frac{u}{\partial n} = g    \text{ on } \Gamma_\mathrm{N},
 ```
 and corresponding variational problem is to find ``u\in\mathcal{U}`` such that
 for all ``v\in\mathcal{V}``
