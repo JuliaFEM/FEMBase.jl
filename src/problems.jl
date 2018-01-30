@@ -418,32 +418,36 @@ function push!(problem::Problem, elements_::Vector...)
     end
 end
 
-function get_gdofs(element::Element, dim::Int)
+"""
+    set_gdofs!(problem, element)
+
+Set element global degrees of freedom.
+"""
+function set_gdofs!(problem, element, dofs)
+    problem.dofmap[element] = dofs
+end
+
+"""
+    get_gdofs(problem, element)
+
+Return the global degrees of freedom for element.
+
+First make lookup from problem dofmap. If not defined there, make implicit
+assumption that dofs follow formula `gdofs = [dim*(nid-1)+j for j=1:dim]`,
+where `nid` is node id and `dim` is the dimension of problem. This formula
+arranges dofs so that first comes all dofs of node 1, then node 2 and so on:
+(u11, u12, u13, u21, u22, u23, ..., un1, un2, un3) for 3 dofs/node setting.
+"""
+function get_gdofs(problem, element)
+    if haskey(problem.dofmap, element)
+        return problem.dofmap[element]
+    end
     conn = get_connectivity(element)
     if length(conn) == 0
-        error("element connectivity not defined, cannot determine global dofs for element: $element")
+        error("element connectivity not defined, cannot determine global ",
+              "degrees of freedom for element #: $(element.id)")
     end
-    gdofs = vec([dim*(i-1)+j for j=1:dim, i in conn])
+    dim = get_unknown_field_dimension(problem)
+    gdofs = [dim*(i-1)+j for i in conn for j=1:dim]
     return gdofs
-end
-
-function empty!(problem::Problem)
-    empty!(problem.assembly)
-end
-
-""" Return global degrees of freedom for element.
-
-Notes
------
-First look dofs from problem.dofmap, it not found, update dofmap from
-element.element connectivity using formula gdofs = [dim*(nid-1)+j for j=1:dim]
-1. look element dofs from problem.dofmap
-2. if not found, use element.connectivity to update dofmap and 1.
-"""
-function get_gdofs(problem::Problem, element::Element)
-    if !haskey(problem.dofmap, element)
-        dim = get_unknown_field_dimension(problem)
-        problem.dofmap[element] = get_gdofs(element, dim)
-    end
-    return problem.dofmap[element]
 end

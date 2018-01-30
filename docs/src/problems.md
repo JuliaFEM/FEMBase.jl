@@ -121,6 +121,18 @@ matrix can be parallelized (at least almost) perfectly and is not considered
 as a bottleneck when models get big enough. It's anyway a good idea to pay
 attention to the memory allocations.
 
+### Setting and getting global degrees of freedom for element
+
+[`get_gdofs`](@ref) is returning the global degrees of freedom for element. They
+can be set manually using [`set_gdofs(problem, element, dofs)`](@ref). Otherwise
+they are calculated automatically based on the problem dimension using formula
+`g(i,j,d) = d*(i-1)+j`, where `i` is local node number, `j` is the number of
+degree of freedom and `d` is the maximum number of degrees of freedom for node.
+With this formula dofs are ordered so that first comes all dofs for node 1,
+then for node 2 and so on. For 3 dofs/node we get ``(u_{11}, u_{12}, u_{13},
+u_{21}, u_{22}, u_{23}, \ldots, u_{N1}, u_{N2}, u_{N3})``, where the first index
+is node number and second index is dof number.
+
 Let's create some test problem and test our implementation:
 
 ```@example FEMBase
@@ -131,6 +143,7 @@ update!(el1, "thermal conductivity", 6.0)
 elements = [el1]
 assembly = Assembly()
 problem = Problem(Heat, "test problem", 1)
+nothing # hide
 ```
 
 Now the struct `Heat` is empty. If we need to store some problem-wide settings
