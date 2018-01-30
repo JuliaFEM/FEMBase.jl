@@ -98,9 +98,7 @@ end
     println("elgeom is ", el("geometry", 0.0))
     @test isapprox(p1("geometry", 0.0)[1], [0.0, 0.0])
     @test get_parent_field_name(p2) == "p"
-    @test get_gdofs(el, 1) == [1, 2]
     @test get_gdofs(p1, el) == [1, 2]
-    empty!(p2)
 
     p3 = Problem(P2, "P3", 1, "p")
     as = get_assembly(p3)
@@ -117,7 +115,7 @@ end
     @test haskey(p3, "f")
     @test isapprox(p3["f"].data, 1.0)
     f = p3("f", 0.0)
-    @test_throws Exception get_gdofs(e3, 1)
+    @test_throws Exception get_gdofs(problem, e3)
 end
 
 @testset "test initializing new problems" begin
@@ -258,4 +256,14 @@ end
     assemble!(problem.assembly, problem, first(elements), 0.0)
     assemble!(problem.assembly, problem, problem.elements, 0.0)
     assemble_elements!(problem, problem.assembly, elements, 0.0)
+end
+
+@testset "test set and get global dofs for element" begin
+    element = Element(Seg2, [1, 2])
+    problem = Problem(P3, "P3", 2)
+    @test get_gdofs(problem, element) == [1, 2, 3, 4]
+    set_gdofs!(problem, element, [2, 3, 4, 5])
+    @test get_gdofs(problem, element) == [2, 3, 4, 5]
+    element2 = Element(Seg2, Int[])
+    @test_throws ErrorException get_gdofs(problem, element2)
 end
