@@ -438,7 +438,7 @@ where `nid` is node id and `dim` is the dimension of problem. This formula
 arranges dofs so that first comes all dofs of node 1, then node 2 and so on:
 (u11, u12, u13, u21, u22, u23, ..., un1, un2, un3) for 3 dofs/node setting.
 """
-function get_gdofs(problem, element)
+function get_gdofs(problem::Problem, element::Element)
     if haskey(problem.dofmap, element)
         return problem.dofmap[element]
     end
