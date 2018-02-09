@@ -377,7 +377,10 @@ end
 @testset "update DVTI/DVTV with Dict" begin
     el = Element(Seg2, [1, 2])
     update!(el, "u", 0.0 => (0.0, 0.0))
+    update!(el, "v", (0.0, 0.0))
     u = Dict(1 => 1.0, 2 => 1.0)
     update!(el, "u", 0.0 => u)
+    update!(el, "v", u)
     @test isapprox(el("u", (0.0,), 0.0), 1.0)
+    @test isapprox(el("v", (0.0,), 0.0), 1.0)
 end

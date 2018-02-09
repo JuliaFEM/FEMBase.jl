@@ -251,15 +251,21 @@ function size(element::Element, dim)
     return size(element)[dim]
 end
 
-function update!{F<:AbstractField}(element::Element, field::F, data)
+function update!{F<:AbstractField}(::Element, field::F, data)
+    update!(field, data)
+end
+
+function update!{F<:AbstractField,T,V}(element::Element, field::F,
+                                       data_::Dict{T,V})
+    data = (collect(data_[i] for i in get_connectivity(element))...)
     update!(field, data)
 end
 
 function update!{F<:AbstractField,T,V}(element::Element, field::F,
                                        data__::Pair{Float64, Dict{T,V}})
-    time, data_ = data__
+    time_, data_ = data__
     data = (collect(data_[i] for i in get_connectivity(element))...)
-    update!(field, time => data)
+    update!(field, time_ => data)
 end
 
 function update!(element::Element, field_name, data)
