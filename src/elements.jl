@@ -251,9 +251,20 @@ function size(element::Element, dim)
     return size(element)[dim]
 end
 
+function update!{F<:AbstractField}(element::Element, field::F, data)
+    update!(field, data)
+end
+
+function update!{F<:AbstractField,T,V}(element::Element, field::F,
+                                       data__::Pair{Float64, Dict{T,V}})
+    time, data_ = data__
+    data = (collect(data_[i] for i in get_connectivity(element))...)
+    update!(field, time => data)
+end
+
 function update!(element::Element, field_name, data)
     if haskey(element.fields, field_name)
-        update!(element.fields[field_name], data)
+        update!(element, element.fields[field_name], data)
     else
         element.fields[field_name] = field(data)
     end

@@ -37,7 +37,7 @@ include("solvers.jl")
 export LinearSystem, AbstractLinearSystemSolver, solve!
 
 include("analysis.jl")
-export AbstractAnalysis, Analysis, add_problems!,
+export AbstractAnalysis, Analysis, add_problems!, get_problems, run!,
        AbstractResultsWriter, add_results_writer!, get_results_writers
 
 export FieldProblem, BoundaryProblem, Problem, Element, Assembly

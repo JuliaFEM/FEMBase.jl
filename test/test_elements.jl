@@ -373,3 +373,11 @@ end
     update!(el, "f", f)
     @test f === el.fields["f"]
 end
+
+@testset "update DVTI/DVTV with Dict" begin
+    el = Element(Seg2, [1, 2])
+    update!(el, "u", 0.0 => (0.0, 0.0))
+    u = Dict(1 => 1.0, 2 => 1.0)
+    update!(el, "u", 0.0 => u)
+    @test isapprox(el("u", (0.0,), 0.0), 1.0)
+end
