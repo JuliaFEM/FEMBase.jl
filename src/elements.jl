@@ -251,9 +251,25 @@ function size(element::Element, dim)
     return size(element)[dim]
 end
 
+function update!{F<:AbstractField}(::Element, field::F, data)
+    update!(field, data)
+end
+
+function update!{F<:DVTI,T,V}(element::Element, field::F, data_::Dict{T,V})
+    data = (collect(data_[i] for i in get_connectivity(element))...)
+    update!(field, data)
+end
+
+function update!{F<:DVTV,T,V}(element::Element, field::F,
+                              data__::Pair{Float64, Dict{T,V}})
+    time_, data_ = data__
+    data = (collect(data_[i] for i in get_connectivity(element))...)
+    update!(field, time_ => data)
+end
+
 function update!(element::Element, field_name, data)
     if haskey(element.fields, field_name)
-        update!(element.fields[field_name], data)
+        update!(element, element.fields[field_name], data)
     else
         element.fields[field_name] = field(data)
     end
