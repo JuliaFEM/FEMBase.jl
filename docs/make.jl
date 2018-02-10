@@ -15,7 +15,8 @@ DEVELOPER_GUIDE = [
           "solvers.md",
           "postprocessing.md",
           "results.md",
-          "materials.md"]
+          "materials.md",
+          "testing.md"]
 
 LIBRARY = ["api.md"]
 
