@@ -9,8 +9,8 @@
 # `get_integration_points(element, 2)` third rule and so on. Rules should be
 # ordered so that picking next one integrates more accurately.
 integration_rule_mapping = (
-    :Seg2    => (:GLSEG1, :GLSEG2, :GLSEG3, :GLSEG4, :GLSEG5),
-    :Seg3    => (:GLSEG2, :GLSEG3, :GLSEG4, :GLSEG5),
+    :Seg2    => (:GLSEG2, :GLSEG3, :GLSEG4, :GLSEG5),
+    :Seg3    => (:GLSEG3, :GLSEG4, :GLSEG5),
     :NSeg    => (:GLSEG2, :GLSEG3, :GLSEG4, :GLSEG5),
     :Quad4   => (:GLQUAD4, :GLQUAD9, :GLQUAD16, :GLQUAD25),
     :Quad8   => (:GLQUAD9, :GLQUAD16, :GLQUAD25),
