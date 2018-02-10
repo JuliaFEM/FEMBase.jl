@@ -31,7 +31,7 @@ include("problems.jl")
 export set_gdofs!, get_gdofs
 
 include("assembly.jl")
-export assemble_prehook!, assemble_posthook!
+export assemble_prehook!, assemble_posthook!, assemble_elements!
 
 include("solvers.jl")
 export LinearSystem, AbstractLinearSystemSolver, solve!
