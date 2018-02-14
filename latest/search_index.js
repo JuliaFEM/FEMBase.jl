@@ -473,6 +473,22 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "testing.html#",
+    "page": "Testing extensions",
+    "title": "Testing extensions",
+    "category": "page",
+    "text": ""
+},
+
+{
+    "location": "testing.html#Testing-extensions-1",
+    "page": "Testing extensions",
+    "title": "Testing extensions",
+    "category": "section",
+    "text": "Own extensions to JuliaFEM can be done to own separate packages which are then used in JuliaFEM. The main idea is that FEMBase.jl is giving all supporting functions and types for all kind of extensions. Extensions lives in their own modules. Extensions can be tested using FEMBase.Test, which itself is a extension to FEMBase, containing types introduced in this manual.Some guidelines:use Coverage.jl to check coverage, should be 100 %\nuse Lint.jl to check syntax\nno use of tabulators in files allowed\nno use of fancy utf-8 in code\nlicence header should match in every source file to one defined in main file\nkeep version history clean and understandable\nunit tests should test only implemented functions, nothing else"
+},
+
+{
     "location": "api.html#",
     "page": "API Documentation",
     "title": "API Documentation",
