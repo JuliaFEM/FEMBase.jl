@@ -58,4 +58,6 @@ export is_field_problem, is_boundary_problem, get_elements,
        get_element_type, filter_by_element_type, get_element_id,
        optimize!, resize_sparse, resize_sparsevec
 
+include("test.jl")
+
 end

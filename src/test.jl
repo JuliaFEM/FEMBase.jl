@@ -1,0 +1,212 @@
+# This file is a part of JuliaFEM.
+# License is MIT: see https://github.com/JuliaFEM/FEMBase.jl/blob/master/LICENSE
+
+"""
+    FEMBase.Test
+
+FEMBase.Test contains utilities to test JuliaFEM extensions, including:
+
+- all test macros from Base.Test (@test, @testset, ...)
+- test problems `Poisson` and `Dirichlet`.
+- test linear system solver `LUSolver`.
+- test analysis `Static`.
+
+"""
+module Test
+
+# For convenience, one can also get all @test macros and so on just by typing
+# `using FEMBase.Test`, they are the very same than in `Base.Test`
+using Base.Test
+export @test, @test_throws, @test_broken, @test_skip,
+       @test_warn, @test_nowarn
+# export @test_logs, @test_deprecated
+export @testset, @inferred
+
+using FEMBase
+import FEMBase: assemble_elements!, get_unknown_field_name, solve!, run!
+
+type Poisson <: FieldProblem end
+
+function get_unknown_field_name(::Problem{Poisson})
+    return "u"
+end
+
+function assemble_elements!{E}(problem::Problem{Poisson},
+                               assembly::Assembly,
+                               elements::Vector{Element{E}},
+                               time::Float64)
+
+    bi = BasisInfo(E)
+    ndofs = length(bi)
+    Ke = zeros(ndofs, ndofs)
+    fe = zeros(ndofs)
+
+    for element in elements
+        fill!(Ke, 0.0)
+        fill!(fe, 0.0)
+        for ip in get_integration_points(element)
+            J, detJ, N, dN = element_info!(bi, element, ip, time)
+            k = 1.0
+            if haskey(element, "coefficient")
+                k = element("coefficient", ip, time)
+            end
+            Ke += ip.weight * k*dN'*dN * detJ
+            if haskey(element, "source")
+                f = element("source", ip, time)
+                fe += ip.weight * N'*f * detJ
+            end
+        end
+        gdofs = get_gdofs(problem, element)
+        add!(assembly.K, gdofs, gdofs, Ke)
+        add!(assembly.f, gdofs, fe)
+    end
+end
+
+function assemble_elements!{E<:Union{Seg2,Seg3}}(problem::Problem{Poisson},
+                                                 assembly::Assembly,
+                                                 elements::Vector{Element{E}},
+                                                 time::Float64)
+
+    bi = BasisInfo(E)
+    ndofs = length(bi)
+    Ce = zeros(ndofs, ndofs)
+    fe = zeros(ndofs)
+    ge = zeros(ndofs)
+
+    for element in elements
+        fill!(Ce, 0.0)
+        fill!(fe, 0.0)
+        fill!(ge, 0.0)
+        for ip in get_integration_points(element)
+            J, detJ, N, dN = element_info!(bi, element, ip, time)
+            if haskey(element, "flux")
+                f = element("flux", ip, time)
+                fe += ip.weight * N'*f * detJ
+            end
+            if haskey(element, "fixed u")
+                f = element("fixed u", ip, time)
+                Ce += ip.weight * N'*N * detJ
+                ge += ip.weight * N'*f * detJ
+            end
+        end
+        gdofs = get_gdofs(problem, element)
+        add!(assembly.C1, gdofs, gdofs, Ce')
+        add!(assembly.C2, gdofs, gdofs, Ce)
+        add!(assembly.f, gdofs, fe)
+        add!(assembly.g, gdofs, ge)
+    end
+end
+
+type Dirichlet <: BoundaryProblem end
+
+function assemble_elements!{E}(problem::Problem{Dirichlet},
+                               assembly::Assembly,
+                               elements::Vector{Element{E}},
+                               time::Float64)
+
+    name = get_parent_field_name(problem)
+    dim = get_unknown_field_dimension(problem)
+
+    data = Dict{Int64,Float64}()
+    for element in elements
+        for i=1:dim
+            haskey(element, "$name $i") || continue
+            gdofs = get_gdofs(problem, element)
+            ldofs = gdofs[i:dim:end]
+            xis = get_reference_element_coordinates(E)
+            for (ldof, xi) in zip(ldofs, xis)
+                data[ldof] = interpolate(element, "$name $i", xi, time)
+            end
+        end
+    end
+
+    for (dof, val) in data
+        add!(assembly.C1, dof, dof, 1.0)
+        add!(assembly.C2, dof, dof, 1.0)
+        add!(assembly.g, dof, val)
+    end
+
+end
+
+type LUSolver <: AbstractLinearSystemSolver
+end
+
+"""
+    solve!(solver::LUSolver, ls::LinearSystem)
+
+Solve linear system using LU factorization. If final system has zero rows,
+add 1 to diagonal to make matrix non-singular.
+"""
+function solve!(ls::LinearSystem, ::LUSolver)
+    A = [ls.K ls.C1; ls.C2 ls.D]
+    b = [ls.f; ls.g]
+
+    # add 1.0 to diagonal for any zero rows in system
+    p = ones(2*ls.dim)
+    p[unique(rowvals(A))] = 0.0
+    A += spdiagm(p)
+
+    # solve A*x = b using LU factorization and update solution vectors
+    x = lufact(A) \ full(b)
+    ls.u = x[1:ls.dim]
+    ls.la = x[ls.dim+1:end]
+
+    return nothing
+end
+
+type Static <: AbstractAnalysis
+    time :: Float64
+end
+
+function Static()
+    return Static(0.0)
+end
+
+"""
+    get_linear_system(problems, time)
+
+Assemble `problems` and construct LinearSystem for test problem.
+"""
+function get_linear_system(problems, time)
+    # assemble matrices for all problems
+    N = 0 # size of resulting matrix
+    for problem in problems
+        assemble!(problem, time)
+        N = max(N, size(problem.assembly.K, 2))
+    end
+    # create new LinearSystem and add assemblies to that
+    ls = LinearSystem(N)
+    for problem in problems
+        ls.M += sparse(problem.assembly.M, N, N)
+        ls.K += sparse(problem.assembly.K, N, N)
+        ls.Kg += sparse(problem.assembly.K, N, N)
+        ls.f += sparse(problem.assembly.f, N, 1)
+        ls.fg += sparse(problem.assembly.f, N, 1)
+        ls.C1 += sparse(problem.assembly.C1, N, N)
+        ls.C2 += sparse(problem.assembly.C2, N, N)
+        ls.D += sparse(problem.assembly.D, N, N)
+        ls.g += sparse(problem.assembly.g, N, 1)
+    end
+    return ls
+end
+
+"""
+    run!(analysis::Analysis{Static})
+
+Run static analysis for test problem. This is for testing purposes only and
+should not be used in real simulations.
+"""
+function run!(analysis::Analysis{Static})
+    info("This is from FEMBase.Test.Analysis{Static}, which is for testing ",
+         "purposes only.")
+    ls = get_linear_system(get_problems(analysis), analysis.properties.time)
+    solve!(ls, LUSolver())
+    normu = norm(ls.u)
+    normla = norm(ls.la)
+    info("Solution norms are |u| = $normu, |la| = $normla")
+    return ls, normu, normla
+end
+
+export Poisson, Dirichlet, Static, LUSolver, get_linear_system
+
+end
