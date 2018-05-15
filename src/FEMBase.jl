@@ -60,4 +60,19 @@ export is_field_problem, is_boundary_problem, get_elements,
 
 include("test.jl")
 
+function eliminate_boundary_conditions! end
+export eliminate_boundary_conditions!
+
+function add_slave_elements! end
+export add_slave_elements!
+
+function get_slave_elements end
+export get_slave_elements
+
+function add_master_elements! end
+export add_master_elements!
+
+function get_master_elements end
+export get_master_elements
+
 end
