@@ -10,6 +10,7 @@ FEMBase.Test contains utilities to test JuliaFEM extensions, including:
 - test problems `Poisson` and `Dirichlet`.
 - test linear system solver `LUSolver`.
 - test analysis `Static`.
+- read ABAQUS matrices
 
 """
 module Test
@@ -207,6 +208,90 @@ function run!(analysis::Analysis{Static})
     return ls, normu, normla
 end
 
-export Poisson, Dirichlet, Static, LUSolver, get_linear_system
+export Poisson, Dirichlet, Static, LUSolver, get_linear_system, abaqus_read_mtx
 
+function read_mtx(data::IO; dim=0)
+    if dim == 0
+        for ln in eachline(data)
+            i,idof,j,jdof,value = map(parse, split(ln, ','))
+            dim = max(dim, idof, jdof)
+        end
+    end
+    seekstart(data)
+    I = Int64[]
+    J = Int64[]
+    V = Float64[]
+    for ln in eachline(data)
+        i,idof,j,jdof,value = map(parse, split(ln, ','))
+        if i < 1 || j < 1
+            continue
+        end
+        push!(I, (i-1)*dim+idof)
+        push!(J, (j-1)*dim+jdof)
+        push!(V, value)
+    end
+    A = full(sparse(I, J, V))
+    A += transpose(tril(A,-1))
+    return A
+end
+
+"""
+    read_mtx_from_file(filename::String; dim=0)
+
+Read matrix data export from ABAQUS by using command:
+
+*STEP
+*MATRIX GENERATE, STIFFNESS, MASS, LOAD
+*MATRIX OUTPUT, STIFFNESS, MASS, LOAD
+*END STEP
+
+If number of dofs / node (dim) is not given, it will be automatically
+detemined from file.
+
+"""
+function read_mtx_from_file(filename::String; dim=0)
+    open(filename) do fid
+        return read_mtx(fid; dim=dim)
+    end
+end
+
+function read_mtx_from_string(data::String; dim=0)
+    return read_mtx(IOBuffer(data); dim=dim)
+end
+
+"""
+    test_resource(resource::String) -> String
+
+`@test_resource(resource)` expands to a string containing full path to the some
+`resource` what is needed by a test. 
+
+# Example
+
+Say, test file name is `test_run_model.jl` inside package called `Models`.
+One needs a test mesh file `mesh.inp`. Then, function
+
+```julia
+mesh_file = @test_resource("mesh.inp")
+```
+
+expands to 
+
+    `~/.julia/v0.6/Models/test/test_run_model/mesh.inp`
+
+Macro must be used inside the actual test file.
+"""
+macro test_resource(resource::String)
+    #__source__.file === nothing && return nothing
+    #filename = String(__source__.file)
+    filename = Base.source_path()
+    abs_dirname = abspath(dirname(filename))
+    test_dir_name = first(splitext(basename(filename)))
+    resource_ = joinpath(abs_dirname, test_dir_name, resource)
+    if !isfile(resource_)
+        warn("Cannot find resource $resource_")
+    end
+    return resource_
+end
+
+export read_mtx_from_file, read_mtx_from_string, @test_resource
 end

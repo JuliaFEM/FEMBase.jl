@@ -59,3 +59,18 @@ end
     @test isapprox(normu, 136.5979502042399)
     @test isapprox(normla, 569.2099788303083)
 end
+
+@testset "Test @test_resource" begin
+    fn = @test_resource("mesh.inp")
+    @test contains(fn, "mesh.inp")
+end
+
+@testset "Test read_mtx_from_file and read_mtx_from_string" begin
+    data = """
+    1,1, 1,1,  1.0
+    """
+    K = read_mtx_from_string(data)
+    @test isapprox(K[1,1], 1.0)
+    K2 = read_mtx_from_file(@test_resource("eb3arxs4_STIF1.mtx"))
+    @test isapprox(K2[1,1], 1.8e6)
+end
