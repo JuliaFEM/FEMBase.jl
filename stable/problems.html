@@ -69,8 +69,8 @@ add_elements!(problem, elements)
 assemble!(problem, time)</code></pre><pre><code class="language-none">WARNING: The name of unknown field (e.g. displacement, temperature, ...) of the problem type must be given by defining function `get_unknown_field_name`
 WARNING: The name of unknown field (e.g. displacement, temperature, ...) of the problem type must be given by defining function `get_unknown_field_name`
 WARNING: The name of unknown field (e.g. displacement, temperature, ...) of the problem type must be given by defining function `get_unknown_field_name`
-Assembling elements of kind FEMBasis.Tri3
-Assembling elements of kind FEMBasis.Quad4</code></pre></div><pre><code class="language-julia-repl">julia&gt; full(problem.assembly.K)
+Assembling elements of kind FEMBasis.Quad4
+Assembling elements of kind FEMBasis.Tri3</code></pre></div><pre><code class="language-julia-repl">julia&gt; full(problem.assembly.K)
 5×5 Array{Float64,2}:
   4.0  -1.0  -2.0  -1.0   0.0
  -1.0   7.0  -4.0  -2.0   0.0
@@ -143,9 +143,9 @@ assemble!(problem, time)</code></pre><pre><code class="language-none">WARNING: T
 WARNING: The name of unknown field (e.g. displacement, temperature, ...) of the problem type must be given by defining function `get_unknown_field_name`
 WARNING: The name of unknown field (e.g. displacement, temperature, ...) of the problem type must be given by defining function `get_unknown_field_name`
 WARNING: The name of unknown field (e.g. displacement, temperature, ...) of the problem type must be given by defining function `get_unknown_field_name`
-Assembling volume elements of kind FEMBasis.Tri3
+Assembling boundary elements of kind FEMBasis.Seg2
 Assembling volume elements of kind FEMBasis.Quad4
-Assembling boundary elements of kind FEMBasis.Seg2</code></pre></div><p>Global stiffness matrix <span>$\boldsymbol{K}$</span> and force vector <span>$\boldsymbol{f}$</span> are</p><pre><code class="language-julia-repl">julia&gt; K = full(problem.assembly.K)
+Assembling volume elements of kind FEMBasis.Tri3</code></pre></div><p>Global stiffness matrix <span>$\boldsymbol{K}$</span> and force vector <span>$\boldsymbol{f}$</span> are</p><pre><code class="language-julia-repl">julia&gt; K = full(problem.assembly.K)
 5×5 Array{Float64,2}:
   4.0  -1.0  -2.0  -1.0   0.0
  -1.0   7.0  -4.0  -2.0   0.0
