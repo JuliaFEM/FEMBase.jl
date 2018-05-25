@@ -132,8 +132,9 @@ function interpolate_field(field::DCTV, time)
         if t0 < time < t1
             y0 = field.data[i-1].second
             y1 = field.data[i].second
-            f = (time-t0)/(t1-t0)
-            return f*y0 + (1-f)*y1
+            dy = y1-y0
+            dt = t1-t0
+            return y0 + (time-t0)*dy/dt
         end
     end
 end
@@ -179,8 +180,8 @@ function interpolate_field{N,T}(field::DVTV{N,T}, time)
         if t0 < time < t1
             y0 = field.data[i-1].second
             y1 = field.data[i].second
-            f = (time-t0)/(t1-t0)
-            return map((a,b) -> f*a + (1-f)*b, y0, y1)
+            dt = t1-t0
+            return map((a,b) -> a + (time-t0)*(b-a)/dt, y0, y1)
         end
     end
 end
