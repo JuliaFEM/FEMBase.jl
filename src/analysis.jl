@@ -27,6 +27,7 @@ end
 
 function add_results_writer!{W<:AbstractResultsWriter}(analysis::Analysis, writer::W)
     push!(analysis.results_writers, writer)
+    return nothing
 end
 
 function get_results_writers(analysis::Analysis)
