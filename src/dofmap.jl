@@ -31,3 +31,57 @@ end
 function DOFMap()
     return DOFMap(Dict(), Dict())
 end
+
+"""
+    set_gdofs!(dm, nodes, dof_names, gdofs)
+
+Create mapping of `nodes` and `dof_names` to `gdofs`.
+
+# Example
+
+``jltest
+dm = DOFMap()
+set_gdofs!(dm, (1, 3), (:u1, :u2), (1, 2, 5, 6))
+``
+"""
+function set_gdofs!(dm::DOFMap, nodes, dof_names, gdofs)
+    k = 0
+    for j in nodes
+        if !haskey(dm.map, j)
+            dm.map[j] = Dict()
+        end
+        for n in dof_names
+            k = k + 1
+            dm.map[j][n] = gdofs[k]
+        end
+    end
+    return nothing
+end
+
+function get_gdofs(dofmap::DOFMap, nodes, dof_names)
+    ldi = dofmap.local_dof_indices
+    max_dim = length(ldi)
+    if max_dim != 0
+        return (max_dim*(j-1)+ldi[n] for j in nodes for n in dof_names)
+    else
+        return (dofmap.map[j][n] for j in nodes for n in dof_names)
+    end
+end
+
+function get_gdofs!(gdofs, dofmap::DOFMap, nodes, dof_names)
+    for (k,j) in enumerate(get_gdofs(dofmap, nodes, dof_names))
+        gdofs[k] = j
+    end
+    return gdofs
+end
+
+function get_gdofs(nodes, max_dim, dof_indices)
+    return (max_dim*(j-1)+k for j in nodes for k in dof_indices)
+end
+
+function get_gdofs!(gdofs, nodes, max_dim, dof_indices)
+    for (k,j) in enumerate(get_gdofs(nodes, max_dim, dof_indices))
+        gdofs[k] = j
+    end
+    return gdofs
+end
