@@ -5,7 +5,7 @@
 
 using FEMBase
 using FEMBase.Test
-using FEMBase: SimpleDOFMap, set_local_dof_indices!
+using FEMBase: DOFMap, set_local_dof_indices!
 
 # With `SimpleDOFMap`, matrix row indices, what we call to global dofs, are
 # calculated based on the number of node ``j`` and maximum number of dofs per
