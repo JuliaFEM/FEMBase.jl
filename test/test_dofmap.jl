@@ -1,42 +1,29 @@
 # This file is a part of JuliaFEM.
 # License is MIT: see https://github.com/JuliaFEM/FEMBase.jl/blob/master/LICENSE
 
-# # Mapping nodal degrees of freedom to matrix rows
+# # Mapping nodal degrees of freedom to matrix rows (global dofs)
 
 using FEMBase
 using FEMBase.Test
-using FEMBase: DOFMap
-import FEMBase: set_gdofs!, get_gdofs, get_gdofs!
+using FEMBase: SimpleDOFMap, set_local_dof_indices!
 
-# Initialize a new `DOFMap`:
+# With `SimpleDOFMap`, matrix row indices, what we call to global dofs, are
+# calculated based on the number of node ``j`` and maximum number of dofs per
+# node ``d``. So for example, if each node has two dofs ``u_1``, ``u_2``, we
+# have ``(u_{11}, u_{12}, u_{21}, u_{22}, \ldots, u_{N1}, u_{N2})``. In general,
+# this formula is then `gdof(i,j) = d*(1-j)+i`. `SimpleDOFMap` mode does not
+# need any storage of mapping because matrix row is explicitly determined based
+# on node id number and local dof index.
 
-dm = DOFMap()
+dm = SimpleDOFMap()
+set_local_dof_indices!(dm, Dict(:u1=>1, :u2=>2, :T=>3))
 
-@test isempty(dm.map)
-@test isempty(dm.local_dof_indices)
+# Accessing of data is done using `get_gdofs` or in-place version `get_gdofs!`:
 
-# ## Basic usage
+@test collect(get_gdofs(dm, (1, 3), (:u1, :u2))) == [1, 2, 7, 8]
 
-# First we assign that nodes 1-4, each node having dof ``u_1`` and ``u_2``, are
-# connected to matrix rows 1-8:
+# In general, `get_gdofs` takes two iterables, one describing nodes and another
+# describing name of the dofs. Order does matter:
 
-set_gdofs!(dm, (1, 2, 3, 4), (:u1, :u2), (1, 2, 3, 4, 5, 6, 7, 8))
-
-# Accessing of data is done using `get_gdofs`
-
-gdofs = zeros(Int64, 4)
-@test get_gdofs!(gdofs, dm, (1, 2, 3, 4), (:u1,)) == [1, 3, 5, 7]
-@test get_gdofs!(gdofs, dm, (1, 2), (:u1, :u2)) == [1, 2, 3, 4]
-
-# Order does matter:
-
-@test get_gdofs!(gdofs, dm, (2, 1), (:u1, :u2)) == [3, 4, 1, 2]
-@test get_gdofs!(gdofs, dm, (1, 2), (:u2, :u1)) == [2, 1, 4, 3]
-
-# For fast access, we have functions to return dofs, given maximum dimension
-# and dof ids. For exapmle, to get dofs u1 and u2 (in indices 1,2) for nodes
-# 2,3, and maximum dimension is 3, is done using the following command. Here
-# dofs are (u11, u12, u13, u21, u22, u23, u31, u32, u33), so requesting dofs
-# 1,2 for nodes 2,3 is returning 4, 5, 7, 8.
-
-@test get_gdofs!(gdofs, (2,3), 3, (1,2)) == [4, 5, 7, 8]
+@test collect(get_gdofs(dm, (3, 1), (:u1, :u2))) == [7, 8, 1, 2]
+@test collect(get_gdofs(dm, (1, 3), (:u2, :u1))) == [2, 1, 8, 7]
