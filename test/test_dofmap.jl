@@ -15,7 +15,7 @@ using FEMBase: SimpleDOFMap, set_local_dof_indices!
 # need any storage of mapping because matrix row is explicitly determined based
 # on node id number and local dof index.
 
-dm = SimpleDOFMap()
+dm = DOFMap()
 set_local_dof_indices!(dm, Dict(:u1=>1, :u2=>2, :T=>3))
 
 # Accessing of data is done using `get_gdofs` or in-place version `get_gdofs!`:

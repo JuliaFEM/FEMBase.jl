@@ -24,16 +24,6 @@ function SimpleDOFMap()
     return SimpleDOFMap(Dict())
 end
 
-function get_gdofs(dofmap::SimpleDOFMap, nodes, dof_names)
-    ldi = dofmap.local_dof_indices
-    max_dim = length(ldi)
-    return (max_dim*(j-1)+ldi[n] for j in nodes for n in dof_names)
-end
-
-function DOFMap()
-    return SimpleDOFMap()
-end
-
 """
     set_local_dof_indices!(dofmap, local_dof_indices)
 
@@ -74,4 +64,8 @@ function get_gdofs!(gdofs, dofmap::SimpleDOFMap, nodes, dof_names)
         gdofs[k] = j
     end
     return gdofs
+end
+
+function DOFMap()
+    return SimpleDOFMap()
 end
