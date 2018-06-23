@@ -27,3 +27,8 @@ set_local_dof_indices!(dm, Dict(:u1=>1, :u2=>2, :T=>3))
 
 @test collect(get_gdofs(dm, (3, 1), (:u1, :u2))) == [7, 8, 1, 2]
 @test collect(get_gdofs(dm, (1, 3), (:u2, :u1))) == [2, 1, 8, 7]
+
+# There is also in-place version to get dofs:
+
+gdofs = zeros(Int64, 4)
+@test collect(get_gdofs!(dm, (1, 2), (:u1, :u2))) == [1, 2, 3, 4]

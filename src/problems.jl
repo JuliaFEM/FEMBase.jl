@@ -446,9 +446,7 @@ function get_dof_names(problem::Problem{P}, ::Element) where {P}
     warn("Define function FEMBase.get_dof_names(::Problem{$P}, ::Element).")
     warn("Assuming that dofs for problem $P are $(collect(dof_names)).")
     code = quote
-        function FEMBase.get_dof_names(::Problem{$P}, ::Element)
-            return $dof_names
-        end
+        FEMBase.get_dof_names(::Problem{$P}, ::Element) = $dof_names
     end
     eval(code)
     return dof_names
