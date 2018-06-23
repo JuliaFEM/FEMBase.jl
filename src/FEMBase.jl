@@ -27,10 +27,12 @@ export element_info!
 include("elements_lagrange.jl")
 include("integrate.jl")
 
-include("problems.jl")
-export set_gdofs!, get_gdofs, get_formulation_type
-
 include("dofmap.jl")
+export get_gdofs
+
+include("problems.jl")
+export get_formulation_type
+
 
 include("assembly.jl")
 export assemble_prehook!, assemble_posthook!, assemble_elements!

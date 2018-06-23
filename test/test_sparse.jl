@@ -21,11 +21,6 @@ end
     @test isapprox(full(b), full(b2))
 end
 
-@testset "Failure to add data to sparse vector due dimension mismatch" begin
-    b = SparseVectorCOO()
-    @test_throws ErrorException add!(b, [1, 2], [1.0, 2.0, 3.0])
-end
-
 @testset "Test combining of SparseMatrixCOO" begin
     k = convert(Matrix{Float64}, reshape(collect(1:9), 3, 3))
     dofs1 = [1, 2, 3]

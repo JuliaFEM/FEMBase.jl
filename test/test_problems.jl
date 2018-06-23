@@ -98,7 +98,7 @@ end
     println("elgeom is ", el("geometry", 0.0))
     @test isapprox(p1("geometry", 0.0)[1], [0.0, 0.0])
     @test get_parent_field_name(p2) == "p"
-    @test get_gdofs(p1, el) == [1, 2]
+    @test collect(get_gdofs(p1, el)) == [1, 2]
 
     p3 = Problem(P2, "P3", 1, "p")
     as = get_assembly(p3)
@@ -203,7 +203,7 @@ function assemble_elements!{E}(problem::Problem{DirBC},
     for element in elements
         for i=1:dim
             haskey(element, "$name $dim") || continue
-            gdofs = get_gdofs(problem, element)
+            gdofs = collect(get_gdofs(problem, element))
             ldofs = gdofs[i:dim:end]
             xis = get_reference_element_coordinates(E)
             for (ldof, xi) in zip(ldofs, xis)
@@ -258,12 +258,8 @@ end
     assemble_elements!(problem, problem.assembly, elements, 0.0)
 end
 
-@testset "test set and get global dofs for element" begin
+@testset "test get global dofs for element" begin
     element = Element(Seg2, [1, 2])
     problem = Problem(P3, "P3", 2)
-    @test get_gdofs(problem, element) == [1, 2, 3, 4]
-    set_gdofs!(problem, element, [2, 3, 4, 5])
-    @test get_gdofs(problem, element) == [2, 3, 4, 5]
-    element2 = Element(Seg2, Int[])
-    @test_throws ErrorException get_gdofs(problem, element2)
+    @test collect(get_gdofs(problem, element)) == [1, 2, 3, 4]
 end
