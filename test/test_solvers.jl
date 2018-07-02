@@ -6,11 +6,11 @@ using Base.Test
 
 import FEMBase: solve!, can_solve
 
-type LSSolver1 <: AbstractLinearSystemSolver
+mutable struct LSSolver1 <: AbstractLinearSystemSolver
     a :: Int64
 end
 
-type LSSolver2 <: AbstractLinearSystemSolver
+mutable struct LSSolver2 <: AbstractLinearSystemSolver
 end
 
 function LSSolver1()

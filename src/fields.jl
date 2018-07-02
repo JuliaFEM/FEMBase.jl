@@ -8,27 +8,27 @@ Abstract supertype for all fields in JuliaFEM.
 """
 abstract type AbstractField end
 
-function length{F<:AbstractField}(f::F)
+function length(f::F) where F<:AbstractField
     return length(f.data)
 end
 
-function size{F<:AbstractField}(f::F)
+function size(f::F) where F<:AbstractField
     return size(f.data)
 end
 
-function =={F<:AbstractField}(x::F, y)
+function ==(x::F, y) where F<:AbstractField
     return ==(x.data, y)
 end
 
-function =={F<:AbstractField}(x, y::F)
+function ==(x, y::F) where F<:AbstractField
     return ==(x, y.data)
 end
 
-function =={F<:AbstractField}(x::F, y::F)
+function ==(x::F, y::F) where F<:AbstractField
     return ==(x.data, y.data)
 end
 
-function getindex{F<:AbstractField}(f::F, i::Int64)
+function getindex(f::F, i::Int64) where F<:AbstractField
     return getindex(f.data, i)
 end
 
@@ -55,7 +55,7 @@ julia> DCTI(1)
 FEMBase.DCTI{Int64}(1)
 ```
 """
-type DCTI{T} <: AbstractField
+mutable struct DCTI{T} <: AbstractField
     data :: T
 end
 
@@ -80,7 +80,7 @@ julia> DVTI(1, 2, 3)
 FEMBase.DVTI{3,Int64}((1, 2, 3))
 ```
 """
-type DVTI{N,T} <: AbstractField
+mutable struct DVTI{N,T} <: AbstractField
     data :: NTuple{N,T}
 end
 
@@ -104,15 +104,15 @@ FEMBase.DCTV{Int64}(Pair{Float64,Int64}[0.0=>5, 1.0=>10])
 ```
 
 """
-type DCTV{T} <: AbstractField
+mutable struct DCTV{T} <: AbstractField
     data :: Vector{Pair{Float64,T}}
 end
 
-function DCTV{T}(data::Pair{Float64,T}...)
+function DCTV(data::Pair{Float64,T}...) where T
     return DCTV(collect(data))
 end
 
-function update_field!{T}(f::DCTV, data::Pair{Float64, T})
+function update_field!(f::DCTV, data::Pair{Float64, T}) where T
     if isapprox(last(f.data).first, data.first)
         f.data[end] = data
     else
@@ -152,15 +152,15 @@ julia> DVTV(0.0 => (1, 2), 1.0 => (2, 3))
 FEMBase.DVTV{2,Int64}(Pair{Float64,Tuple{Int64,Int64}}[0.0=>(1, 2), 1.0=>(2, 3)])
 ```
 """
-type DVTV{N,T} <: AbstractField
+mutable struct DVTV{N,T} <: AbstractField
     data :: Vector{Pair{Float64,NTuple{N,T}}}
 end
 
-function DVTV{N,T}(data::Pair{Float64,NTuple{N,T}}...)
+function DVTV(data::Pair{Float64,NTuple{N,T}}...) where {N,T}
     return DVTV(collect(data))
 end
 
-function update_field!{N,T}(f::DVTV, data::Pair{Float64, NTuple{N,T}})
+function update_field!(f::DVTV, data::Pair{Float64, NTuple{N,T}}) where {N,T}
     if isapprox(last(f.data).first, data.first)
         f.data[end] = data
     else
@@ -168,7 +168,7 @@ function update_field!{N,T}(f::DVTV, data::Pair{Float64, NTuple{N,T}})
     end
 end
 
-function interpolate_field{N,T}(field::DVTV{N,T}, time)
+function interpolate_field(field::DVTV{N,T}, time) where {N,T}
     time < first(field.data).first && return first(field.data).second
     time > last(field.data).first && return last(field.data).second
     for i=reverse(1:length(field))
@@ -198,7 +198,7 @@ julia> f = CVTV((xi,t) -> xi*t)
 FEMBase.CVTV(#1)
 ```
 """
-type CVTV <: AbstractField
+mutable struct CVTV <: AbstractField
     data :: Function
 end
 
@@ -211,11 +211,11 @@ end
 
 Discrete, variable, time invariant dictionary field.
 """
-type DVTId{T} <: AbstractField
+mutable struct DVTId{T} <: AbstractField
     data :: Dict{Int64, T}
 end
 
-function update_field!{T}(field::DVTId{T}, data::Dict{Int64, T})
+function update_field!(field::DVTId{T}, data::Dict{Int64, T}) where T
     merge!(field.data, data)
 end
 
@@ -224,15 +224,15 @@ end
 
 Discrete, variable, time variant dictionary field.
 """
-type DVTVd{T} <: AbstractField
+mutable struct DVTVd{T} <: AbstractField
     data :: Vector{Pair{Float64,Dict{Int64,T}}}
 end
 
-function DVTVd{T}(data::Pair{Float64,Dict{Int64,T}}...)
+function DVTVd(data::Pair{Float64,Dict{Int64,T}}...) where T
     return DVTVd(collect(data))
 end
 
-function interpolate_field{T}(field::DVTVd{T}, time)
+function interpolate_field(field::DVTVd{T}, time) where T
     time < first(field.data).first && return first(field.data).second
     time > last(field.data).first && return last(field.data).second
     for i=reverse(1:length(field))
@@ -254,7 +254,7 @@ function interpolate_field{T}(field::DVTVd{T}, time)
     end
 end
 
-function update_field!{T}(f::DVTVd, data::Pair{Float64,Dict{Int64,T}})
+function update_field!(f::DVTVd, data::Pair{Float64,Dict{Int64,T}}) where T
     if isapprox(last(f.data).first, data.first)
         f.data[end] = data
     else
@@ -270,15 +270,15 @@ function new_field(data...)
     return DVTI(data)
 end
 
-function new_field{N,T}(data::NTuple{N,T})
+function new_field(data::NTuple{N,T}) where {N,T}
     return DVTI(data)
 end
 
-function new_field{T}(data::Pair{Float64,T}...)
+function new_field(data::Pair{Float64,T}...) where T
     return DCTV(collect(data))
 end
 
-function new_field{N,T}(data::Pair{Float64,NTuple{N,T}}...)
+function new_field(data::Pair{Float64,NTuple{N,T}}...) where {N,T}
     return DVTV(collect(data))
 end
 
@@ -286,19 +286,19 @@ function new_field(data::Function)
     return CVTV(data)
 end
 
-function new_field{T}(data::Pair{Int64, T}...)
+function new_field(data::Pair{Int64, T}...) where T
     return DVTId(Dict(data))
 end
 
-function new_field{N,T}(data::Pair{Float64, NTuple{N, Pair{Int64, T}}}...)
+function new_field(data::Pair{Float64, NTuple{N, Pair{Int64, T}}}...) where {N,T}
     return DVTVd(collect(t => Dict(d) for (t, d) in data))
 end
 
-function new_field{T}(data::Dict{Int64,T})
+function new_field(data::Dict{Int64,T}) where T
     return DVTId(data)
 end
 
-function new_field{T}(data::Pair{Float64, Dict{Int64, T}}...)
+function new_field(data::Pair{Float64, Dict{Int64, T}}...) where T
     return DVTVd(collect(data))
 end
 
@@ -360,7 +360,7 @@ time of some frame and return that frame. At last, we find correct bin so
 that t0 < time < t1 and use linear interpolation.
 
 """
-function interpolate{F<:AbstractField}(field::F, time)
+function interpolate(field::F, time) where F<:AbstractField
     return interpolate_field(field, time)
 end
 
@@ -380,6 +380,6 @@ end
 
 Update new value to field.
 """
-function update!{F<:AbstractField}(field::F, data)
+function update!(field::F, data) where F<:AbstractField
     update_field!(field, data)
 end

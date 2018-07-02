@@ -26,16 +26,16 @@ export @testset, @inferred
 using FEMBase
 import FEMBase: assemble_elements!, get_unknown_field_name, solve!, run!
 
-type Poisson <: FieldProblem end
+mutable struct Poisson <: FieldProblem end
 
 function get_unknown_field_name(::Problem{Poisson})
     return "u"
 end
 
-function assemble_elements!{E}(problem::Problem{Poisson},
-                               assembly::Assembly,
-                               elements::Vector{Element{E}},
-                               time::Float64)
+function assemble_elements!(problem::Problem{Poisson},
+                            assembly::Assembly,
+                            elements::Vector{Element{E}},
+                            time::Float64) where E
 
     bi = BasisInfo(E)
     ndofs = length(bi)
@@ -63,10 +63,10 @@ function assemble_elements!{E}(problem::Problem{Poisson},
     end
 end
 
-function assemble_elements!{E<:Union{Seg2,Seg3}}(problem::Problem{Poisson},
-                                                 assembly::Assembly,
-                                                 elements::Vector{Element{E}},
-                                                 time::Float64)
+function assemble_elements!(problem::Problem{Poisson},
+                            assembly::Assembly,
+                            elements::Vector{Element{E}},
+                            time::Float64) where E<:Union{Seg2,Seg3}
 
     bi = BasisInfo(E)
     ndofs = length(bi)
@@ -98,12 +98,12 @@ function assemble_elements!{E<:Union{Seg2,Seg3}}(problem::Problem{Poisson},
     end
 end
 
-type Dirichlet <: BoundaryProblem end
+mutable struct Dirichlet <: BoundaryProblem end
 
-function assemble_elements!{E}(problem::Problem{Dirichlet},
-                               assembly::Assembly,
-                               elements::Vector{Element{E}},
-                               time::Float64)
+function assemble_elements!(problem::Problem{Dirichlet},
+                            assembly::Assembly,
+                            elements::Vector{Element{E}},
+                            time::Float64) where E
 
     name = get_parent_field_name(problem)
     dim = get_unknown_field_dimension(problem)
@@ -129,7 +129,7 @@ function assemble_elements!{E}(problem::Problem{Dirichlet},
 
 end
 
-type LUSolver <: AbstractLinearSystemSolver
+mutable struct LUSolver <: AbstractLinearSystemSolver
 end
 
 """
@@ -155,7 +155,7 @@ function solve!(ls::LinearSystem, ::LUSolver)
     return nothing
 end
 
-type Static <: AbstractAnalysis
+mutable struct Static <: AbstractAnalysis
     time :: Float64
 end
 

@@ -4,7 +4,7 @@
 using FEMBase
 using Base.Test
 
-type Dummy <: FEMBase.FieldProblem
+mutable struct Dummy <: FEMBase.FieldProblem
 end
 
 @testset "add elements to problem" begin

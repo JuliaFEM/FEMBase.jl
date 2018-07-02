@@ -5,8 +5,8 @@ using FEMBase
 using FEMBase: assemble_mass_matrix!
 using Base.Test
 
-type Dummy <: FieldProblem end
-type Dummy2 <: FieldProblem end
+mutable struct Dummy <: FieldProblem end
+mutable struct Dummy2 <: FieldProblem end
 
 @testset "test tet4 mass matrix" begin
     X = Dict(

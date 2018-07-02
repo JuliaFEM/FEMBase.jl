@@ -5,7 +5,7 @@ const Node = Vector{Float64}
 
 abstract type AbstractPoint end
 
-type Point{P<:AbstractPoint}
+mutable struct Point{P<:AbstractPoint}
     id :: Int
     weight :: Float64
     coords :: Tuple{Vararg{Float64}}
@@ -13,7 +13,7 @@ type Point{P<:AbstractPoint}
     properties :: P
 end
 
-function setindex!{T}(point::Point, val::Pair{Float64, T}, field_name)
+function setindex!(point::Point, val::Pair{Float64, T}, field_name) where T
     point.fields[field_name] = field(val)
 end
 
@@ -45,7 +45,7 @@ function next(point::Point, i)
     return next(point.coords, i)
 end
 
-function update!{T}(point::Point, field_name, val::Pair{Float64, T})
+function update!(point::Point, field_name, val::Pair{Float64, T}) where T
     if haskey(point, field_name)
         update!(point[field_name], val)
     else
@@ -61,7 +61,7 @@ type MaterialPoint <: AbstractPoint
 end
 =#
 
-type IntegrationPoint <: AbstractPoint
+mutable struct IntegrationPoint <: AbstractPoint
 end
 
 const IP = Point{IntegrationPoint}

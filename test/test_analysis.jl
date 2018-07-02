@@ -7,11 +7,11 @@ using Base.Test
 
 import FEMBase: run!
 
-type MyAnalysis1 <: AbstractAnalysis end
+mutable struct MyAnalysis1 <: AbstractAnalysis end
 
-type MyAnalysis2 <: AbstractAnalysis end
+mutable struct MyAnalysis2 <: AbstractAnalysis end
 
-type MyProblem <: FieldProblem
+mutable struct MyProblem <: FieldProblem
     value :: Bool
 end
 
@@ -40,7 +40,7 @@ end
 # Writing results of some analysis is done, in abstract level, by using
 # results writers. They must be subtypes of `AbstractResultsWriter`:
 
-type TestResultsWriter <: AbstractResultsWriter
+mutable struct TestResultsWriter <: AbstractResultsWriter
 end
 
 # Results writer is added to analysis using `add_results_writer!`:

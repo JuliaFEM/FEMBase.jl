@@ -4,7 +4,7 @@
 abstract type AbstractAnalysis end
 abstract type AbstractResultsWriter end
 
-type Analysis{A<:AbstractAnalysis}
+mutable struct Analysis{A<:AbstractAnalysis}
     name :: String
     problems :: Vector{Problem}
     fields :: Dict{String, AbstractField}
@@ -12,7 +12,7 @@ type Analysis{A<:AbstractAnalysis}
     properties :: A
 end
 
-function Analysis{A<:AbstractAnalysis}(::Type{A}, name::String="$A Analysis")
+function Analysis(::Type{A}, name::String="$A Analysis") where A<:AbstractAnalysis
     analysis = Analysis{A}(name, [], Dict(), [], A())
     return analysis
 end
@@ -25,7 +25,7 @@ function get_problems(analysis::Analysis)
     return analysis.problems
 end
 
-function add_results_writer!{W<:AbstractResultsWriter}(analysis::Analysis, writer::W)
+function add_results_writer!(analysis::Analysis, writer::W) where W<:AbstractResultsWriter
     push!(analysis.results_writers, writer)
     return nothing
 end
@@ -34,7 +34,7 @@ function get_results_writers(analysis::Analysis)
     return analysis.results_writers
 end
 
-function run!{A<:AbstractAnalysis}(::Analysis{A})
+function run!(::Analysis{A}) where A<:AbstractAnalysis
     info("This is a placeholder function for running an analysis $A for a set of problems.")
 end
 

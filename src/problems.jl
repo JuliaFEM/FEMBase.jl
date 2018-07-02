@@ -11,7 +11,7 @@ General linearized problem to solve
     (K₁+K₂)Δu  +   C1'*Δλ = f₁+f₂
          C2Δu  +     D*Δλ = g
 """
-type Assembly
+mutable struct Assembly
 
     M :: SparseMatrixCOO  # mass matrix
 
@@ -95,7 +95,7 @@ Problem.elements = a
 ```
 
 """
-type Problem{P<:AbstractProblem}
+mutable struct Problem{P<:AbstractProblem}
     name :: AbstractString           # descriptive name for the problem
     dimension :: Int                 # degrees of freedom per node
     parent_field_name :: AbstractString # (optional) name of the parent field e.g. "displacement"
@@ -124,7 +124,7 @@ prob1 = Problem(Elasticity, "this is my problem", 3)
 ```
 
 """
-function Problem{P<:FieldProblem}(::Type{P}, name::AbstractString, dimension::Int64)
+function Problem(::Type{P}, name::AbstractString, dimension::Int64) where P<:FieldProblem
     return Problem{P}(name, dimension, "none", [], Dict(), Assembly(), Dict(), Vector(), P())
 end
 
@@ -138,7 +138,7 @@ Create a Dirichlet boundary problem for a vector-valued (dim=3) elasticity probl
 julia> bc1 = Problem(Dirichlet, "support", 3, "displacement")
 solver.
 """
-function Problem{P<:BoundaryProblem}(::Type{P}, name, dimension, parent_field_name)
+function Problem(::Type{P}, name, dimension, parent_field_name) where P<:BoundaryProblem
     return Problem{P}(name, dimension, parent_field_name, [], Dict(), Assembly(), Dict(), Vector(), P())
 end
 
@@ -160,30 +160,30 @@ end
 
 Default function if unknown field name is not defined for some problem.
 """
-function get_unknown_field_name{P<:AbstractProblem}(::P)
+function get_unknown_field_name(::P) where P<:AbstractProblem
     warn("The name of unknown field (e.g. displacement, temperature, ...) of the ",
          "problem type must be given by defining function `get_unknown_field_name`")
     return "N/A"
 end
 
 """ Return the name of the unknown field of this problem. """
-function get_unknown_field_name{P}(problem::Problem{P})
+function get_unknown_field_name(problem::Problem{P}) where P
     return get_unknown_field_name(problem.properties)
 end
 
 """ Return the name of the parent field of this (boundary) problem. """
-function get_parent_field_name{P<:BoundaryProblem}(problem::Problem{P})
+function get_parent_field_name(problem::Problem{P}) where P<:BoundaryProblem
     return problem.parent_field_name
 end
 
-function get_unknown_field_name{P<:BoundaryProblem}(::P)
+function get_unknown_field_name(::P) where P<:BoundaryProblem
     return "lambda"
 end
 
 is_field_problem(::Problem) = false
-is_field_problem{P<:FieldProblem}(::Problem{P}) = true
+is_field_problem(::Problem{P}) where {P<:FieldProblem} = true
 is_boundary_problem(::Problem) = false
-is_boundary_problem{P<:BoundaryProblem}(::Problem{P}) = true
+is_boundary_problem(::Problem{P}) where {P<:BoundaryProblem} = true
 
 function get_elements(problem::Problem)
     return problem.elements
@@ -201,7 +201,7 @@ Update properties for a problem.
 update!(body.properties, "finite_strain" => "false")
 ```
 """
-function update!{P<:AbstractProblem}(problem::P, attr::Pair{String, String}...)
+function update!(problem::P, attr::Pair{String, String}...) where P<:AbstractProblem
     for (name, value) in attr
         setfield!(problem, parse(name), parse(value))
     end
@@ -326,7 +326,7 @@ end
 
 Update a solution from the assebly to elements.
 """
-function update!{P<:FieldProblem}(problem::Problem{P}, assembly::Assembly, elements::Vector{Element}, time::Float64)
+function update!(problem::Problem{P}, assembly::Assembly, elements::Vector{Element}, time::Float64) where P<:FieldProblem
     u, la = get_global_solution(problem, assembly)
     field_name = get_unknown_field_name(problem)
     # update solution u for elements
@@ -336,7 +336,7 @@ function update!{P<:FieldProblem}(problem::Problem{P}, assembly::Assembly, eleme
     end
 end
 
-function update!{P<:BoundaryProblem}(problem::Problem{P}, assembly::Assembly, elements::Vector{Element}, time::Float64)
+function update!(problem::Problem{P}, assembly::Assembly, elements::Vector{Element}, time::Float64) where P<:BoundaryProblem
     u, la = get_global_solution(problem, assembly)
     parent_field_name = get_parent_field_name(problem) # displacement
     field_name = get_unknown_field_name(problem) # lambda

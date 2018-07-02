@@ -1,7 +1,7 @@
 # This file is a part of JuliaFEM.
 # License is MIT: see https://github.com/JuliaFEM/FEMBase.jl/blob/master/LICENSE
 
-type Element{E<:AbstractBasis}
+mutable struct Element{E<:AbstractBasis}
     id :: Int
     connectivity :: Vector{Int}
     integration_points :: Vector{IP}
@@ -25,7 +25,7 @@ element = Element(Tri3, [89, 43, 12])
 ```
 ![img](figs/mesh.png)
 """
-function Element{E<:AbstractBasis}(::Type{E}, connectivity::Vector{Int})
+function Element(::Type{E}, connectivity::Vector{Int}) where E<:AbstractBasis
     return Element{E}(-1, connectivity, [], Dict(), E())
 end
 
@@ -51,19 +51,19 @@ function getindex(element::Element, field_name::String)
     return element.fields[field_name]
 end
 
-function setindex!{T<:AbstractField}(element::Element, data::T, field_name)
+function setindex!(element::Element, data::T, field_name) where T<:AbstractField
     element.fields[field_name] = data
 end
 
-function get_element_type{E}(::Element{E})
+function get_element_type(::Element{E}) where E
     return E
 end
 
-function get_element_id{E}(element::Element{E})
+function get_element_id(element::Element{E}) where E
     return element.id
 end
 
-function is_element_type{E}(::Element{E}, element_type)
+function is_element_type(::Element{E}, element_type) where E
     return E === element_type
 end
 
@@ -149,14 +149,14 @@ function interpolate(element::Element, field_name::String, time::Float64)
     end
 end
 
-function get_basis{B}(element::Element{B}, ip, ::Any)
+function get_basis(element::Element{B}, ip, ::Any) where B
     T = typeof(first(ip))
     N = zeros(T, 1, length(element))
     eval_basis!(B, N, tuple(ip...))
     return N
 end
 
-function get_dbasis{B}(element::Element{B}, ip, ::Any)
+function get_dbasis(element::Element{B}, ip, ::Any) where B
     T = typeof(first(ip))
     dN = zeros(T, size(element)...)
     eval_dbasis!(B, dN, tuple(ip...))
@@ -224,18 +224,18 @@ function interpolate(element::Element, field_name, ip, time)
     return interpolate_field(element, field, ip, time)
 end
 
-function interpolate_field{T<:Union{DCTI,DCTV}}(::Element, field::T, ::Any, time)
+function interpolate_field(::Element, field::T, ::Any, time) where T<:Union{DCTI,DCTV}
     return interpolate_field(field, time)
 end
 
-function interpolate_field{T<:Union{DVTV,DVTI}}(element::Element, field::T, ip, time)
+function interpolate_field(element::Element, field::T, ip, time) where T<:Union{DVTV,DVTI}
     data = interpolate_field(field, time)
     basis = get_basis(element, ip, time)
     N = length(basis)
     return sum(data[i]*basis[i] for i=1:N)
 end
 
-function interpolate_field{T<:Union{DVTVd,DVTId}}(element::Element, field::T, ip, time)
+function interpolate_field(element::Element, field::T, ip, time) where T<:Union{DVTVd,DVTId}
     data = interpolate_field(field, time)
     basis = element(ip, time)
     N = length(element)
@@ -251,17 +251,17 @@ function size(element::Element, dim)
     return size(element)[dim]
 end
 
-function update!{F<:AbstractField}(::Element, field::F, data)
+function update!(::Element, field::F, data) where F<:AbstractField
     update!(field, data)
 end
 
-function update!{F<:DVTI,T,V}(element::Element, field::F, data_::Dict{T,V})
+function update!(element::Element, field::F, data_::Dict{T,V}) where {F<:DVTI,T,V}
     data = (collect(data_[i] for i in get_connectivity(element))...)
     update!(field, data)
 end
 
-function update!{F<:DVTV,T,V}(element::Element, field::F,
-                              data__::Pair{Float64, Dict{T,V}})
+function update!(element::Element, field::F,
+                 data__::Pair{Float64, Dict{T,V}}) where {F<:DVTV,T,V}
     time_, data_ = data__
     data = (collect(data_[i] for i in get_connectivity(element))...)
     update!(field, time_ => data)
@@ -275,7 +275,7 @@ function update!(element::Element, field_name, data)
     end
 end
 
-function update!{F<:AbstractField}(element::Element, field_name, field_::F)
+function update!(element::Element, field_name, field_::F) where F<:AbstractField
     element.fields[field_name] = field_
 end
 
@@ -298,7 +298,7 @@ function haskey(element::Element, field_name)
     return haskey(element.fields, field_name)
 end
 
-function get_integration_points{E}(element::Element{E})
+function get_integration_points(element::Element{E}) where E
     # first time initialize default integration points
     if length(element.integration_points) == 0
         ips = get_integration_points(element.properties)
@@ -314,7 +314,7 @@ end
 """ This is a special case, temporarily change order
 of integration scheme mainly for mass matrix.
 """
-function get_integration_points{E}(element::Element{E}, change_order::Int)
+function get_integration_points(element::Element{E}, change_order::Int) where E
     ips = get_integration_points(element.properties, Val{change_order})
     if E in (Seg2, Seg3, NSeg)
         return [IP(i, w, (xi,)) for (i, (w, xi)) in enumerate(ips)]
@@ -341,7 +341,7 @@ function get_local_coordinates(element::Element, X::Vector, time::Float64; max_i
 end
 
 """ Test is X inside element. """
-function inside{E}(element::Element{E}, X, time)
+function inside(element::Element{E}, X, time) where E
     xi = get_local_coordinates(element, X, time)
     return inside(E, xi)
 end
@@ -358,7 +358,7 @@ function (element::Element)(field_name::String, ip, time::Float64)
     return interpolate(element, field_name, ip, time)
 end
 
-function element_info!{E,T}(bi::BasisInfo{E,T}, element::Element{E}, ip, time)
+function element_info!(bi::BasisInfo{E,T}, element::Element{E}, ip, time) where {E,T}
     X = interpolate(element, "geometry", time)
     eval_basis!(bi, X, ip)
     return bi.J, bi.detJ, bi.N, bi.grad

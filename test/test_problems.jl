@@ -10,7 +10,7 @@ using Base.Test
 import FEMBase: get_unknown_field_dimension, get_unknown_field_name
 import FEMBase: get_formulation_type, assemble_elements!
 
-type P1 <: FieldProblem
+mutable struct P1 <: FieldProblem
     A :: Bool
 end
 
@@ -18,7 +18,7 @@ function P1()
     return P1(true)
 end
 
-type P2 <: BoundaryProblem
+mutable struct P2 <: BoundaryProblem
     formulation :: Symbol
 end
 
@@ -26,7 +26,7 @@ function P2()
     return P2(:incremental)
 end
 
-type P3 <: FieldProblem
+mutable struct P3 <: FieldProblem
 end
 
 get_unknown_field_name(p::P1) = "P1"
@@ -136,10 +136,10 @@ end
     @test isapprox(e2("lambda", (0.0,), 0.0), [0.0, 0.0])
 end
 
-function assemble_elements!{E}(problem::Problem{P1},
-                               assembly::Assembly,
-                               elements::Vector{Element{E}},
-                               time::Float64)
+function assemble_elements!(problem::Problem{P1},
+                            assembly::Assembly,
+                            elements::Vector{Element{E}},
+                            time::Float64) where E
 
     info("Assembling elements of kind $E")
     bi = BasisInfo(E)
@@ -188,13 +188,13 @@ end
     @test isapprox(K, K_expected)
 end
 
-type DirBC <: BoundaryProblem
+mutable struct DirBC <: BoundaryProblem
 end
 
-function assemble_elements!{E}(problem::Problem{DirBC},
-                               assembly::Assembly,
-                               elements::Vector{Element{E}},
-                               time::Float64)
+function assemble_elements!(problem::Problem{DirBC},
+                            assembly::Assembly,
+                            elements::Vector{Element{E}},
+                            time::Float64) where E
 
     name = get_parent_field_name(problem)
     dim = get_unknown_field_dimension(problem)
