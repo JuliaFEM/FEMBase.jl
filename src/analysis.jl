@@ -37,3 +37,24 @@ end
 function run!{A<:AbstractAnalysis}(::Analysis{A})
     info("This is a placeholder function for running an analysis $A for a set of problems.")
 end
+
+function write_results!(::Analysis{A}, ::W) where {A<:AbstractAnalysis, W<:AbstractResultsWriter}
+    info("Writing the results of analysis $A is not supported by a results writer $W")
+    return nothing
+end
+
+function write_results!(analysis)
+    results_writers = get_results_writers(analysis)
+    if isempty(results_writers)
+        info("No result writers attached to the analysis $(analysis.name). ",
+             "In order to get results of the analysis stored to the disk, one ",
+             "must attach some results writer to the analysis using ",
+             "add_results_writer!, e.g. xdmf_writer = Xdmf(\"results\"); ",
+             "add_results_writer!(analysis, xdmf_writer)")
+        return nothing
+    end
+    for results_writer in results_writers
+        write_results!(analysis, results_writer)
+    end
+    return nothing
+end
