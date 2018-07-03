@@ -38,7 +38,8 @@ export LinearSystem, AbstractLinearSystemSolver, solve!
 
 include("analysis.jl")
 export AbstractAnalysis, Analysis, add_problems!, get_problems, run!,
-       AbstractResultsWriter, add_results_writer!, get_results_writers
+       AbstractResultsWriter, add_results_writer!, get_results_writers,
+       write_results!
 
 export FieldProblem, BoundaryProblem, Problem, Element, Assembly
 export Poi1, Seg2, Seg3, Tri3, Tri6, Tri7, Quad4, Quad8, Quad9,
