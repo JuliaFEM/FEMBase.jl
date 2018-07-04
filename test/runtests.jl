@@ -16,6 +16,7 @@ push!(test_files, "test_solvers.jl")
 push!(test_files, "test_analysis.jl")
 push!(test_files, "test_test.jl")
 push!(test_files, "test_types.jl")
+push!(test_files, "test_dofmap.jl")
 
 @testset "FEMBase.jl" begin
     for fn in test_files

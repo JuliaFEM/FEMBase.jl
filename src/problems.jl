@@ -100,7 +100,7 @@ type Problem{P<:AbstractProblem}
     dimension :: Int                 # degrees of freedom per node
     parent_field_name :: AbstractString # (optional) name of the parent field e.g. "displacement"
     elements :: Vector{Element}
-    dofmap :: Dict{Element, Vector{Int64}} # connects the element local dofs to the global dofs
+    dofmap :: AbstractDOFMap         # connects the element local dofs to the global dofs
     assembly :: Assembly
     fields :: Dict{String, AbstractField}
     postprocess_fields :: Vector{String}
@@ -125,7 +125,13 @@ prob1 = Problem(Elasticity, "this is my problem", 3)
 
 """
 function Problem{P<:FieldProblem}(::Type{P}, name::AbstractString, dimension::Int64)
-    return Problem{P}(name, dimension, "none", [], Dict(), Assembly(), Dict(), Vector(), P())
+    dofmap = DOFMap()
+    assembly = Assembly()
+    local_dof_indices = Dict(Symbol("u$i") => i for i=1:dimension)
+    set_local_dof_indices!(dofmap, local_dof_indices)
+    problem = Problem{P}(name, dimension, "none", [], dofmap, assembly,
+                         Dict(), Vector(), P())
+    return problem
 end
 
 """
@@ -139,14 +145,20 @@ julia> bc1 = Problem(Dirichlet, "support", 3, "displacement")
 solver.
 """
 function Problem{P<:BoundaryProblem}(::Type{P}, name, dimension, parent_field_name)
-    return Problem{P}(name, dimension, parent_field_name, [], Dict(), Assembly(), Dict(), Vector(), P())
+    dofmap = DOFMap()
+    assembly = Assembly()
+    local_dof_indices = Dict(Symbol("u$i") => i for i=1:dimension)
+    set_local_dof_indices!(dofmap, local_dof_indices)
+    problem = Problem{P}(name, dimension, parent_field_name, [], dofmap,
+                         assembly, Dict(), Vector(), P())
+    return problem
 end
 
 function get_formulation_type(::Problem)
     return :incremental
 end
 
-""" 
+"""
     get_unknown_field_dimension(problem)
 
 Return the dimension of the unknown field of this problem.
@@ -419,12 +431,34 @@ function push!(problem::Problem, elements_::Vector...)
 end
 
 """
-    set_gdofs!(problem, element)
+    get_dof_names(problem, element)
 
-Set element global degrees of freedom.
+Return an iterable containing the abbreviations of dof names for this element
+and problem. This could be e.g. `(:u1, :u2, :T)` for two-dimensional problem
+having two displacement dofs and temperature dof.
+
+Each new Problem should define this function. If now defined, assumption is that
+dofs for problem are (:u1, :u2, ..., :uN) where N is the unknown field dimension.
 """
-function set_gdofs!(problem, element, dofs)
-    problem.dofmap[element] = dofs
+function get_dof_names(problem::Problem{P}, ::Element) where {P}
+    dim = get_unknown_field_dimension(problem)
+    dof_names = (Symbol("u$i") for i=1:dim)
+    warn("Define function FEMBase.get_dof_names(::Problem{$P}, ::Element).")
+    warn("Assuming that dofs for problem $P are $(collect(dof_names)).")
+    code = quote
+        FEMBase.get_dof_names(::Problem{$P}, ::Element) = $dof_names
+    end
+    eval(code)
+    return dof_names
+end
+
+"""
+    get_dofmap(problem)
+
+Return `DOFMap` for problem.
+"""
+function get_dofmap(problem)
+    return problem.dofmap
 end
 
 """
@@ -432,22 +466,10 @@ end
 
 Return the global degrees of freedom for element.
 
-First make lookup from problem dofmap. If not defined there, make implicit
-assumption that dofs follow formula `gdofs = [dim*(nid-1)+j for j=1:dim]`,
-where `nid` is node id and `dim` is the dimension of problem. This formula
-arranges dofs so that first comes all dofs of node 1, then node 2 and so on:
-(u11, u12, u13, u21, u22, u23, ..., un1, un2, un3) for 3 dofs/node setting.
 """
-function get_gdofs(problem::Problem, element::Element)
-    if haskey(problem.dofmap, element)
-        return problem.dofmap[element]
-    end
-    conn = get_connectivity(element)
-    if length(conn) == 0
-        error("element connectivity not defined, cannot determine global ",
-              "degrees of freedom for element #: $(element.id)")
-    end
-    dim = get_unknown_field_dimension(problem)
-    gdofs = [dim*(i-1)+j for i in conn for j=1:dim]
-    return gdofs
+function get_gdofs(problem::Problem{P}, element::Element) where {P}
+    nodes = get_connectivity(element)
+    dof_names = get_dof_names(problem, element)
+    dofmap = get_dofmap(problem)
+    return get_gdofs(dofmap, nodes, dof_names)
 end

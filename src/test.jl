@@ -112,7 +112,7 @@ function assemble_elements!{E}(problem::Problem{Dirichlet},
     for element in elements
         for i=1:dim
             haskey(element, "$name $i") || continue
-            gdofs = get_gdofs(problem, element)
+            gdofs = collect(get_gdofs(problem, element))
             ldofs = gdofs[i:dim:end]
             xis = get_reference_element_coordinates(E)
             for (ldof, xi) in zip(ldofs, xis)
@@ -263,7 +263,7 @@ end
     test_resource(resource::String) -> String
 
 `@test_resource(resource)` expands to a string containing full path to the some
-`resource` what is needed by a test. 
+`resource` what is needed by a test.
 
 # Example
 
@@ -274,7 +274,7 @@ One needs a test mesh file `mesh.inp`. Then, function
 mesh_file = @test_resource("mesh.inp")
 ```
 
-expands to 
+expands to
 
     `~/.julia/v0.6/Models/test/test_run_model/mesh.inp`
 

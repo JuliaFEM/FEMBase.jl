@@ -116,11 +116,10 @@ Example
  0.0  0.0  0.0  0.0  0.0  8.0  9.0  10.0
 
 """
-function add!(A::SparseMatrixCOO, dofs1::Vector{Int}, dofs2::Vector{Int}, data::Matrix)
-    n, m = size(data)
-    for j=1:m
-        for i=1:n
-            add!(A, dofs1[i], dofs2[j], data[i,j])
+function add!(A::SparseMatrixCOO, dofs1, dofs2, data)
+    for (j, d1) in enumerate(dofs1)
+        for (i, d2) in enumerate(dofs2)
+            add!(A, d1, d2, data[i,j])
         end
     end
     return nothing
@@ -134,15 +133,11 @@ function add!(A::SparseMatrixCOO, B::SparseMatrixCSC)
 end
 
 """ Add new data to COO Sparse vector. """
-function add!(A::SparseMatrixCOO, dofs::Vector{Int}, data::Array{Float64}, dim::Int=1)
-    if length(dofs) != length(data)
-        info("dofs = $dofs")
-        info("data = $(vec(data))")
-        error("when adding to sparse vector dimension mismatch!")
+function add!(A::SparseMatrixCOO, dofs, data::Array{Float64}, dim::Int=1)
+    for (d, v) in zip(dofs, data)
+        add!(A, d, dim, v)
     end
-    append!(A.I, dofs)
-    append!(A.J, dim*ones(Int, length(dofs)))
-    append!(A.V, vec(data))
+    return nothing
 end
 
 """ Add SparseVector to SparseVectorCOO. """
