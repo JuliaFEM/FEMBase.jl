@@ -10,7 +10,7 @@ using FEMBase: get_basis, get_dbasis, get_integration_order
 using FEMBase: get_reference_element_coordinates, get_reference_coordinates
 using FEMBase: get_element_type, is_element_type, get_element_id, filter_by_element_type
 
-type Dummy <: FieldProblem
+mutable struct Dummy <: FieldProblem
 end
 
 @testset "add elements to problem" begin

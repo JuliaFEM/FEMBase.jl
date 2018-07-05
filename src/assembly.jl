@@ -11,20 +11,20 @@ function isapprox(a1::Assembly, a2::Assembly)
     return T
 end
 
-function assemble_prehook!{T<:Number}(::Problem, ::T) end
+function assemble_prehook!(::Problem, ::T) where T<:Number end
 
-function assemble_posthook!{T<:Number}(::Problem, ::T) end
+function assemble_posthook!(::Problem, ::T) where T<:Number end
 
 # will be deprecated
-function assemble!{P}(::Assembly, ::Problem{P}, ::Element, ::Any)
+function assemble!(::Assembly, ::Problem{P}, ::Element, ::Any) where P
     warn("One must define assemble! function for problem of type $P. ",
          "Not doing anything.")
     return nothing
 end
 
 # will be deprecated
-function assemble!{P}(assembly::Assembly, problem::Problem{P},
-                      elements::Vector{Element}, time)
+function assemble!(assembly::Assembly, problem::Problem{P},
+                   elements::Vector{Element}, time) where P
     warn("This is default assemble! function. Decreased performance can be ",
          "expected without preallocation of memory. One should implement ",
          "`assemble_elements!(problem, assembly, elements, time)` function.")
@@ -41,8 +41,8 @@ Assemble elements for problem.
 
 This should be overridden with own `assemble_elements!`-implementation.
 """
-function assemble_elements!{E}(problem::Problem, assembly::Assembly,
-                      elements::Vector{Element{E}}, time)
+function assemble_elements!(problem::Problem, assembly::Assembly,
+                      elements::Vector{Element{E}}, time) where E
     elements2 = convert(Vector{Element}, elements)
     assemble!(assembly, problem, elements2, time)
 end
@@ -107,7 +107,7 @@ function assemble_mass_matrix!(problem::Problem, time::Float64)
     return nothing
 end
 
-function assemble_mass_matrix!{Basis}(problem::Problem, elements::Vector{Element{Basis}}, time)
+function assemble_mass_matrix!(problem::Problem, elements::Vector{Element{Basis}}, time) where Basis
     nnodes = length(first(elements))
     dim = get_unknown_field_dimension(problem)
     M = zeros(nnodes, nnodes)

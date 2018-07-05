@@ -1,7 +1,7 @@
 # This file is a part of JuliaFEM.
 # License is MIT: see https://github.com/JuliaFEM/FEMBase.jl/blob/master/LICENSE
 
-type LinearSystem{Tv, Ti<:Integer}
+mutable struct LinearSystem{Tv, Ti<:Integer}
     M :: SparseMatrixCSC{Tv, Ti}
     K :: SparseMatrixCSC{Tv, Ti}
     Kg :: SparseMatrixCSC{Tv, Ti}
@@ -26,17 +26,17 @@ end
 
 abstract type AbstractLinearSystemSolver end
 
-function solve!{Solver<:AbstractLinearSystemSolver}(::LinearSystem, ::Solver)
+function solve!(::LinearSystem, ::Solver) where Solver<:AbstractLinearSystemSolver
     info("This is a placeholder function for solving linear systems")
     info("To solve linear systems, you must define a function")
     info("      solve!(system::LinearSystem, solver::$Solver)")
 end
 
-function can_solve{Solver<:AbstractLinearSystemSolver}(::LinearSystem, ::Solver)
+function can_solve(::LinearSystem, ::Solver) where Solver<:AbstractLinearSystemSolver
     return (true, "OK")
 end
 
-function solve!{S<:AbstractLinearSystemSolver}(ls::LinearSystem, solvers::Vector{S})
+function solve!(ls::LinearSystem, solvers::Vector{S}) where S<:AbstractLinearSystemSolver
     for solver in solvers
         Solver = typeof(solver)
         cansolve, msg = can_solve(ls, solver)

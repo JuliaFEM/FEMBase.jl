@@ -4,7 +4,7 @@
 # Sparse utils to make assembly of local and global matrices easier.
 # Unoptimized but should do all necessary stuff for at start.
 
-type SparseMatrixCOO{T<:Real}
+mutable struct SparseMatrixCOO{T<:Real}
     I :: Vector{Int}
     J :: Vector{Int}
     V :: Vector{T}

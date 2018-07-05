@@ -5,7 +5,7 @@ E.g. mesh reader or results writer.
 
 
 ```julia
-type MeshReader <: AbstractMeshReader
+mutable struct MeshReader <: AbstractMeshReader
 end
 
 """
@@ -20,7 +20,7 @@ end
 
 
 ```julia
-type ResultsWriter <: AbstractResultsWriter
+mutable struct ResultsWriter <: AbstractResultsWriter
 end
 
 """
@@ -39,7 +39,7 @@ Starting point is a weak formulation, which is then discretized to elements.
 
 
 ```julia
-type Heat <: AbstractProblem
+mutable struct Heat <: AbstractProblem
 end
 
 """
@@ -60,7 +60,7 @@ Aim is to define material response given data.
 
 
 ```julia
-type LinearIsotropic <: AbstractMaterial
+mutable struct LinearIsotropic <: AbstractMaterial
 end
 
 """
@@ -96,7 +96,7 @@ end
 
 
 ```julia
-type Quad4PointGaussLegendre <: AbstractIntegrationRule
+mutable struct Quad4PointGaussLegendre <: AbstractIntegrationRule
 end
 
 """
@@ -113,7 +113,7 @@ end
 
 
 ```julia
-type ImplicitTimeSolver <: AbstractSolver
+mutable struct ImplicitTimeSolver <: AbstractSolver
 end
 
 """

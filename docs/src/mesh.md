@@ -17,7 +17,7 @@ end
 Whould work somehow like this:
 
 ```julia
-type DemoReader <: AbstractMeshReader
+mutable struct DemoReader <: AbstractMeshReader
     handle :: String
 end
 
