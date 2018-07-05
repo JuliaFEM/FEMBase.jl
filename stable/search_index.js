@@ -53,7 +53,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Mesh",
     "title": "Defining new mesh parsers",
     "category": "section",
-    "text": "Whould work somehow like this:type DemoReader <: AbstractMeshReader\n    handle :: String\nend\n\nfunction read_mesh!(m::Mesh, r::DemoReader)\n    # parse file and insert results to `m`.\nend\n\nmesh = Mesh()\nreader = DemoReader(\"file.inp\")\nread_mesh!(mesh, reader)"
+    "text": "Whould work somehow like this:mutable struct DemoReader <: AbstractMeshReader\n    handle :: String\nend\n\nfunction read_mesh!(m::Mesh, r::DemoReader)\n    # parse file and insert results to `m`.\nend\n\nmesh = Mesh()\nreader = DemoReader(\"file.inp\")\nread_mesh!(mesh, reader)"
 },
 
 {
