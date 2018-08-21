@@ -33,16 +33,12 @@ function (point::Point)(field_name, time)
     interpolate(point.fields[field_name], time)
 end
 
-function start(point::Point)
-    return start(point.coords)
+function Base.iterate(point::Point)
+    return Base.iterate(point.coords)
 end
 
-function done(point::Point, i)
-    return done(point.coords, i)
-end
-
-function next(point::Point, i)
-    return next(point.coords, i)
+function Base.iterate(point::Point, i::Int)
+    return Base.iterate(point.coords, i)
 end
 
 function update!(point::Point, field_name, val::Pair{Float64, T}) where T
@@ -61,7 +57,7 @@ type MaterialPoint <: AbstractPoint
 end
 =#
 
-mutable struct IntegrationPoint <: AbstractPoint
+struct IntegrationPoint <: AbstractPoint
 end
 
 const IP = Point{IntegrationPoint}
@@ -71,6 +67,6 @@ function IP(id, weight, coords::Tuple)
 end
 
 function IP(id, weight, coords::Vector)
-    warn("Consider giving coords as Tuple.")
+    @warn "Consider giving coordinates as tuple."
     return IP(id, weight, tuple(coords...), Dict(), IntegrationPoint())
 end

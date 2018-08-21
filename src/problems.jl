@@ -161,8 +161,9 @@ end
 Default function if unknown field name is not defined for some problem.
 """
 function get_unknown_field_name(::P) where P<:AbstractProblem
-    warn("The name of unknown field (e.g. displacement, temperature, ...) of the ",
-         "problem type must be given by defining function `get_unknown_field_name`")
+    @warn("The name of unknown field (e.g. displacement, temperature, ...) of the " *
+          "problem type must be given by defining a function " * 
+          "`get_unknown_field_name(::$P)`")
     return "N/A"
 end
 
@@ -203,7 +204,7 @@ update!(body.properties, "finite_strain" => "false")
 """
 function update!(problem::P, attr::Pair{String, String}...) where P<:AbstractProblem
     for (name, value) in attr
-        setfield!(problem, parse(name), parse(value))
+        setfield!(problem, Meta.parse(name), Meta.parse(value))
     end
 end
 
@@ -256,13 +257,14 @@ function update!(problem::Problem, assembly::Assembly, u::Vector, la::Vector)
     # resize & fill with zeros vectors if length mismatch with current solution
 
     if length(u) != length(assembly.u)
-        info("resizing solution vector u")
+        @debug("resizing solution vector u", length(u), length(assembly.u))
         resize!(assembly.u, length(u))
         fill!(assembly.u, 0.0)
     end
 
     if length(la) != length(assembly.la)
-        info("resizing lagrange multiplier vector la")
+        @debug("resizing lagrange multiplier vector la",
+               length(la), length(assembly.la))
         resize!(assembly.la, length(la))
         fill!(assembly.la, 0.0)
     end
@@ -284,7 +286,7 @@ function update!(problem::Problem, assembly::Assembly, u::Vector, la::Vector)
         assembly.u += u
         assembly.la += la
     else
-        info("$(problem.name): unknown formulation type, don't know what to do with results")
+        @info("$(problem.name): unknown formulation type, don't know what to do with results")
         error("serious failure with problem formulation: $(get_formulation_type(problem))")
     end
 
@@ -395,8 +397,8 @@ function (problem::Problem)(field_name::String, time::Float64)
         for (c, v) in zip(get_connectivity(element), element(field_name, time))
             if haskey(f, c)
                 if !isapprox(f[c], v)
-                    info("several values for single node when returning field $field_name")
-                    info("already have: $(f[c]), and trying to set $v")
+                    @info("several values for single node when returning field $field_name")
+                    @info("already have: $(f[c]), and trying to set $v")
                 end
             else
                 f[c] = v

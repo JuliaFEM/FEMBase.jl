@@ -3,13 +3,15 @@
 
 module FEMBase
 
+using LinearAlgebra
+
 macro lintpragma(s)
 end
 
 import Base: getindex, setindex!, convert, length, size, isapprox,
-             similar, start, first, next, done, last, endof, vec,
+             start, first, next, done, last, endof, vec,
              ==, +, -, *, /, haskey, copy, push!, isempty, empty!,
-             append!, sparse, full, read
+             append!, read
 
 using TimerOutputs
 export @timeit, print_timer
@@ -57,7 +59,7 @@ export is_field_problem, is_boundary_problem, get_elements,
        eval_basis!, get_basis, get_dbasis, grad!,
        assemble_mass_matrix!, get_local_coordinates, inside,
        get_element_type, filter_by_element_type, get_element_id,
-       optimize!, resize_sparse, resize_sparsevec
+       resize_sparse, resize_sparsevec
 
 include("test.jl")
 

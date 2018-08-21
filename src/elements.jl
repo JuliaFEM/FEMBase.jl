@@ -94,7 +94,7 @@ function group_by_element_type(elements::Vector{Element})
 end
 
 function setindex!(element::Element, data::Function, field_name)
-    if method_exists(data, Tuple{Element, Vector, Float64})
+    if hasmethod(data, Tuple{Element, Vector, Float64})
         # create enclosure to pass element as argument
         element.fields[field_name] = field((ip,time) -> data(element,ip,time))
     else
@@ -255,16 +255,18 @@ function update!(::Element, field::F, data) where F<:AbstractField
     update!(field, data)
 end
 
-function update!(element::Element, field::F, data_::Dict{T,V}) where {F<:DVTI,T,V}
-    data = (collect(data_[i] for i in get_connectivity(element))...)
-    update!(field, data)
+function update!(element::Element, field::F, data::Dict{T,V}) where {F<:DVTI,T,V}
+    connectivity = get_connectivity(element)
+    picked_data = ((data[nid] for nid in connectivity)...,)
+    update!(field, picked_data)
 end
 
 function update!(element::Element, field::F,
-                 data__::Pair{Float64, Dict{T,V}}) where {F<:DVTV,T,V}
-    time_, data_ = data__
-    data = (collect(data_[i] for i in get_connectivity(element))...)
-    update!(field, time_ => data)
+                 data::Pair{Float64, Dict{T,V}}) where {F<:DVTV,T,V}
+    time, data2 = data
+    connectivity = get_connectivity(element)
+    picked_data = ((data2[nid] for nid in connectivity)...,)
+    update!(field, time => picked_data)
 end
 
 function update!(element::Element, field_name, data)
@@ -280,7 +282,7 @@ function update!(element::Element, field_name, field_::F) where F<:AbstractField
 end
 
 function update!(element::Element, field_name, data::Function)
-    if method_exists(data, Tuple{Element, Any, Any})
+    if hasmethod(data, Tuple{Element, Any, Any})
         element.fields[field_name] = field((ip, time) -> data(element, ip, time))
     else
         element.fields[field_name] = field(data)
@@ -336,7 +338,7 @@ function get_local_coordinates(element::Element, X::Vector, time::Float64; max_i
         dX = element("geometry", xi, time) - X
         norm(dX) < tolerance && return xi
     end
-    info("X = $X, dX = $dX, xi = $xi")
+    debug("get_local_coordinates", X, dX, xi)
     error("Unable to find inverse isoparametric mapping for element $element for X = $X")
 end
 

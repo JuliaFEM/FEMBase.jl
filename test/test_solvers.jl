@@ -1,9 +1,7 @@
 # This file is a part of JuliaFEM.
 # License is MIT: see https://github.com/JuliaFEM/FEMBase.jl/blob/master/LICENSE
 
-using FEMBase
-using Base.Test
-
+using FEMBase, Test, SparseArrays
 import FEMBase: solve!, can_solve
 
 mutable struct LSSolver1 <: AbstractLinearSystemSolver
@@ -33,6 +31,6 @@ end
     solve!(ls, solver1)
     @test can_solve(ls, solver1)[1] == false
     solve!(ls, [solver1, solver2])
-    @test isapprox(ls.u, sparse(ones(3)))
+    @test isapprox(ls.u, ones(3))
     @test_throws ErrorException solve!(ls, [solver1])
 end

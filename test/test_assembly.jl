@@ -3,10 +3,10 @@
 
 using FEMBase
 using FEMBase: assemble_mass_matrix!
-using Base.Test
+using Test
 
-mutable struct Dummy <: FieldProblem end
-mutable struct Dummy2 <: FieldProblem end
+struct Dummy <: FieldProblem end
+struct Dummy2 <: FieldProblem end
 
 @testset "test tet4 mass matrix" begin
     X = Dict(
@@ -22,18 +22,15 @@ mutable struct Dummy2 <: FieldProblem end
     p = Problem(Dummy, "test", 1)
     add_elements!(p, [element])
     assemble_mass_matrix!(p, 0.0)
-    M = full(p.assembly.M)
-
     M_expected = [
                   2 1 1 1
                   1 2 1 1
                   1 1 2 1
                   1 1 1 2
                  ]
-    @test isapprox(M, M_expected)
+    @test isapprox(p.assembly.M, M_expected)
     assemble_mass_matrix!(p, 0.0)
-    M = full(p.assembly.M)
-    @test isapprox(M, M_expected)
+    @test isapprox(p.assembly.M, M_expected)
 end
 
 @testset "test tet10 mass matrix" begin
@@ -56,7 +53,6 @@ end
     p = Problem(Dummy, "test", 1)
     add_elements!(p, [element])
     assemble_mass_matrix!(p, 0.0)
-    M = full(p.assembly.M)
 
     M_expected = [
         6   1   1   1  -4  -6  -4  -4  -6  -6 
@@ -70,13 +66,12 @@ end
        -6  -4  -6  -4  16  16   8  16  32  16
        -6  -6  -4  -4   8  16  16  16  16  32]
 
-    @test isapprox(M, M_expected)
+    @test isapprox(p.assembly.M, M_expected)
 
-    X[5] += 0.1
+    X[5] .+= 0.1
     update!(element, "geometry", X)
     empty!(p.assembly.M)
     assemble_mass_matrix!(p, 0.0)
-    M = full(p.assembly.M)
 end
 
 @testset "add, empty and compare assembly" begin
@@ -108,7 +103,7 @@ end
     K_expected = zeros(3,3)
     K_expected[1:2,1:2] += k
     K_expected[2:3,2:3] += k
-    @test isapprox(full(p.assembly.K), K_expected)
+    @test isapprox(p.assembly.K, K_expected)
     assemble!(p, 0.0)
-    @test isapprox(full(p.assembly.K), 2.0*K_expected)
+    @test isapprox(p.assembly.K, 2.0*K_expected)
 end

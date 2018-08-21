@@ -27,9 +27,9 @@ end
 abstract type AbstractLinearSystemSolver end
 
 function solve!(::LinearSystem, ::Solver) where Solver<:AbstractLinearSystemSolver
-    info("This is a placeholder function for solving linear systems")
-    info("To solve linear systems, you must define a function")
-    info("      solve!(system::LinearSystem, solver::$Solver)")
+    @info("This is a placeholder function for solving linear systems. To solve " *
+          "linear systems, you must define a function " *
+          "solve!(system::LinearSystem, solver::$Solver)")
 end
 
 function can_solve(::LinearSystem, ::Solver) where Solver<:AbstractLinearSystemSolver
@@ -41,7 +41,7 @@ function solve!(ls::LinearSystem, solvers::Vector{S}) where S<:AbstractLinearSys
         Solver = typeof(solver)
         cansolve, msg = can_solve(ls, solver)
         if !cansolve
-            info("Solver $Solver cannot solve linear system: $msg")
+            @info("Solver $Solver cannot solve linear system: $msg")
             continue
         end
         timeit("solve linear system using solver $Solver") do

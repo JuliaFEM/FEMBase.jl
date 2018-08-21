@@ -17,17 +17,17 @@ function assemble_posthook!(::Problem, ::T) where T<:Number end
 
 # will be deprecated
 function assemble!(::Assembly, ::Problem{P}, ::Element, ::Any) where P
-    warn("One must define assemble! function for problem of type $P. ",
-         "Not doing anything.")
+    @warn("One must define assemble! function for problem of type $P. " *
+          "Not doing anything.")
     return nothing
 end
 
 # will be deprecated
 function assemble!(assembly::Assembly, problem::Problem{P},
                    elements::Vector{Element}, time) where P
-    warn("This is default assemble! function. Decreased performance can be ",
-         "expected without preallocation of memory. One should implement ",
-         "`assemble_elements!(problem, assembly, elements, time)` function.")
+    @warn("This is default assemble! function. Decreased performance can be " *
+          "expected without preallocation of memory. One should implement " *
+          "`assemble_elements!(problem, assembly, elements, time)` function.")
     for element in elements
         assemble!(assembly, problem, element, time)
     end
@@ -54,18 +54,17 @@ function assemble!(problem::Problem, time)
     assembly = get_assembly(problem)
 
     if !isempty(assembly)
-        warn("Assembling elements for problem $(problem.name): problem.assembly ",
-             "is not empty before assembling. This is probably causing unexpected ",
-             "results. To remove old assembly, use `empty!(problem.assembly)`")
+        @warn("Problem assembly is not empty before assembling. This is probably " *
+              "causing unexpected results. To remove old assembly, use " *
+              "`empty!(problem.assembly)`", typeof(problem), problem.name)
         assemble_posthook!(problem, time)
         return nothing
     end
 
     if isempty(elements)
-        warn("Assembling elements for problem $(problem.name): problem.elements ",
-             "is empty, there is no elements in problem. Before assembling ",
-             "problem, elements must be added using ",
-             "`add_elements!(problem, elements)`.")
+        @warn("There is no elements defined in problem. Before assembling a " *
+              "problem, elements must be added using " *
+              "`add_elements!(problem, elements)`.", typeof(problem), problem.name)
         assemble_posthook!(problem, time)
         return nothing
     end
@@ -90,14 +89,14 @@ function assemble!(problem::Problem, time)
 end
 
 function assemble!(problem::Problem)
-    warn("assemble!(problem) will be deprecated. Use assemble!(problem, time)")
+    @warn("assemble!(problem) will be deprecated. Use assemble!(problem, time)")
     assemble!(problem, 0.0)
 end
 
 function assemble_mass_matrix!(problem::Problem, time::Float64)
     if !isempty(problem.assembly.M)
-        info("Mass matrix for $(problem.name) is already assembled, ",
-             "not assembling.")
+        @info("Mass matrix for is already assembled, not assembling.",
+              problem.name)
         return nothing
     end
     elements = get_elements(problem)
@@ -122,8 +121,8 @@ function assemble_mass_matrix!(problem::Problem, elements::Vector{Element{Basis}
             w = ip.weight*rho*detJ
             eval_basis!(Basis, N, ip)
             N = element(ip, time)
-            At_mul_B!(NtN, N, N)
-            scale!(NtN, w)
+            mul!(NtN, transpose(N), N)
+            rmul!(NtN, w)
             for i=1:nnodes^2
                 M[i] += NtN[i]
             end
@@ -132,7 +131,7 @@ function assemble_mass_matrix!(problem::Problem, elements::Vector{Element{Basis}
             @inbounds ldofs[i] = (j-1)*dim
         end
         for i=1:dim
-            add!(problem.assembly.M, ldofs+i, ldofs+i, M)
+            add!(problem.assembly.M, ldofs.+i, ldofs.+i, M)
         end
     end
     return
@@ -190,7 +189,7 @@ function assemble_mass_matrix!(problem::Problem, elements::Vector{Element{Tet10}
             CM_s = detJ*rho
             n_CM += 1
             for i=1:dim
-                add!(problem.assembly.M, ldofs+i, ldofs+i, CM_s * M_CM)
+                add!(problem.assembly.M, ldofs .+ i, ldofs .+ i, CM_s * M_CM)
             end
         else
             fill!(M, 0.0)
@@ -200,17 +199,17 @@ function assemble_mass_matrix!(problem::Problem, elements::Vector{Element{Tet10}
                 w = ip.weight*rho*detJ
                 eval_basis!(Tet10, N, ip)
                 N = element(ip, time)
-                At_mul_B!(NtN, N, N)
-                scale!(NtN, w)
+                mul!(NtN, transpose(N), N)
+                rmul!(NtN, w)
                 for i=1:nnodes^2
                     M[i] += NtN[i]
                 end
             end
             for i=1:dim
-                add!(problem.assembly.M, ldofs+i, ldofs+i, M)
+                add!(problem.assembly.M, ldofs .+ i, ldofs .+ i, M)
             end
         end
     end
-    info("$n_CM of $(length(elements)) was constant metric.")
+    @info("$n_CM of $(length(elements)) was constant metric.")
     return
 end

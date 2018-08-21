@@ -2,7 +2,7 @@
 # License is MIT: see https://github.com/JuliaFEM/FEMBase.jl/blob/master/LICENSE
 
 using FEMBase
-using Base.Test
+using Test
 
 @testset "DCTI field" begin
 

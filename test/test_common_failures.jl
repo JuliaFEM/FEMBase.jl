@@ -2,9 +2,9 @@
 # License is MIT: see https://github.com/JuliaFEM/FEMBase.jl/blob/master/LICENSE
 
 using FEMBase
-using Base.Test
+using Test
 
-mutable struct Dummy <: FieldProblem end
+struct Dummy <: FieldProblem end
 
 @testset "no unknown field name or assemble!-function defined" begin
     el = Element(Quad4, [1, 2, 3, 4])

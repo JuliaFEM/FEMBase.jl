@@ -2,9 +2,9 @@
 # License is MIT: see https://github.com/JuliaFEM/FEMBase.jl/blob/master/LICENSE
 
 """
-    FEMBase.Test
+    FEMBase.FEMTest
 
-FEMBase.Test contains utilities to test JuliaFEM extensions, including:
+FEMBase.FEMTest contains utilities to test JuliaFEM extensions, including:
 
 - all test macros from Base.Test (@test, @testset, ...)
 - test problems `Poisson` and `Dirichlet`.
@@ -13,29 +13,27 @@ FEMBase.Test contains utilities to test JuliaFEM extensions, including:
 - read ABAQUS matrices
 
 """
-module Test
+module FEMTest
 
 # For convenience, one can also get all @test macros and so on just by typing
-# `using FEMBase.Test`, they are the very same than in `Base.Test`
-using Base.Test
+# `using FEMBase.FEMTest`, they are the very same than in `Base.Test`
+using Test, LinearAlgebra, SparseArrays
+
 export @test, @test_throws, @test_broken, @test_skip,
-       @test_warn, @test_nowarn
-# export @test_logs, @test_deprecated
-export @testset, @inferred
+       @test_warn, @test_nowarn, @testset, @inferred
 
 using FEMBase
-import FEMBase: assemble_elements!, get_unknown_field_name, solve!, run!
 
-mutable struct Poisson <: FieldProblem end
+struct Poisson <: FieldProblem end
 
-function get_unknown_field_name(::Problem{Poisson})
+function FEMBase.get_unknown_field_name(::Problem{Poisson})
     return "u"
 end
 
-function assemble_elements!(problem::Problem{Poisson},
-                            assembly::Assembly,
-                            elements::Vector{Element{E}},
-                            time::Float64) where E
+function FEMBase.assemble_elements!(problem::Problem{Poisson},
+                                    assembly::Assembly,
+                                    elements::Vector{Element{E}},
+                                    time::Float64) where E
 
     bi = BasisInfo(E)
     ndofs = length(bi)
@@ -63,10 +61,10 @@ function assemble_elements!(problem::Problem{Poisson},
     end
 end
 
-function assemble_elements!(problem::Problem{Poisson},
-                            assembly::Assembly,
-                            elements::Vector{Element{E}},
-                            time::Float64) where E<:Union{Seg2,Seg3}
+function FEMBase.assemble_elements!(problem::Problem{Poisson},
+                                    assembly::Assembly,
+                                    elements::Vector{Element{E}},
+                                    time::Float64) where E<:Union{Seg2,Seg3}
 
     bi = BasisInfo(E)
     ndofs = length(bi)
@@ -98,12 +96,12 @@ function assemble_elements!(problem::Problem{Poisson},
     end
 end
 
-mutable struct Dirichlet <: BoundaryProblem end
+struct Dirichlet <: BoundaryProblem end
 
-function assemble_elements!(problem::Problem{Dirichlet},
-                            assembly::Assembly,
-                            elements::Vector{Element{E}},
-                            time::Float64) where E
+function FEMBase.assemble_elements!(problem::Problem{Dirichlet},
+                                    assembly::Assembly,
+                                    elements::Vector{Element{E}},
+                                    time::Float64) where E
 
     name = get_parent_field_name(problem)
     dim = get_unknown_field_dimension(problem)
@@ -129,7 +127,7 @@ function assemble_elements!(problem::Problem{Dirichlet},
 
 end
 
-mutable struct LUSolver <: AbstractLinearSystemSolver
+struct LUSolver <: AbstractLinearSystemSolver
 end
 
 """
@@ -138,17 +136,17 @@ end
 Solve linear system using LU factorization. If final system has zero rows,
 add 1 to diagonal to make matrix non-singular.
 """
-function solve!(ls::LinearSystem, ::LUSolver)
+function FEMBase.solve!(ls::LinearSystem, ::LUSolver)
     A = [ls.K ls.C1; ls.C2 ls.D]
     b = [ls.f; ls.g]
 
     # add 1.0 to diagonal for any zero rows in system
     p = ones(2*ls.dim)
-    p[unique(rowvals(A))] = 0.0
-    A += spdiagm(p)
+    p[unique(SparseArrays.rowvals(A))] .= 0.0
+    A += sparse(Diagonal(p))
 
     # solve A*x = b using LU factorization and update solution vectors
-    x = lufact(A) \ full(b)
+    x = lu(A) \ Vector(b)
     ls.u = x[1:ls.dim]
     ls.la = x[ls.dim+1:end]
 
@@ -197,23 +195,21 @@ end
 Run static analysis for test problem. This is for testing purposes only and
 should not be used in real simulations.
 """
-function run!(analysis::Analysis{Static})
-    info("This is from FEMBase.Test.Analysis{Static}, which is for testing ",
-         "purposes only.")
+function FEMBase.run!(analysis::Analysis{Static})
+    @info("This is from FEMBase.Test.Analysis{Static}, which is for testing " *
+          "purposes only.")
     ls = get_linear_system(get_problems(analysis), analysis.properties.time)
     solve!(ls, LUSolver())
     normu = norm(ls.u)
     normla = norm(ls.la)
-    info("Solution norms are |u| = $normu, |la| = $normla")
+    @info("Solution norms are |u| = $normu, |la| = $normla")
     return ls, normu, normla
 end
-
-export Poisson, Dirichlet, Static, LUSolver, get_linear_system, abaqus_read_mtx
 
 function read_mtx(data::IO; dim=0)
     if dim == 0
         for ln in eachline(data)
-            i,idof,j,jdof,value = map(parse, split(ln, ','))
+            i,idof,j,jdof,value = map(Meta.parse, split(ln, ','))
             dim = max(dim, idof, jdof)
         end
     end
@@ -222,7 +218,7 @@ function read_mtx(data::IO; dim=0)
     J = Int64[]
     V = Float64[]
     for ln in eachline(data)
-        i,idof,j,jdof,value = map(parse, split(ln, ','))
+        i,idof,j,jdof,value = map(Meta.parse, split(ln, ','))
         if i < 1 || j < 1
             continue
         end
@@ -230,7 +226,7 @@ function read_mtx(data::IO; dim=0)
         push!(J, (j-1)*dim+jdof)
         push!(V, value)
     end
-    A = full(sparse(I, J, V))
+    A = Matrix(sparse(I, J, V))
     A += transpose(tril(A,-1))
     return A
 end
@@ -288,10 +284,14 @@ macro test_resource(resource::String)
     test_dir_name = first(splitext(basename(filename)))
     resource_ = joinpath(abs_dirname, test_dir_name, resource)
     if !isfile(resource_)
-        warn("Cannot find resource $resource_")
+        @warn("Cannot find resource $resource_")
     end
     return resource_
 end
 
+export Poisson, Dirichlet, Static, LUSolver, get_linear_system, abaqus_read_mtx
 export read_mtx_from_file, read_mtx_from_string, @test_resource
+
 end
+
+global const Test = FEMTest
