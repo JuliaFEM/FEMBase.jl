@@ -3,6 +3,8 @@
 
 using LinearAlgebra, Test
 
+include("../docs/make.jl")
+
 @testset "FEMBase.jl" begin
     @testset "test_assembly" begin include("test_assembly.jl") end
     @testset "test_elements" begin include("test_elements.jl") end
@@ -15,3 +17,5 @@ using LinearAlgebra, Test
     @testset "test_test" begin include("test_test.jl") end
     @testset "test_types" begin include("test_types.jl") end
 end
+
+include("../docs/deploy.jl")
