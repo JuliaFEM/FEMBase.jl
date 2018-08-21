@@ -3,7 +3,7 @@
 
 using Documenter, FEMBase
 
-cp("../README.md", "src/index.md"; remove_destination=true)
+cp("../README.md", "src/index.md"; force=true)
 
 DEVELOPER_GUIDE = [
           "mesh.md",
