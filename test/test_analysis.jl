@@ -2,14 +2,14 @@
 # License is MIT: see https://github.com/JuliaFEM/FEMBase.jl/blob/master/LICENSE
 
 using FEMBase
-using FEMBase.get_problems
-using Base.Test
+using FEMBase: get_problems
+using Test
 
 import FEMBase: run!
 
-mutable struct MyAnalysis1 <: AbstractAnalysis end
+struct MyAnalysis1 <: AbstractAnalysis end
 
-mutable struct MyAnalysis2 <: AbstractAnalysis end
+struct MyAnalysis2 <: AbstractAnalysis end
 
 mutable struct MyProblem <: FieldProblem
     value :: Bool

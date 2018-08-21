@@ -245,7 +245,7 @@ function interpolate_field(field::DVTVd{T}, time) where T
             y0 = field.data[i-1].second
             y1 = field.data[i].second
             f = (time-t0)/(t1-t0)
-            new_data = similar(y0)
+            new_data = empty(y0)
             for i in keys(y0)
                 new_data[i] = f*y0[i] + (1-f)*y1[i]
             end

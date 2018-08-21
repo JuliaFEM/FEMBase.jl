@@ -3,7 +3,7 @@
 
 using FEMBase
 using FEMBase: get_local_coordinates, inside
-using Base.Test
+using Test
 
 @testset "inverse isoparametric mapping" begin
     el = Element(Quad4, [1, 2, 3, 4])

@@ -2,7 +2,7 @@
 # License is MIT: see https://github.com/JuliaFEM/FEMBase.jl/blob/master/LICENSE
 
 using FEMBase
-using Base.Test
+using Test
 
 using FEMBase: group_by_element_type
 using FEMBase: get_local_coordinates, inside
@@ -10,8 +10,7 @@ using FEMBase: get_basis, get_dbasis, get_integration_order
 using FEMBase: get_reference_element_coordinates, get_reference_coordinates
 using FEMBase: get_element_type, is_element_type, get_element_id, filter_by_element_type
 
-mutable struct Dummy <: FieldProblem
-end
+struct Dummy <: FieldProblem end
 
 @testset "add elements to problem" begin
     problem = Problem(Dummy, "test", 2)
@@ -31,14 +30,21 @@ end
 
 @testset "add time dependent field to element" begin
     el = Element(Seg2, [1, 2])
-    u1 = Vector{Float64}[[0.0, 0.0], [0.0, 0.0]]
-    u2 = Vector{Float64}[[1.0, 1.0], [1.0, 1.0]]
+    u1 = ([0.0, 0.0], [0.0, 0.0])
+    u2 = ([1.0, 1.0], [1.0, 1.0])
     update!(el, "displacement", 0.0 => u1)
     update!(el, "displacement", 1.0 => u2)
     @test length(el["displacement"]) == 2
-    @test isapprox(el("displacement", [0.0], 0.0), [0.0, 0.0])
-    @test isapprox(el("displacement", [0.0], 0.5), [0.5, 0.5])
-    @test isapprox(el("displacement", [0.0], 1.0), [1.0, 1.0])
+    xi = (0.0, )
+    ui1 = el("displacement", xi, 0.0)
+    ui2 = el("displacement", xi, 0.5)
+    ui3 = el("displacement", xi, 1.0)
+    @debug "interpolated displacement" xi=0.0 time=0.0 u=ui1
+    @debug "interpolated displacement" xi=0.0 time=0.5 u=ui2
+    @debug "interpolated displacement" xi=0.0 time=1.0 u=ui3
+    @test isapprox(ui1, [0.0, 0.0])
+    @test isapprox(ui2, [0.5, 0.5])
+    @test isapprox(ui3, [1.0, 1.0])
     el2 = Element(Poi1, [1])
     update!(el2, "force 1", 0.0 => 1.0)
 end
@@ -101,7 +107,7 @@ end
     X1 = el("geometry", [0.1, 0.2], time)
     xi = get_local_coordinates(el, X1, time)
     X2 = el("geometry", xi, time)
-    info("X1 = $X1, X2 = $X2")
+    @debug "inverse isoparametric mapping" time X xi X1 X2
     @test isapprox(X1, X2)
 end
 

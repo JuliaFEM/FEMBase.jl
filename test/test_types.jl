@@ -3,7 +3,7 @@
 
 using FEMBase
 using FEMBase: IP
-using Base.Test
+using Test
 
 @testset "test integration point" begin
     a = sqrt(1.0/3.0)

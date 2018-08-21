@@ -3,10 +3,7 @@
 
 using FEMBasis
 
-#    "Poi1" => (0, 1),
-"1 node discrete point element",
-type Poi1 <: AbstractBasis
-end
+struct Poi1 <: AbstractBasis end
 
 function get_basis(::Element{Poi1}, ::Any, ::Any)
     return [1]
@@ -50,7 +47,7 @@ function inside(::Union{Type{Tri3}, Type{Tri6}, Type{Tri7}, Type{Tet4}, Type{Tet
     return all(xi .>= 0.0) && (sum(xi) <= 1.0)
 end
 
-function get_reference_coordinates{B}(::Element{B})
+function get_reference_coordinates(::Element{B}) where B
     return get_reference_element_coordinates(B)
 end
 

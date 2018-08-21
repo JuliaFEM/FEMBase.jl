@@ -2,7 +2,7 @@
 # License is MIT: see https://github.com/JuliaFEM/FEMBase.jl/blob/master/LICENSE
 
 using FEMBase
-using FEMBase.Test
+using FEMBase.FEMTest
 
 @testset "Poisson + Dirichlet" begin
     el1 = Element(Quad4, [1, 2, 3, 4])
@@ -62,7 +62,7 @@ end
 
 @testset "Test @test_resource" begin
     fn = @test_resource("mesh.inp")
-    @test contains(fn, "mesh.inp")
+    @test occursin("mesh.inp", fn)
 end
 
 @testset "Test read_mtx_from_file and read_mtx_from_string" begin

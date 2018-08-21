@@ -5,7 +5,7 @@ using FEMBase
 using FEMBase: is_field_problem, is_boundary_problem
 using FEMBase: get_parent_field_name, get_global_solution
 using FEMBase: get_assembly, get_elements
-using Base.Test
+using Test
 
 import FEMBase: get_unknown_field_dimension, get_unknown_field_name
 import FEMBase: get_formulation_type, assemble_elements!
@@ -94,8 +94,8 @@ end
     @test length(p1) == 1
     update!(p1, "geometry", Dict(1 => [0.0, 0.0], 2 => [1.0, 0.0]))
     @test haskey(el, "geometry")
-    println("geom is ", p1("geometry", 0.0))
-    println("elgeom is ", el("geometry", 0.0))
+    @debug "p1 geometry field" X = p1("geometry", 0.0)
+    @debug "e1 geometry field" X = el("geometry", 0.0)
     @test isapprox(p1("geometry", 0.0)[1], [0.0, 0.0])
     @test get_parent_field_name(p2) == "p"
     @test get_gdofs(p1, el) == [1, 2]
@@ -130,7 +130,7 @@ end
     add_elements!(p2, [e2])
     initialize!(p1, 0.0)
     initialize!(p2, 0.0)
-    println("e1 keys = ", keys(e1.fields))
+    @debug "e1 keys" keys(e1.fields)
     @test isapprox(e1("P1", (0.0,), 0.0), [0.0, 0.0])
     @test isapprox(e2("P1", (0.0,), 0.0), [0.0, 0.0])
     @test isapprox(e2("lambda", (0.0,), 0.0), [0.0, 0.0])
@@ -141,7 +141,7 @@ function assemble_elements!(problem::Problem{P1},
                             elements::Vector{Element{E}},
                             time::Float64) where E
 
-    info("Assembling elements of kind $E")
+    @debug "assemble_elements!" eltype=E
     bi = BasisInfo(E)
     ndofs = length(E)
     Ke = zeros(ndofs, ndofs)
@@ -178,14 +178,13 @@ end
     add_elements!(problem, elements)
     time = 0.0
     assemble!(problem, time)
-    K = full(problem.assembly.K)
     K_expected = [
                   4.0 -1.0 -2.0 -1.0  0.0
                  -1.0  7.0 -4.0 -2.0  0.0
                  -2.0 -4.0 10.0 -1.0 -3.0
                  -1.0 -2.0 -1.0  4.0  0.0
                   0.0  0.0 -3.0  0.0  3.0]
-    @test isapprox(K, K_expected)
+    @test isapprox(problem.assembly.K, K_expected)
 end
 
 mutable struct DirBC <: BoundaryProblem
@@ -238,14 +237,10 @@ end
     add_elements!(problem, elements)
     time = 0.0
     assemble!(problem, time)
-    C = full(problem.assembly.C1)
-    g = full(problem.assembly.g)
-    println(C)
-    println(g)
-    C_expected = [1.0 0.0 0.0; 0.0 1.0 0.0; 0.0 0.0 1.0]
+    C1_expected = [1.0 0.0 0.0; 0.0 1.0 0.0; 0.0 0.0 1.0]
     g_expected = [0.5, 0.0, 1.0]
-    @test isapprox(C, C_expected)
-    @test isapprox(g, g_expected)
+    @test isapprox(problem.assembly.C1, C1_expected)
+    @test isapprox(problem.assembly.g, g_expected)
 end
 
 @testset "test deprecated assembly procedure" begin

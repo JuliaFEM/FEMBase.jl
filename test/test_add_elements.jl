@@ -2,10 +2,9 @@
 # License is MIT: see https://github.com/JuliaFEM/FEMBase.jl/blob/master/LICENSE
 
 using FEMBase
-using Base.Test
+using Test
 
-mutable struct Dummy <: FEMBase.FieldProblem
-end
+struct Dummy <: FEMBase.FieldProblem end
 
 @testset "add elements to problem" begin
     problem = Problem(Dummy, "test", 2)
