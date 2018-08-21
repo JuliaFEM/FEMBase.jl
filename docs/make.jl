@@ -3,8 +3,6 @@
 
 using Documenter, FEMBase
 
-cp("../README.md", "src/index.md"; remove_destination=true)
-
 DEVELOPER_GUIDE = [
           "mesh.md",
           "fields.md",
