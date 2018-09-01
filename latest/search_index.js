@@ -209,30 +209,6 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "fields.html#FEMBase.field-Tuple{Any}",
-    "page": "Fields",
-    "title": "FEMBase.field",
-    "category": "method",
-    "text": "field(x)\n\nCreate new field. Field type is deduced from data type.\n\n\n\n\n\n"
-},
-
-{
-    "location": "fields.html#FEMBase.update!-Union{Tuple{F}, Tuple{F,Any}} where F<:AbstractField",
-    "page": "Fields",
-    "title": "FEMBase.update!",
-    "category": "method",
-    "text": "update!(field, data)\n\nUpdate new value to field.\n\n\n\n\n\n"
-},
-
-{
-    "location": "fields.html#FEMBasis.interpolate-Union{Tuple{F}, Tuple{F,Any}} where F<:AbstractField",
-    "page": "Fields",
-    "title": "FEMBasis.interpolate",
-    "category": "method",
-    "text": "interpolate(field, time)\n\nInterpolate field in time direction.\n\nExamples\n\nFor time invariant fields DCTI, DVTI, DVTId solution is trivially the data inside field as fields does not depend from the time:\n\njulia> a = field(1.0)\nFEMBase.DCTI{Float64}(1.0)\n\njulia> interpolate(a, 0.0)\n1.0\n\njulia> a = field((1.0, 2.0))\nFEMBase.DVTI{2,Float64}((1.0, 2.0))\n\njulia> interpolate(a, 0.0)\n(1.0, 2.0)\n\njulia> a = field(1=>1.0, 2=>2.0)\nFEMBase.DVTId{Float64}(Dict(2=>2.0,1=>1.0))\n\njulia> interpolate(a, 0.0)\nDict{Int64,Float64} with 2 entries:\n  2 => 2.0\n  1 => 1.0\n\nDVTId trivial solution is returned. For time variant fields DCTV, DVTV, DVTVd linear interpolation is performed.\n\nOther notes\n\nFirst algorithm checks that is time out of range, i.e. time is smaller than time of first frame or larger than last frame. If that is the case, return first or last frame. Secondly algorithm finds is given time exact match to time of some frame and return that frame. At last, we find correct bin so that t0 < time < t1 and use linear interpolation.\n\n\n\n\n\n"
-},
-
-{
     "location": "fields.html#Functions-(public)-1",
     "page": "Fields",
     "title": "Functions (public)",
