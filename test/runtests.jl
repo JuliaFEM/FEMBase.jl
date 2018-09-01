@@ -1,9 +1,9 @@
 # This file is a part of JuliaFEM.
 # License is MIT: see https://github.com/JuliaFEM/FEMBase.jl/blob/master/LICENSE
 
-using LinearAlgebra, Test
+using FEMBase, Test, LinearAlgebra, SparseArrays, Statistics
 
-include("../docs/make.jl")
+include(joinpath("..", "docs", "make.jl"))
 
 @testset "FEMBase.jl" begin
     @testset "test_assembly" begin include("test_assembly.jl") end
@@ -18,4 +18,4 @@ include("../docs/make.jl")
     @testset "test_types" begin include("test_types.jl") end
 end
 
-include("../docs/deploy.jl")
+include(joinpath("..", "docs", "deploy.jl"))

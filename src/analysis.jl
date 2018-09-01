@@ -12,17 +12,62 @@ mutable struct Analysis{A<:AbstractAnalysis}
     properties :: A
 end
 
+"""
+    Analysis(A, analysis_name)
+
+Create a new analysis of type `A`, where `A` is a subtype of `AbstractAnalysis`.
+Analysis can be e.g. `Linear` for linear quasistatic analysis, `Nonlinear` for
+nonlinear quasistatic analysis or `Modal` for natural frequency analysis.
+
+# Examples
+
+```julia
+analysis = Analysis(Linear, "linear quasistatic analysis of beam structure")
+```
+"""
 function Analysis(::Type{A}, name::String="$A Analysis") where A<:AbstractAnalysis
     analysis = Analysis{A}(name, [], Dict(), [], A())
+    @info("Creating a new analysis of type $A with name `$name`.")
     return analysis
 end
 
-function add_problems!(analysis::Analysis, problems::Vector)
-    append!(analysis.problems, problems)
+function add_problem!(analysis::Analysis, problems::Problem...)
+    for problem in problems
+        @info("Adding problem `$(problem.name)` to analysis `$(analysis.name)`.")
+        push!(analysis.problems, problem)
+    end
+    return nothing
 end
+
+add_problems!(analysis::Analysis, problems::Union{Vector, Tuple}) = add_problem!(analysis, problems...)
+
+"""
+    add_problems!(analysis, problem...)
+
+Add problem(s) to analysis.
+
+# Examples
+
+Add two problems, `beam` and `bc`, to linear quasistatic analysis:
+```julia
+beam = Problem(Beam, "beam structure", 6)
+bc = Problem(Dirichlet, "fix", 6, "displacement")
+analysis = Analysis(Linear, "linear quasistatic analysis")
+add_problems!(analysis, beam, bc)
+```
+"""
+add_problems!(analysis::Analysis, problems...) = add_problem!(analysis, problems...)
 
 function get_problems(analysis::Analysis)
     return analysis.problems
+end
+
+function get_problem(analysis::Analysis, problem_name)
+    problems = filter(p -> p.name == problem_name, get_problems(analysis))
+    if length(problems) != 1
+        error("Several problem with name $problem_name found from analysis $(analysis.name).")
+    end
+    return first(problems)
 end
 
 function add_results_writer!(analysis::Analysis, writer::W) where W<:AbstractResultsWriter

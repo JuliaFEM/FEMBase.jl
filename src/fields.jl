@@ -375,11 +375,6 @@ function interpolate(a, b)
     return sum(a[i]*b[i] for i=1:length(a))
 end
 
-"""
-    update!(field, data)
-
-Update new value to field.
-"""
 function update!(field::F, data) where F<:AbstractField
     update_field!(field, data)
 end

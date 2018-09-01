@@ -50,7 +50,7 @@ end
 
 @testset "construct sparse matrix and empty it" begin
     A = SparseMatrixCOO()
-    push!(A, 1, 1, 1.0)
+    add!(A, 1, 1, 1.0)
     A_expected = sparse([1], [1], [1.0], 2, 2)
     A2 = sparse(A, 2, 2)
     @test isapprox(A2, A_expected)
@@ -60,8 +60,8 @@ end
 
 @testset "construct sparse matrix with special function" begin
     A = SparseMatrixCOO()
-    push!(A, 1, 1, 1.0)
-    push!(A, 1, 1, 2.0)
+    add!(A, 1, 1, 1.0)
+    add!(A, 1, 1, 2.0)
     B = sparse(A, 2, 2, +)
     @test isapprox(B[1,1], 3.0)
 end

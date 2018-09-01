@@ -82,17 +82,12 @@ function isempty(assembly::Assembly)
 end
 
 """
-Defines types for Problem variables.
+    Problem{P<:AbstractProblem}
 
-# Examples
-
-The type of 'elements' is Vector{Element}
-
-Add elements into the Problem element list.
-```@example
-a = [1, 2, 3]
-Problem.elements = a
-```
+Defines a new problem of type `P`, where `P` characterizes the physics of the
+problem. `P` can be for example `Elasticity`, if the physics of the system is
+described by Cauchy's stress equation ∇⋅σ + b = ̈ρu, or `Heat`, if the physics
+of the problem is described by heat equation -∇⋅(k∇u) = f.
 
 """
 mutable struct Problem{P<:AbstractProblem}
@@ -108,45 +103,84 @@ mutable struct Problem{P<:AbstractProblem}
 end
 
 """
-    Problem(problem_type, problem_name::String, problem_dimension)
+    Problem(problem_type, problem_name, problem_dimension)
 
-Construct a new field problem where `problem_type` is the type of the problem
-(Elasticity, Dirichlet, etc.), `problem_name` is the name of the problem and
-`problem_dimension` is the number of DOF:s in one node (2 in a 2D problem, 3
-in an elastic 3D problem, 6 in a 3D beam problem, etc.).
+Construct a new field problem.
+
+`problem_type` must be a subtype of `FieldProblem` (`Elasticity`, `Heat`, etc..).
+`problem_dimensions` is the number of degrees of freedom each node is containing.
 
 # Examples
 
-Create a vector-valued (dim=3) elasticity problem:
+To create vector-valued elasticity problem, having 3 dofs / node:
+```julia
+problem1 = Problem(Elasticity, "test problem", 3)
+```
 
-```@example
-prob1 = Problem(Elasticity, "this is my problem", 3)
+To create scalar-valued Poisson problem:
+```julia
+problem2 = Problem(Heat, "test problem 2", 1)
 ```
 
 """
 function Problem(::Type{P}, name::AbstractString, dimension::Int64) where P<:FieldProblem
-    return Problem{P}(name, dimension, "none", [], Dict(), Assembly(), Dict(), Vector(), P())
+    parent_field_name = "none"
+    elements = []
+    dofmap = Dict()
+    assembly = Assembly()
+    fields = Dict()
+    postprocess_fields = Vector()
+    properties = P()
+    problem = Problem{P}(name, dimension, parent_field_name, elements, dofmap,
+                         assembly, fields, postprocess_fields, properties)
+    @info("Creating a new problem of type $P, having name `$name` and " *
+          "dimension $dimension dofs/node.")
+    return problem
 end
 
 """
+    Problem(problem_type, problem_name, problem_dimension, parent_field_name)
+
 Construct a new boundary problem.
 
-Examples
---------
-Create a Dirichlet boundary problem for a vector-valued (dim=3) elasticity problem.
+`problem_type` must be a subtype of `BoundaryProblem` (`Dirichlet`, `Contact`,
+etc..). `problem_dimensions` is the number of degrees of freedom each node is
+containing. `parent_field_name` is describing the field, where the boundary
+problem is affecting.
 
-julia> bc1 = Problem(Dirichlet, "support", 3, "displacement")
-solver.
+# Examples
+
+To create a Dirichlet boundary condition for a vector-valued elasticity problem,
+having 3 dofs / node:
+```julia
+bc1 = Problem(Dirichlet, "fix displacement on support", 3, "displacement")
+```
+
+To create a Dirichlet boundary condition for scalar-valued Poisson problem:
+```julia
+bc2 = Problem(Dirichlet, "fix surface temperature", 1, "temperature")
+```
 """
 function Problem(::Type{P}, name, dimension, parent_field_name) where P<:BoundaryProblem
-    return Problem{P}(name, dimension, parent_field_name, [], Dict(), Assembly(), Dict(), Vector(), P())
+    elements = []
+    dofmap = Dict()
+    assembly = Assembly()
+    fields = Dict()
+    postprocess_fields = Vector()
+    properties = P()
+    problem = Problem{P}(name, dimension, parent_field_name, elements, dofmap,
+                         assembly, fields, postprocess_fields, properties)
+    @info("Creating a new boundary problem of type $P, having name `$name` and " *
+          "dimension $dimension dofs/node. This boundary problems fixes field " *
+          "`$parent_field_name`.")
+    return problem
 end
 
 function get_formulation_type(::Problem)
     return :incremental
 end
 
-""" 
+"""
     get_unknown_field_dimension(problem)
 
 Return the dimension of the unknown field of this problem.
@@ -162,7 +196,7 @@ Default function if unknown field name is not defined for some problem.
 """
 function get_unknown_field_name(::P) where P<:AbstractProblem
     @warn("The name of unknown field (e.g. displacement, temperature, ...) of the " *
-          "problem type must be given by defining a function " * 
+          "problem type must be given by defining a function " *
           "`get_unknown_field_name(::$P)`")
     return "N/A"
 end
@@ -190,18 +224,6 @@ function get_elements(problem::Problem)
     return problem.elements
 end
 
-
-"""
-    update!(problem.properties, attr...)
-
-Update properties for a problem.
-
-# Example
-
-```julia
-update!(body.properties, "finite_strain" => "false")
-```
-"""
 function update!(problem::P, attr::Pair{String, String}...) where P<:AbstractProblem
     for (name, value) in attr
         setfield!(problem, Meta.parse(name), Meta.parse(value))
@@ -247,24 +269,16 @@ function initialize!(problem::Problem, time::Float64=0.0)
     end
 end
 
-"""
-    update!(problem, assembly, u, la)
-
-Update the problem solution vector for assembly.
-"""
 function update!(problem::Problem, assembly::Assembly, u::Vector, la::Vector)
 
     # resize & fill with zeros vectors if length mismatch with current solution
 
     if length(u) != length(assembly.u)
-        @debug("resizing solution vector u", length(u), length(assembly.u))
         resize!(assembly.u, length(u))
         fill!(assembly.u, 0.0)
     end
 
     if length(la) != length(assembly.la)
-        @debug("resizing lagrange multiplier vector la",
-               length(la), length(assembly.la))
         resize!(assembly.la, length(la))
         fill!(assembly.la, 0.0)
     end
@@ -323,11 +337,6 @@ function get_global_solution(problem::Problem, assembly::Assembly)
     end
 end
 
-"""
-    update!(problem, assembly, elements, time)
-
-Update a solution from the assebly to elements.
-"""
 function update!(problem::Problem{P}, assembly::Assembly, elements::Vector{Element}, time::Float64) where P<:FieldProblem
     u, la = get_global_solution(problem, assembly)
     field_name = get_unknown_field_name(problem)
@@ -351,23 +360,41 @@ function update!(problem::Problem{P}, assembly::Assembly, elements::Vector{Eleme
 end
 
 """
-    add_elements!(problem::Problem, elements)
+    add_element!(problem, element1, element2, ...)
 
-Add new elements into the problem.
+Add element(s) to the problem.
 """
-function add_elements!(problem::Problem, elements)
+function add_element!(problem, elements...)
     for element in elements
         push!(problem.elements, element)
     end
+    return nothing
 end
 
-function get_assembly(problem::Problem)
-    return problem.assembly
+"""
+    add_elements!(problem, element_set_1, element_set_2, ...)
+
+Add vectors/tuples of element(s) to the problem.
+"""
+function add_elements!(problem, element_sets::Union{Vector,Tuple}...)
+    for elements in element_sets
+        nelements = length(elements)
+        @info("Adding $nelements elements to problem `$(problem.name)`")
+        add_element!(problem, elements...)
+    end
+    return nothing
 end
 
-function length(problem::Problem)
-    return length(problem.elements)
+add_elements!(problem, elements::Element...) = add_element!(problem, elements...)
+
+function add_elements!(problem, elements_or_lists_of_elements...)
+    for item in elements_or_lists_of_elements
+        add_elements!(problem, item)
+    end
 end
+
+get_assembly(problem::Problem) = problem.assembly
+Base.length(problem::Problem) = length(problem.elements)
 
 function update!(problem::Problem, field_name::AbstractString, data)
     #if haskey(problem.fields, field_name)

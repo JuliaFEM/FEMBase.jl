@@ -30,7 +30,7 @@ include("elements_lagrange.jl")
 include("integrate.jl")
 
 include("problems.jl")
-export set_gdofs!, get_gdofs, get_formulation_type
+export set_gdofs!, get_gdofs, get_formulation_type, add_element!, add_elements!
 
 include("assembly.jl")
 export assemble_prehook!, assemble_posthook!, assemble_elements!
@@ -41,12 +41,12 @@ export LinearSystem, AbstractLinearSystemSolver, solve!
 include("analysis.jl")
 export AbstractAnalysis, Analysis, add_problems!, get_problems, run!,
        AbstractResultsWriter, add_results_writer!, get_results_writers,
-       write_results!
+       write_results!, get_problem
 
 export FieldProblem, BoundaryProblem, Problem, Element, Assembly
 export Poi1, Seg2, Seg3, Tri3, Tri6, Tri7, Quad4, Quad8, Quad9,
        Tet4, Tet10, Pyr5, Wedge6, Wedge15, Hex8, Hex20, Hex27
-export add_elements!, add!, group_by_element_type,
+export add!, group_by_element_type,
        get_unknown_field_name, get_unknown_field_dimension,
        get_integration_points, initialize!, assemble!
 export SparseMatrixCOO, SparseVectorCOO, Node, BasisInfo,
