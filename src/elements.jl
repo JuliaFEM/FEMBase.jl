@@ -10,23 +10,52 @@ mutable struct Element{E<:AbstractBasis}
 end
 
 """
-    Element(element_type, connectivity_vector)
+    Element(topology, connectivity)
 
-Construct a new element where element_type is the type of the element
-and connectivity_vector is the vector of nodes that the element is connected to.
+Construct a new element where `topology` is the topological type of the element
+and connectivity contains node numbers where element is connected.
 
-Examples
---------
-In the example a new element (E in the figure below) of type Tri3 is created.
-This spesific element connects to nodes 89, 43, 12 in the finite element mesh.
+# Topological types
 
-```@example
-element = Element(Tri3, [89, 43, 12])
+## 1d elements
+- `Seg2`
+- `Seg3`
+
+## 2d elements
+- `Tri3`
+- `Tri6`
+- `Tri7`
+- `Quad4`
+- `Quad8`
+- `Quad9`
+
+## 3d elements
+- `Tet4`
+- `Tet10`
+- `Hex8`
+- `Hex20`
+- `Hex27`
+- `Pyr5`
+- `Wedge6`
+- `Wedge15`
+
+# Examples
+
+```julia
+element = Element(Tri3, (1, 2, 3))
 ```
-![img](figs/mesh.png)
 """
-function Element(::Type{E}, connectivity::Vector{Int}) where E<:AbstractBasis
-    return Element{E}(-1, connectivity, [], Dict(), E())
+function Element(::Type{T}, connectivity::NTuple{N, Int}) where {N, T<:AbstractBasis}
+    element_id = -1
+    topology = T()
+    integration_points = []
+    fields = Dict()
+    element = Element{T}(element_id, collect(connectivity), integration_points, fields, topology)
+    return element
+end
+
+function Element(::Type{T}, connectivity::Vector{Int}) where T<:AbstractBasis
+    return Element(T, (connectivity...,))
 end
 
 """
@@ -289,7 +318,48 @@ function update!(element::Element, field_name, data::Function)
     end
 end
 
-function update!(elements::Vector, field_name, data)
+function info_update_field(elements, field_name, data)
+    nelements = length(elements)
+    @info("Updating field `$field_name` for $nelements elements.")
+end
+
+function info_update_field(elements, field_name, data::Float64)
+    nelements = length(elements)
+    @info("Updating field `$field_name` => $data for $nelements elements.")
+end
+
+"""
+    update!(elements, field_name, data)
+
+Given a list of elements, field name and data, update field to elements. Data
+is passed directly to the `field`-function.
+
+# Examples
+
+Create two elements with topology `Seg2`, one is connecting to nodes (1, 2) and
+the other is connecting to (2, 3). Some examples of updating fields:
+
+```julia
+elements = [Element(Seg2, [1, 2]), Element(Seg2, [2, 3])]
+X = Dict(1 => 0.0, 2 => 1.0, 3 => 2.0)
+u = Dict(1 => 0.0, 2 => 0.0, 3 => 0.0)
+update!(elements, "geometry", X)
+update!(elements, "displacement", 0.0 => u)
+update!(elements, "youngs modulus", 210.0e9)
+update!(elements, "time-dependent force", 0.0 => 0.0)
+update!(elements, "time-dependent force", 1.0 => 100.0)
+```
+
+When using dictionaries in definition of fields, key of dictionary corresponds
+to node id, that is, updating field `geometry` in the example above is updating
+values `(0.0, 1.0)` for the first elements and values `(1.0, 2.0)` to the second
+element. For time dependent field, syntax `time => data` is used. If field is
+initialized without time-dependency, it cannot be changed to be time-dependent
+afterwards. If unsure, it's better to initialize field with time dependency.
+
+"""
+function update!(elements, field_name, data)
+    info_update_field(elements, field_name, data)
     for element in elements
         update!(element, field_name, data)
     end

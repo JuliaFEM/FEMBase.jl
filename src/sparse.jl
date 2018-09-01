@@ -2,7 +2,7 @@
 # License is MIT: see https://github.com/JuliaFEM/FEMBase.jl/blob/master/LICENSE
 
 using SparseArrays
-import SparseArrays: sparse
+import SparseArrays: sparse, sparsevec
 
 mutable struct SparseMatrixCOO{T<:Real}
     I :: Vector{Int}
@@ -36,60 +36,50 @@ function convert(::Type{SparseMatrixCOO}, A::Matrix)
     return SparseMatrixCOO(I, J, V)
 end
 
-""" Convert from COO format to CSC.
-
-Parameters
-----------
-tol
-    used to drop near zero values less than tol.
-"""
-function sparse(A::SparseMatrixCOO; tol=1.0e-12)
-    B = sparse(A.I, A.J, A.V)
-    SparseArrays.droptol!(B, tol)
-    return B
+function convert(::Type{SparseMatrixCOO}, b::Vector)
+    I = findall(!iszero, b)
+    J = fill(1, size(I))
+    V = b[I]
+    return SparseMatrixCOO(I, J, V)
 end
 
-function sparse(A::SparseMatrixCOO, n::Int, m::Int; tol=1.0e-12)
-    B = sparse(A.I, A.J, A.V, n, m)
-    SparseArrays.droptol!(B, tol)
-    return B
-end
+SparseArrays.sparse(A::SparseMatrixCOO) = sparse(A.I, A.J, A.V)
+SparseArrays.sparse(A::SparseMatrixCOO, n::Int, m::Int) = sparse(A.I, A.J, A.V, n, m)
+SparseArrays.sparse(A::SparseMatrixCOO, n::Int, m::Int, f::Function) = sparse(A.I, A.J, A.V, n, m, f)
+Base.Matrix(A::SparseMatrixCOO) = Matrix(sparse(A))
+Base.Matrix(A::SparseMatrixCOO, n::Int, m::Int) = Matrix(sparse(A, n, m))
 
-function sparse(A::SparseMatrixCOO, n::Int, m::Int, f::Function; tol=1.0e-12)
-    B = sparse(A.I, A.J, A.V, n, m, f)
-    SparseArrays.droptol!(B, tol)
-    return B
-end
-
-# For backward compatibility, will be removed
-function push!(A::SparseMatrixCOO, I::Int, J::Int, V::Float64)
-    push!(A.I, I)
-    push!(A.J, J)
-    push!(A.V, V)
-end
+SparseArrays.sparsevec(b::SparseVectorCOO) = sparsevec(b.I, b.V)
+SparseArrays.sparsevec(b::SparseVectorCOO, n::Int) = sparsevec(b.I, b.V, n)
+Base.Vector(b::SparseVectorCOO) = Vector(sparsevec(b))
+Base.Vector(b::SparseVectorCOO, n::Int) = Vector(sparsevec(b, n))
 
 function add!(A::SparseMatrixCOO, I::Int, J::Int, V::Float64)
     push!(A.I, I)
     push!(A.J, J)
     push!(A.V, V)
+    return nothing
 end
 
 function add!(A::SparseMatrixCOO, I::Int, V::Float64)
     push!(A.I, I)
     push!(A.J, 1)
     push!(A.V, V)
+    return nothing
 end
 
 function empty!(A::SparseMatrixCOO)
     empty!(A.I)
     empty!(A.J)
     empty!(A.V)
+    return nothing
 end
 
 function append!(A::SparseMatrixCOO, B::SparseMatrixCOO)
     append!(A.I, B.I)
     append!(A.J, B.J)
     append!(A.V, B.V)
+    return nothing
 end
 
 function isempty(A::SparseMatrixCOO)
@@ -198,17 +188,12 @@ function resize_sparsevec(b, n)
     return sparsevec(b.nzind, b.nzval, n)
 end
 
-""" Approximative comparison of two matricse A and B. """
+""" Approximative comparison of two matrices A and B. """
 function isapprox(A::SparseMatrixCOO, B::SparseMatrixCOO)
     A2 = sparse(A)
     B2 = sparse(B, size(A2)...)
     return isapprox(A2, B2)
 end
 
-function isapprox(A::SparseMatrixCOO, B)
-    return isapprox(Matrix(sparse(A)), B)
-end
-
-function isapprox(A, B::SparseMatrixCOO)
-    return isapprox(B, A)
-end
+isapprox(A::SparseMatrixCOO, B) = isapprox(Matrix(A), B)
+isapprox(A, B::SparseMatrixCOO) = isapprox(A, Matrix(B))
