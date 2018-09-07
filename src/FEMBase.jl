@@ -9,17 +9,16 @@ macro lintpragma(s)
 end
 
 import Base: getindex, setindex!, convert, length, size, isapprox,
-             start, first, next, done, last, endof, vec,
+             first, last, vec,
              ==, +, -, *, /, haskey, copy, push!, isempty, empty!,
              append!, read
 
 using TimerOutputs
 export @timeit, print_timer
 
-using FEMBasis
-using FEMBasis: AbstractBasis, jacobian, get_reference_element_coordinates
-import FEMBasis: interpolate
-using FEMQuad: get_quadrature_points
+import FEMBasis
+import FEMQuad
+
 include("fields.jl")
 export interpolate, update!, DCTI, DCTV, DVTI, DVTV, CVTV, DVTId, DVTVd, field
 include("types.jl")
@@ -44,8 +43,6 @@ export AbstractAnalysis, Analysis, add_problems!, get_problems, run!,
        write_results!, get_problem
 
 export FieldProblem, BoundaryProblem, Problem, Element, Assembly
-export Poi1, Seg2, Seg3, Tri3, Tri6, Tri7, Quad4, Quad8, Quad9,
-       Tet4, Tet10, Pyr5, Wedge6, Wedge15, Hex8, Hex20, Hex27
 export add!, group_by_element_type,
        get_unknown_field_name, get_unknown_field_dimension,
        get_integration_points, initialize!, assemble!
@@ -77,5 +74,9 @@ export add_master_elements!
 
 function get_master_elements end
 export get_master_elements
+
+using FEMBasis
+export Poi1, Seg2, Seg3, Tri3, Tri6, Tri7, Quad4, Quad8, Quad9,
+       Tet4, Tet10, Pyr5, Wedge6, Wedge15, Hex8, Hex20, Hex27
 
 end

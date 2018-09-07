@@ -1,7 +1,7 @@
 # This file is a part of JuliaFEM.
 # License is MIT: see https://github.com/JuliaFEM/FEMBase.jl/blob/master/LICENSE
 
-mutable struct Element{E<:AbstractBasis}
+mutable struct Element{E<:FEMBasis.AbstractBasis}
     id :: Int
     connectivity :: Vector{Int}
     integration_points :: Vector{IP}
@@ -45,7 +45,7 @@ and connectivity contains node numbers where element is connected.
 element = Element(Tri3, (1, 2, 3))
 ```
 """
-function Element(::Type{T}, connectivity::NTuple{N, Int}) where {N, T<:AbstractBasis}
+function Element(::Type{T}, connectivity::NTuple{N, Int}) where {N, T<:FEMBasis.AbstractBasis}
     element_id = -1
     topology = T()
     integration_points = []
@@ -54,7 +54,7 @@ function Element(::Type{T}, connectivity::NTuple{N, Int}) where {N, T<:AbstractB
     return element
 end
 
-function Element(::Type{T}, connectivity::Vector{Int}) where T<:AbstractBasis
+function Element(::Type{T}, connectivity::Vector{Int}) where T<:FEMBasis.AbstractBasis
     return Element(T, (connectivity...,))
 end
 
@@ -181,14 +181,14 @@ end
 function get_basis(element::Element{B}, ip, ::Any) where B
     T = typeof(first(ip))
     N = zeros(T, 1, length(element))
-    eval_basis!(B, N, tuple(ip...))
+    FEMBasis.eval_basis!(B, N, tuple(ip...))
     return N
 end
 
 function get_dbasis(element::Element{B}, ip, ::Any) where B
     T = typeof(first(ip))
     dN = zeros(T, size(element)...)
-    eval_dbasis!(B, dN, tuple(ip...))
+    FEMBasis.eval_dbasis!(B, dN, tuple(ip...))
     return dN
 end
 
@@ -219,7 +219,7 @@ end
 
 function (element::Element)(ip, time, ::Type{Val{:Jacobian}})
     X = element("geometry", time)
-    J = jacobian(element.properties, X, ip)
+    J = FEMBasis.jacobian(element.properties, X, ip)
     return J
 end
 
@@ -374,11 +374,7 @@ function get_integration_points(element::Element{E}) where E
     # first time initialize default integration points
     if length(element.integration_points) == 0
         ips = get_integration_points(element.properties)
-        if E in (Seg2, Seg3, NSeg)
-            element.integration_points = [IP(i, w, (xi,)) for (i, (w, xi)) in enumerate(ips)]
-        else
-            element.integration_points = [IP(i, w, xi) for (i, (w, xi)) in enumerate(ips)]
-        end
+        element.integration_points = [IP(i, w, xi) for (i, (w, xi)) in enumerate(ips)]
     end
     return element.integration_points
 end
@@ -388,11 +384,7 @@ of integration scheme mainly for mass matrix.
 """
 function get_integration_points(element::Element{E}, change_order::Int) where E
     ips = get_integration_points(element.properties, Val{change_order})
-    if E in (Seg2, Seg3, NSeg)
-        return [IP(i, w, (xi,)) for (i, (w, xi)) in enumerate(ips)]
-    else
-        return [IP(i, w, xi) for (i, (w, xi)) in enumerate(ips)]
-    end
+    return [IP(i, w, xi) for (i, (w, xi)) in enumerate(ips)]
 end
 
 """ Find inverse isoparametric mapping of element. """
@@ -430,7 +422,7 @@ function (element::Element)(field_name::String, ip, time::Float64)
     return interpolate(element, field_name, ip, time)
 end
 
-function element_info!(bi::BasisInfo{E,T}, element::Element{E}, ip, time) where {E,T}
+function element_info!(bi::FEMBasis.BasisInfo{E,T}, element::Element{E}, ip, time) where {E,T}
     X = interpolate(element, "geometry", time)
     eval_basis!(bi, X, ip)
     return bi.J, bi.detJ, bi.N, bi.grad

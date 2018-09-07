@@ -143,7 +143,7 @@ end
 Assemble Tet10 mass matrices using special method. If Tet10 has constant metric
 if can be integrated analytically to gain performance.
 """
-function assemble_mass_matrix!(problem::Problem, elements::Vector{Element{Tet10}}, time)
+function assemble_mass_matrix!(problem::Problem, elements::Vector{Element{FEMBasis.Tet10}}, time)
     nnodes = length(Tet10)
     dim = get_unknown_field_dimension(problem)
     M = zeros(nnodes, nnodes)
@@ -163,7 +163,7 @@ function assemble_mass_matrix!(problem::Problem, elements::Vector{Element{Tet10}
         -6 -4 -6 -4 16 16  8 16 32 16
         -6 -6 -4 -4  8 16 16 16 16 32]
 
-    function is_CM(::Element{Tet10}, X; rtol=1.0e-6)
+    function is_CM(::Element{FEMBasis.Tet10}, X; rtol=1.0e-6)
         isapprox(X[5],  1/2*(X[1]+X[2]); rtol=rtol) || return false
         isapprox(X[6],  1/2*(X[2]+X[3]); rtol=rtol) || return false
         isapprox(X[7],  1/2*(X[3]+X[1]); rtol=rtol) || return false
@@ -197,7 +197,7 @@ function assemble_mass_matrix!(problem::Problem, elements::Vector{Element{Tet10}
                 detJ = element(ip, time, Val{:detJ})
                 rho = element("density", ip, time)
                 w = ip.weight*rho*detJ
-                eval_basis!(Tet10, N, ip)
+                eval_basis!(FEMBasis.Tet10, N, ip)
                 N = element(ip, time)
                 mul!(NtN, transpose(N), N)
                 rmul!(NtN, w)
