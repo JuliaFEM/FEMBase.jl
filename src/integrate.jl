@@ -16,10 +16,10 @@ integration_rule_mapping = (
     :Quad8   => (:GLQUAD9, :GLQUAD16, :GLQUAD25),
     :Quad9   => (:GLQUAD9, :GLQUAD16, :GLQUAD25),
     :NSurf   => (:GLQUAD9, :GLQUAD16, :GLQUAD25),
-    :Hex8    => (:GLHEX8, :GLHEX27, :GLHEX81, :GLHEX243),
-    :Hex20   => (:GLHEX27, :GLHEX81, :GLHEX243),
-    :Hex27   => (:GLHEX27, :GLHEX81, :GLHEX243),
-    :NSolid  => (:GLHEX27, :GLHEX81, :GLHEX243),
+    :Hex8    => (:GLHEX8, :GLHEX27, :GLHEX64, :GLHEX125),
+    :Hex20   => (:GLHEX27, :GLHEX64, :GLHEX125),
+    :Hex27   => (:GLHEX27, :GLHEX64, :GLHEX125),
+    :NSolid  => (:GLHEX27, :GLHEX64, :GLHEX125),
     :Tri3    => (:GLTRI1, :GLTRI3, :GLTRI4, :GLTRI6, :GLTRI7, :GLTRI12),
     :Tri6    => (:GLTRI3, :GLTRI4, :GLTRI6, :GLTRI7, :GLTRI12),
     :Tri7    => (:GLTRI3, :GLTRI4, :GLTRI6, :GLTRI7, :GLTRI12),
@@ -35,14 +35,14 @@ for (E, R) in integration_rule_mapping
         order = Val{i-1}
         if i == 1
             code = quote
-                function get_integration_points(element::$E)
-                    return get_quadrature_points($P)
+                function get_integration_points(element::FEMBasis.$E)
+                    return FEMQuad.get_quadrature_points($P)
                 end
             end
         else
             code = quote
-                function get_integration_points(element::$E, ::Type{$order})
-                    return get_quadrature_points($P)
+                function get_integration_points(element::FEMBasis.$E, ::Type{$order})
+                    return FEMQuad.get_quadrature_points($P)
                 end
             end
         end

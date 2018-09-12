@@ -360,7 +360,7 @@ time of some frame and return that frame. At last, we find correct bin so
 that t0 < time < t1 and use linear interpolation.
 
 """
-function interpolate(field::F, time) where F<:AbstractField
+function interpolate(field::AbstractField, time)
     return interpolate_field(field, time)
 end
 
@@ -375,6 +375,6 @@ function interpolate(a, b)
     return sum(a[i]*b[i] for i=1:length(a))
 end
 
-function update!(field::F, data) where F<:AbstractField
+function update!(field::AbstractField, data)
     update_field!(field, data)
 end

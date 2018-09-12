@@ -22,7 +22,8 @@ using Test, LinearAlgebra, SparseArrays
 export @test, @test_throws, @test_broken, @test_skip,
        @test_warn, @test_nowarn, @testset, @inferred
 
-using FEMBase
+using ..FEMBase
+import ..FEMBasis
 
 struct Poisson <: FieldProblem end
 
@@ -35,7 +36,7 @@ function FEMBase.assemble_elements!(problem::Problem{Poisson},
                                     elements::Vector{Element{E}},
                                     time::Float64) where E
 
-    bi = BasisInfo(E)
+    bi = FEMBasis.BasisInfo(E)
     ndofs = length(bi)
     Ke = zeros(ndofs, ndofs)
     fe = zeros(ndofs)
@@ -64,9 +65,9 @@ end
 function FEMBase.assemble_elements!(problem::Problem{Poisson},
                                     assembly::Assembly,
                                     elements::Vector{Element{E}},
-                                    time::Float64) where E<:Union{Seg2,Seg3}
+                                    time::Float64) where E<:Union{FEMBasis.Seg2,FEMBasis.Seg3}
 
-    bi = BasisInfo(E)
+    bi = FEMBasis.BasisInfo(E)
     ndofs = length(bi)
     Ce = zeros(ndofs, ndofs)
     fe = zeros(ndofs)
@@ -112,7 +113,7 @@ function FEMBase.assemble_elements!(problem::Problem{Dirichlet},
             haskey(element, "$name $i") || continue
             gdofs = get_gdofs(problem, element)
             ldofs = gdofs[i:dim:end]
-            xis = get_reference_element_coordinates(E)
+            xis = FEMBasis.get_reference_element_coordinates(E)
             for (ldof, xi) in zip(ldofs, xis)
                 data[ldof] = interpolate(element, "$name $i", xi, time)
             end

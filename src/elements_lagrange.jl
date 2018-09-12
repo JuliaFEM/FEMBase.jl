@@ -1,9 +1,7 @@
 # This file is a part of JuliaFEM.
 # License is MIT: see https://github.com/JuliaFEM/FEMBase.jl/blob/master/LICENSE
 
-using FEMBasis
-
-struct Poi1 <: AbstractBasis end
+struct Poi1 <: FEMBasis.AbstractBasis end
 
 function get_basis(::Element{Poi1}, ::Any, ::Any)
     return [1]
@@ -37,13 +35,15 @@ function FEMBasis.get_reference_element_coordinates(::Type{Poi1})
     Vector{Float64}[[0.0]]
 end
 
-function inside(::Union{Type{Seg2}, Type{Seg3}, Type{Quad4}, Type{Quad8},
-                        Type{Quad9}, Type{Pyr5}, Type{Hex8}, Type{Hex20},
-                        Type{Hex27}}, xi)
+function inside(::Union{Type{FEMBasis.Seg2}, Type{FEMBasis.Seg3}, Type{FEMBasis.Quad4},
+                        Type{FEMBasis.Quad8}, Type{FEMBasis.Quad9}, Type{FEMBasis.Pyr5},
+                        Type{FEMBasis.Hex8}, Type{FEMBasis.Hex20},
+                        Type{FEMBasis.Hex27}}, xi)
     return all(-1.0 .<= xi .<= 1.0)
 end
 
-function inside(::Union{Type{Tri3}, Type{Tri6}, Type{Tri7}, Type{Tet4}, Type{Tet10}}, xi)
+function inside(::Union{Type{FEMBasis.Tri3}, Type{FEMBasis.Tri6}, Type{FEMBasis.Tri7},
+                        Type{FEMBasis.Tet4}, Type{FEMBasis.Tet10}}, xi)
     return all(xi .>= 0.0) && (sum(xi) <= 1.0)
 end
 
