@@ -489,9 +489,9 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "api.html#FEMBasis.interpolate-Tuple{Element,String,Float64}",
+    "location": "api.html#FEMBase.interpolate-Tuple{Element,String,Float64}",
     "page": "API Documentation",
-    "title": "FEMBasis.interpolate",
+    "title": "FEMBase.interpolate",
     "category": "method",
     "text": "interpolate(element, field_name, time)\n\nInterpolate field field_name from element at given time.\n\nExample\n\nelement = Element(Seg2, [1, 2])\ndata1 = Dict(1 => 1.0, 2 => 2.0)\ndata2 = Dict(1 => 2.0, 2 => 3.0)\nupdate!(element, \"my field\", 0.0 => data1)\nupdate!(element, \"my field\", 1.0 => data2)\ninterpolate(element, \"my field\", 0.5)\n\n# output\n\n(1.5, 2.5)\n\n\n\n\n\n\n"
 },
