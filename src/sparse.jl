@@ -111,11 +111,14 @@ Matrix(A)
  0.0  0.0  0.0  0.0  0.0  8.0  9.0  10.0
 ```
 """
-function add!(A::SparseMatrixCOO, dofs1::Vector{Int}, dofs2::Vector{Int}, data)
-    n, m = size(data)
+function add!(A::SparseMatrixCOO, dofs1::AbstractVector{Int}, dofs2::AbstractVector{Int}, data)
+    n, m = length(dofs1), length(dofs2)
+    @assert length(data) == n*m
+    k = 1
     for j=1:m
         for i=1:n
-            add!(A, dofs1[i], dofs2[j], data[i,j])
+            add!(A, dofs1[i], dofs2[j], data[k])
+            k += 1
         end
     end
     return nothing
