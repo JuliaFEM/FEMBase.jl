@@ -16,7 +16,7 @@ mutable struct Assembly
     M :: SparseMatrixCOO  # mass matrix
 
     # for field assembly
-    K :: SparseMatrixCOO   # stiffness matrix
+    K :: SparseMatrixCSC{Float64, Int64} # stiffness matrix
     Kg :: SparseMatrixCOO  # geometric stiffness matrix
     f :: SparseMatrixCOO   # force vector
     fg :: SparseMatrixCOO  #
@@ -42,6 +42,7 @@ end
 function Assembly()
     return Assembly(
         SparseMatrixCOO(),
+        sparse(zeros(0,0)), # Will be replaced with a sparsity pattern
         SparseMatrixCOO(),
         SparseMatrixCOO(),
         SparseMatrixCOO(),
@@ -50,15 +51,14 @@ function Assembly()
         SparseMatrixCOO(),
         SparseMatrixCOO(),
         SparseMatrixCOO(),
-        SparseMatrixCOO(),
-        [], [], Inf,
-        [], [], Inf,
-        [])
+        Float64[], Float64[], Inf,
+        Float64[], Float64[], Inf,
+        Int[])
 end
 
 function empty!(assembly::Assembly)
-    empty!(assembly.K)
     empty!(assembly.Kg)
+    fill!(assembly.K.nzval, 0.0)
     empty!(assembly.f)
     empty!(assembly.fg)
     empty!(assembly.C1)
@@ -69,16 +69,15 @@ function empty!(assembly::Assembly)
 end
 
 function isempty(assembly::Assembly)
-    T = isempty(assembly.K)
-    T &= isempty(assembly.Kg)
-    T &= isempty(assembly.f)
-    T &= isempty(assembly.fg)
-    T &= isempty(assembly.C1)
-    T &= isempty(assembly.C2)
-    T &= isempty(assembly.D)
-    T &= isempty(assembly.g)
-    T &= isempty(assembly.c)
-    return T
+    return isempty(assembly.Kg) &&
+           iszero(assembly.K)   &&
+           isempty(assembly.f)  &&
+           isempty(assembly.fg) &&
+           isempty(assembly.C1) &&
+           isempty(assembly.C2) &&
+           isempty(assembly.D)  &&
+           isempty(assembly.g)  &&
+           isempty(assembly.c)
 end
 
 """
@@ -266,6 +265,13 @@ end
 function initialize!(problem::Problem, time::Float64=0.0)
     for element in get_elements(problem)
         initialize!(problem, element, time)
+    end
+    initialize_sparsity_pattern(problem::Problem)
+end
+
+function initialize_sparsity_pattern(problem::Problem)
+    for element in get_elements(problem)
+
     end
 end
 

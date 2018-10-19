@@ -197,3 +197,147 @@ end
 
 isapprox(A::SparseMatrixCOO, B) = isapprox(Matrix(A), B)
 isapprox(A, B::SparseMatrixCOO) = isapprox(A, Matrix(B))
+
+# TODO: Use FEMSParse.jl
+struct AssemblerSparsityPattern{Tv,Ti}
+    K::SparseMatrixCSC{Tv,Ti}
+    permutation::Vector{Int}
+    sorteddofs::Vector{Int}
+end
+
+"""
+    start_assemble(K::SparseMatrixCSC)
+Create an `AssemblerSparsityPattern` from the sparsity pattern in `K`.
+Also, fill the values in `K` with 0.0.
+"""
+function start_assemble(K::SparseMatrixCSC)
+    fill!(K.nzval, 0.0)
+    AssemblerSparsityPattern(K, Int[], Int[])
+end
+
+
+"""
+    assemble!(A::AssemblerSparsityPattern, dofs2, Ke)
+Assemble a local dense element matrix `Ke` into the sparse matrix
+wrapped by the assembler `A`.
+location given by lists of indices `dofs1` and `dofs2`.
+# Example
+```julia
+using SparseArrays
+sparsity_pattern = sparse([1. 0 1; 1 0 1; 1 1 1])
+assembler = FEMSparse.start_assemble(sparsity_pattern)
+dofs = [1, 3]
+Ke = [1.0 2.0; 3.0 4.0]
+FEMSparse.FEMSparse.assemble_local_matrix!(assembler, dofs, Ke)
+Matrix(sparsity_pattern)
+# output
+julia> Matrix(sparsity_pattern)
+3×3 Array{Float64,2}:
+ 1.0  0.0  2.0
+ 0.0  0.0  0.0
+ 3.0  0.0  4.0
+```
+"""
+function assemble_local_matrix!(A::AssemblerSparsityPattern, dofs::AbstractVector{Int}, Ke::AbstractMatrix)
+    permutation = A.permutation
+    sorteddofs = A.sorteddofs
+    K = A.K
+
+    @boundscheck checkbounds(K, dofs, dofs)
+    resize!(permutation, length(dofs))
+    resize!(sorteddofs, length(dofs))
+    copyto!(sorteddofs, dofs)
+    sortperm2!(sorteddofs, permutation)
+
+    current_col = 1
+    @inbounds for Kcol in sorteddofs
+        maxlookups = length(dofs)
+        current_idx = 1
+        for r in nzrange(K, Kcol)
+            Kerow = permutation[current_idx]
+            if K.rowval[r] == dofs[Kerow]
+                Kecol = permutation[current_col]
+                K.nzval[r] += Ke[Kerow, Kecol]
+                current_idx += 1
+            end
+            current_idx > maxlookups && break
+        end
+        if current_idx <= maxlookups
+            error("some row indices were not found")
+        end
+        current_col += 1
+    end
+end
+
+
+##################
+# Sort utilities #
+##################
+# We bundle a few sorting utilities here because the ones
+# in have some unacceptable overhead.
+
+# Sorts B and stores the permutation in `ii`
+function sortperm2!(B, ii)
+   @inbounds for i = 1:length(B)
+      ii[i] = i
+   end
+   quicksort!(B, ii)
+   return
+end
+
+function quicksort!(A, order, i=1,j=length(A))
+    @inbounds if j > i
+        if  j - i <= 12
+           # Insertion sort for small groups is faster than Quicksort
+           insertionsort!(A, order, i, j)
+           return A
+        end
+
+        pivot = A[div(i+j,2)]
+        left, right = i, j
+        while left <= right
+            while A[left] < pivot
+                left += 1
+            end
+            while A[right] > pivot
+                right -= 1
+            end
+            if left <= right
+                A[left], A[right] = A[right], A[left]
+                order[left], order[right] = order[right], order[left]
+
+                left += 1
+                right -= 1
+            end
+        end  # left <= right
+
+        quicksort!(A,order, i,   right)
+        quicksort!(A,order, left,j)
+    end  # j > i
+
+    return A
+end
+
+function insertionsort!(A, order, ii=1, jj=length(A))
+    @inbounds for i = ii+1 : jj
+        j = i - 1
+        temp  = A[i]
+        itemp = order[i]
+
+        while true
+            if j == ii-1
+                break
+            end
+            if A[j] <= temp
+                break
+            end
+            A[j+1] = A[j]
+            order[j+1] = order[j]
+            j -= 1
+        end
+
+        A[j+1] = temp
+        order[j+1] = itemp
+    end  # i
+    return
+end

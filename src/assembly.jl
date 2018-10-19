@@ -81,11 +81,44 @@ function assemble!(problem::Problem, time)
         initialize!(problem, time)
     end
 
+    if size(assembly.K) == (0,0)
+        @info "Creating sparsity pattern"
+        assembly.K = create_sparsity_pattern!(assembly, problem)
+    end
+    fill!(assembly.K, 0.0)
+
     for (element_type, elements) in group_by_element_type(elements)
         assemble_elements!(problem, assembly, elements, time)
     end
     assemble_posthook!(problem, time)
     return nothing
+end
+
+function create_sparsity_pattern!(assembly, problem::Problem)
+    elements = get_elements(problem)
+    sparsity_pattern = FEMBase.SparseMatrixCOO()
+    for (element_type, elements) in group_by_element_type(elements)
+        create_sparsity_pattern!(sparsity_pattern, elements, problem)
+    end
+
+    # Make sure we have the diagonal stored in the sparsity pattern
+    for i in 1:max(maximum(sparsity_pattern.I), maximum(sparsity_pattern.J))
+        push!(sparsity_pattern.I, i)
+        push!(sparsity_pattern.J, i)
+        push!(sparsity_pattern.V, 1.0)
+    end
+    return sparse(sparsity_pattern)
+end
+
+function create_sparsity_pattern!(sparsity_pattern::SparseMatrixCOO, elements::Vector{Element{El}}, problem) where El
+    dim = get_unknown_field_dimension(problem)
+    nnodes = length(El)
+    ndofs = dim*nnodes
+    Km = ones(ndofs, ndofs)
+    for element in elements
+        gdofs = get_gdofs(problem, element)
+        add!(sparsity_pattern, gdofs, gdofs, Km)
+    end
 end
 
 function assemble!(problem::Problem)

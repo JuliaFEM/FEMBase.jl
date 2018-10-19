@@ -14,7 +14,7 @@ mutable struct LinearSystem{Tv, Ti<:Integer}
     u :: SparseVector{Tv, Ti}
     la :: SparseVector{Tv, Ti}
     dim :: Int
-end 
+end
 
 function LinearSystem(dim::Int)
     return LinearSystem(spzeros(dim, dim), spzeros(dim, dim),
