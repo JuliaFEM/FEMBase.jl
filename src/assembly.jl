@@ -84,8 +84,10 @@ function assemble!(problem::Problem, time)
     if size(assembly.K) == (0,0)
         @info "Creating sparsity pattern"
         assembly.K = create_sparsity_pattern!(assembly, problem)
+        assembly.f = zeros(eltype(assembly.K), size(assembly.K, 2))
     end
     fill!(assembly.K, 0.0)
+    fill!(assembly.f, 0.0)
 
     for (element_type, elements) in group_by_element_type(elements)
         assemble_elements!(problem, assembly, elements, time)

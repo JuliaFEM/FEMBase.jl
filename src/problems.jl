@@ -18,7 +18,7 @@ mutable struct Assembly
     # for field assembly
     K :: SparseMatrixCSC{Float64, Int64} # stiffness matrix
     Kg :: SparseMatrixCOO  # geometric stiffness matrix
-    f :: SparseMatrixCOO   # force vector
+    f :: Vector{Float64}   # force vector
     fg :: SparseMatrixCOO  #
 
     # for boundary assembly
@@ -44,7 +44,7 @@ function Assembly()
         SparseMatrixCOO(),
         sparse(zeros(0,0)), # Will be replaced with a sparsity pattern
         SparseMatrixCOO(),
-        SparseMatrixCOO(),
+        zeros(0),
         SparseMatrixCOO(),
         SparseMatrixCOO(),
         SparseMatrixCOO(),
@@ -59,7 +59,7 @@ end
 function empty!(assembly::Assembly)
     empty!(assembly.Kg)
     fill!(assembly.K.nzval, 0.0)
-    empty!(assembly.f)
+    fill!(assembly.f, 0.0)
     empty!(assembly.fg)
     empty!(assembly.C1)
     empty!(assembly.C2)
@@ -71,7 +71,7 @@ end
 function isempty(assembly::Assembly)
     return isempty(assembly.Kg) &&
            iszero(assembly.K)   &&
-           isempty(assembly.f)  &&
+           iszero(assembly.f)   &&
            isempty(assembly.fg) &&
            isempty(assembly.C1) &&
            isempty(assembly.C2) &&
