@@ -5,7 +5,8 @@ mutable struct Element{E<:AbstractBasis}
     id :: Int
     connectivity :: Vector{Int}
     integration_points :: Vector{IP}
-    fields :: Dict{String, AbstractField}
+    fields_keys :: Vector{String}
+    fields_values :: Vector{AbstractField}
     properties :: E
 end
 
@@ -48,9 +49,11 @@ element = Element(Tri3, (1, 2, 3))
 function Element(::Type{T}, connectivity::NTuple{N, Int}) where {N, T<:AbstractBasis}
     element_id = -1
     topology = T()
-    integration_points = []
-    fields = Dict()
-    element = Element{T}(element_id, collect(connectivity), integration_points, fields, topology)
+    integration_points = IP[]
+    fields_keys = AbstractField[]
+    fields_values = String[]
+    element = Element{T}(element_id, collect(connectivity), integration_points,
+                         fields_keys, fields_values, topology)
     return element
 end
 
@@ -76,13 +79,41 @@ function size(element::Element)
     return size(element.properties)
 end
 
-function getindex(element::Element, field_name::String)
-    return element.fields[field_name]
+function get_slot(element::Element, field_name::String)
+    for (i, k) in enumerate(element.fields_keys)
+        if k == field_name
+            return i
+        end
+    end
+    return 0 # not found
 end
 
-function setindex!(element::Element, data::T, field_name) where T<:AbstractField
-    element.fields[field_name] = data
+function Base.getindex(element::Element, field_name::String)
+    i = get_slot(element, field_name)
+    i > 0 && return element.fields_values[i]
+    error("key error $field_name")
 end
+
+function Base.setindex!(element::Element, data::T, field_name) where T<:AbstractField
+    i = get_slot(element, field_name)
+    i > 0 && return element.field_keys[i] = data
+    push!(element.fields_keys,   field_name)
+    push!(element.fields_values, data)
+end
+
+function Base.haskey(element::Element, field_name::String)
+    get_slot(element, field_name) != 0
+end
+
+function Base.delete!(element::Element, field_name::String)
+    i = get_slot(element, field_name)
+    if i > 0
+        deleteat!(element.fields_keys, i)
+        deleteat!(element.fields_values, i)
+    end
+    return
+end
+
 
 function get_element_type(::Element{E}) where E
     return E
@@ -299,22 +330,22 @@ function update!(element::Element, field::F,
 end
 
 function update!(element::Element, field_name, data)
-    if haskey(element.fields, field_name)
-        update!(element, element.fields[field_name], data)
+    if haskey(element, field_name)
+        update!(element, element[field_name], data)
     else
-        element.fields[field_name] = field(data)
+        element[field_name] = field(data)
     end
 end
 
 function update!(element::Element, field_name, field_::F) where F<:AbstractField
-    element.fields[field_name] = field_
+    element[field_name] = field_
 end
 
 function update!(element::Element, field_name, data::Function)
     if hasmethod(data, Tuple{Element, Any, Any})
-        element.fields[field_name] = field((ip, time) -> data(element, ip, time))
+        element[field_name] = field((ip, time) -> data(element, ip, time))
     else
-        element.fields[field_name] = field(data)
+        element[field_name] = field(data)
     end
 end
 
