@@ -7,6 +7,7 @@ mutable struct Element{E<:AbstractBasis}
     integration_points :: Vector{IP}
     fields :: Dict{String, AbstractField}
     properties :: E
+    color::Int
 end
 
 """
@@ -50,7 +51,7 @@ function Element(::Type{T}, connectivity::NTuple{N, Int}) where {N, T<:AbstractB
     topology = T()
     integration_points = []
     fields = Dict()
-    element = Element{T}(element_id, collect(connectivity), integration_points, fields, topology)
+    element = Element{T}(element_id, collect(connectivity), integration_points, fields, topology, 0)
     return element
 end
 
@@ -102,6 +103,24 @@ end
 
 function get_connectivity(element::Element)
     return element.connectivity
+end
+
+function assign_colors!(elements::Vector{Element}, colors::Dict{Int, Int})
+    for element in elements
+        element.color = colors[element.id]
+    end
+end
+
+# TODO: Better name
+function get_color_ranges(elements::Vector{T}) where {T <: Element}
+    d = Dict{Int, Vector{T}}()
+    for element in elements
+        col = element.color
+        @assert col != 0
+        !haskey(d, col) && (d[col] = Vector{T}())
+        push!(d[col], element)
+    end
+    return d
 end
 
 """

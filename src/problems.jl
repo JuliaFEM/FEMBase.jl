@@ -99,6 +99,7 @@ mutable struct Problem{P<:AbstractProblem}
     fields :: Dict{String, AbstractField}
     postprocess_fields :: Vector{String}
     properties :: P
+    assemble_parallel::Bool
 end
 
 """
@@ -131,7 +132,7 @@ function Problem(::Type{P}, name::AbstractString, dimension::Int64) where P<:Fie
     postprocess_fields = Vector()
     properties = P()
     problem = Problem{P}(name, dimension, parent_field_name, elements, dofmap,
-                         assembly, fields, postprocess_fields, properties)
+                         assembly, fields, postprocess_fields, properties, false)
     @info("Creating a new problem of type $P, having name `$name` and " *
           "dimension $dimension dofs/node.")
     return problem
@@ -168,7 +169,7 @@ function Problem(::Type{P}, name, dimension, parent_field_name) where P<:Boundar
     postprocess_fields = Vector()
     properties = P()
     problem = Problem{P}(name, dimension, parent_field_name, elements, dofmap,
-                         assembly, fields, postprocess_fields, properties)
+                         assembly, fields, postprocess_fields, properties, false)
     @info("Creating a new boundary problem of type $P, having name `$name` and " *
           "dimension $dimension dofs/node. This boundary problems fixes field " *
           "`$parent_field_name`.")
@@ -228,6 +229,8 @@ function update!(problem::P, attr::Pair{String, String}...) where P<:AbstractPro
         setfield!(problem, Meta.parse(name), Meta.parse(value))
     end
 end
+
+assign_colors!(problem::Problem, colors::Dict{Int, Int}) = assign_colors!(problem.elements, colors)
 
 """
     function initialize!(problem_type, element_name, time)
