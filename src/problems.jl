@@ -16,9 +16,11 @@ mutable struct Assembly
     M :: SparseMatrixCOO  # mass matrix
 
     # for field assembly
-    K :: SparseMatrixCSC{Float64, Int64} # stiffness matrix
+    K :: SparseMatrixCOO # stiffness matrix
+    K_csc :: SparseMatrixCSC{Float64, Int64} # stiffness matrix
     Kg :: SparseMatrixCOO  # geometric stiffness matrix
-    f :: Vector{Float64}   # force vector
+    f :: SparseMatrixCOO  # force vector
+    f_csc :: Vector{Float64}   # force vector if csc is used
     fg :: SparseMatrixCOO  #
 
     # for boundary assembly
@@ -42,7 +44,9 @@ end
 function Assembly()
     return Assembly(
         SparseMatrixCOO(),
+        SparseMatrixCOO(),
         sparse(zeros(0,0)), # Will be replaced with a sparsity pattern
+        SparseMatrixCOO(),
         SparseMatrixCOO(),
         zeros(0),
         SparseMatrixCOO(),
@@ -53,13 +57,16 @@ function Assembly()
         SparseMatrixCOO(),
         Float64[], Float64[], Inf,
         Float64[], Float64[], Inf,
-        Int[])
+        Int[]
+        )
 end
 
 function empty!(assembly::Assembly)
     empty!(assembly.Kg)
-    fill!(assembly.K.nzval, 0.0)
-    fill!(assembly.f, 0.0)
+    empty!(assembly.K)
+    fill!(assembly.K_csc.nzval, 0.0)
+    empty!(assembly.f)
+    fill!(assembly.f_csc, 0.0)
     empty!(assembly.fg)
     empty!(assembly.C1)
     empty!(assembly.C2)
@@ -69,14 +76,16 @@ function empty!(assembly::Assembly)
 end
 
 function isempty(assembly::Assembly)
-    return isempty(assembly.Kg) &&
-           iszero(assembly.K)   &&
-           iszero(assembly.f)   &&
-           isempty(assembly.fg) &&
-           isempty(assembly.C1) &&
-           isempty(assembly.C2) &&
-           isempty(assembly.D)  &&
-           isempty(assembly.g)  &&
+    return isempty(assembly.Kg)   &&
+           isempty(assembly.K)    &&
+           iszero(assembly.K_csc) &&
+           isempty(assembly.K)    &&
+           iszero(assembly.f_csc) &&
+           isempty(assembly.fg)   &&
+           isempty(assembly.C1)   &&
+           isempty(assembly.C2)   &&
+           isempty(assembly.D)    &&
+           isempty(assembly.g)    &&
            isempty(assembly.c)
 end
 
@@ -100,6 +109,7 @@ mutable struct Problem{P<:AbstractProblem}
     postprocess_fields :: Vector{String}
     properties :: P
     assemble_parallel::Bool
+    assemble_csc::Bool
 end
 
 """
@@ -132,7 +142,7 @@ function Problem(::Type{P}, name::AbstractString, dimension::Int64) where P<:Fie
     postprocess_fields = Vector()
     properties = P()
     problem = Problem{P}(name, dimension, parent_field_name, elements, dofmap,
-                         assembly, fields, postprocess_fields, properties, false)
+                         assembly, fields, postprocess_fields, properties, false, false)
     @info("Creating a new problem of type $P, having name `$name` and " *
           "dimension $dimension dofs/node.")
     return problem
@@ -169,7 +179,7 @@ function Problem(::Type{P}, name, dimension, parent_field_name) where P<:Boundar
     postprocess_fields = Vector()
     properties = P()
     problem = Problem{P}(name, dimension, parent_field_name, elements, dofmap,
-                         assembly, fields, postprocess_fields, properties, false)
+                         assembly, fields, postprocess_fields, properties, false, false)
     @info("Creating a new boundary problem of type $P, having name `$name` and " *
           "dimension $dimension dofs/node. This boundary problems fixes field " *
           "`$parent_field_name`.")
@@ -268,13 +278,6 @@ end
 function initialize!(problem::Problem, time::Float64=0.0)
     for element in get_elements(problem)
         initialize!(problem, element, time)
-    end
-    initialize_sparsity_pattern(problem::Problem)
-end
-
-function initialize_sparsity_pattern(problem::Problem)
-    for element in get_elements(problem)
-
     end
 end
 
