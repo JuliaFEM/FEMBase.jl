@@ -480,8 +480,14 @@ arranges dofs so that first comes all dofs of node 1, then node 2 and so on:
 (u11, u12, u13, u21, u22, u23, ..., un1, un2, un3) for 3 dofs/node setting.
 """
 function get_gdofs(problem::Problem, element::Element)
+    dim = get_unknown_field_dimension(problem)
+    dofs = zeros(Int, length(get_connectivity(element))*dim)
+    return get_gdofs!(dofs, problem, element)
+end
+
+function get_gdofs!(gdofs, problem::Problem, element::Element)
     if haskey(problem.dofmap, element)
-        return problem.dofmap[element]
+        return copy!(gdofs, element[problem.d])
     end
     conn = get_connectivity(element)
     if length(conn) == 0
@@ -489,6 +495,17 @@ function get_gdofs(problem::Problem, element::Element)
               "degrees of freedom for element #: $(element.id)")
     end
     dim = get_unknown_field_dimension(problem)
-    gdofs = [dim*(i-1)+j for i in conn for j=1:dim]
+    if length(gdofs) !== dim * length(conn)
+        @show length(gdofs)
+        @show dim * length(conn)
+    end
+    @assert length(gdofs) == dim * length(conn)
+    k = 1
+    @inbounds for i in conn
+        for j = 1:dim
+            gdofs[k] = dim*(i-1)+j
+            k += 1
+        end
+    end
     return gdofs
 end

@@ -49,8 +49,13 @@ element = Element(Tri3, (1, 2, 3))
 function Element(::Type{T}, connectivity::NTuple{N, Int}) where {N, T<:AbstractBasis}
     element_id = -1
     topology = T()
-    integration_points = []
     fields = Dict()
+    ips = get_integration_points(topology)
+    if T in (Seg2, Seg3, NSeg)
+        integration_points = [IP(i, w, (xi,)) for (i, (w, xi)) in enumerate(ips)]
+    else
+        integration_points = [IP(i, w, xi) for (i, (w, xi)) in enumerate(ips)]
+    end
     element = Element{T}(element_id, collect(connectivity), integration_points, fields, topology, 0)
     return element
 end
@@ -406,12 +411,7 @@ end
 of integration scheme mainly for mass matrix.
 """
 function get_integration_points(element::Element{E}, change_order::Int) where E
-    ips = get_integration_points(element.properties, Val{change_order})
-    if E in (Seg2, Seg3, NSeg)
-        return [IP(i, w, (xi,)) for (i, (w, xi)) in enumerate(ips)]
-    else
-        return [IP(i, w, xi) for (i, (w, xi)) in enumerate(ips)]
-    end
+    return element.integration_points
 end
 
 """ Find inverse isoparametric mapping of element. """
