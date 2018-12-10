@@ -145,6 +145,7 @@ function group_by_element_type(elements::Vector{Element})
     end
     return results
 end
+group_by_element_type(elements::Vector{E}) where E<:Element = Dict(E => elements)
 
 function setindex!(element::Element, data::Function, field_name)
     if hasmethod(data, Tuple{Element, Vector, Float64})
@@ -196,7 +197,7 @@ function interpolate(element::Element, field_name::String, time::Float64)
     result = interpolate(field, time)
     if isa(result, Dict)
         connectivity = get_connectivity(element)
-        return tuple((result[i] for i in connectivity)...)
+        return [Vec{3}(result[i]) for i in connectivity]
     else
         return result
     end

@@ -3,8 +3,9 @@
 
 using FEMBasis
 
-struct Poi1 <: AbstractBasis end
+struct Poi1 <: AbstractBasis{1} end
 
+#=
 function get_basis(::Element{Poi1}, ::Any, ::Any)
     return [1]
 end
@@ -50,4 +51,4 @@ end
 function get_reference_coordinates(::Element{B}) where B
     return get_reference_element_coordinates(B)
 end
-
+=#

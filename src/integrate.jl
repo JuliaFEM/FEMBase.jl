@@ -50,7 +50,9 @@ for (E, R) in integration_rule_mapping
     end
 end
 
+#=
 # All good codes needs a special case. Here we have it: Poi1
 function get_integration_points(::Poi1)
     [ (1.0, (0.0,) ) ]
 end
+=#

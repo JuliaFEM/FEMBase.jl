@@ -84,7 +84,7 @@ function assemble!(problem::Problem, time)
     if problem.assemble_csc
         if size(assembly.K_csc) == (0,0)
             @info "Creating sparsity pattern"
-            assembly.K_csc = create_sparsity_pattern!(assembly, problem)
+            assembly.K_csc = create_sparsity_pattern!(problem)
             assembly.f_csc = zeros(eltype(assembly.K_csc), size(assembly.K_csc, 2))
         end
         fill!(assembly.K_csc, 0.0)
@@ -98,8 +98,11 @@ function assemble!(problem::Problem, time)
     return nothing
 end
 
-function create_sparsity_pattern!(assembly, problem::Problem)
-    elements = get_elements(problem)
+function create_sparsity_pattern!(problem::Problem)
+    create_sparsity_pattern!(problem, get_elements(problem))
+end
+
+function create_sparsity_pattern!(problem, elements)
     sparsity_pattern = FEMBase.SparseMatrixCOO()
     for (element_type, elements) in group_by_element_type(elements)
         create_sparsity_pattern!(sparsity_pattern, elements, problem)
