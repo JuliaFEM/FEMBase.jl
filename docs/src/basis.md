@@ -51,7 +51,7 @@ Quad4()
 The dimensions of basis functions can be determined by `size` and `length`.
 In JuliaFEM, we have a convention that arrays grow on right according to
 number of nodes and down according to the spatial index. So if we have a
-column vector $\boldsymbol N$ and a row vector $\boldsymbol u$, interpolation
+row vector $\boldsymbol N$ and a column vector $\boldsymbol u$, interpolation
 goes $u = \boldsymbol N \boldsymbol u$:
 
 ```@repl FEMBase
