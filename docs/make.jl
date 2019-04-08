@@ -25,9 +25,10 @@ PAGES = [
         ]
 
 makedocs(modules=[FEMBase],
-         format = :html,
+         format = Documenter.HTML(analytics = "UA-83590644-1"),
          checkdocs = :all,
          sitename = "FEMBase.jl",
          authors = "Jukka Aho",
-         analytics = "UA-83590644-1",
          pages = PAGES)
+
+include("deploy.jl")
