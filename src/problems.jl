@@ -36,7 +36,7 @@ mutable struct Assembly
     la_prev :: Vector{Float64}  # previous solution vector u
     la_norm_change :: Real # change of norm in la
 
-    removed_dofs :: Vector{Int64} # manually remove dofs from assembly
+    removed_dofs :: Vector{Int} # manually remove dofs from assembly
 end
 
 function Assembly()
@@ -95,7 +95,7 @@ mutable struct Problem{P<:AbstractProblem}
     dimension :: Int                 # degrees of freedom per node
     parent_field_name :: AbstractString # (optional) name of the parent field e.g. "displacement"
     elements :: Vector{Element}
-    dofmap :: Dict{Element, Vector{Int64}} # connects the element local dofs to the global dofs
+    dofmap :: Dict{Element, Vector{Int}} # connects the element local dofs to the global dofs
     assembly :: Assembly
     fields :: Dict{String, AbstractField}
     postprocess_fields :: Vector{String}
@@ -123,7 +123,7 @@ problem2 = Problem(Heat, "test problem 2", 1)
 ```
 
 """
-function Problem(::Type{P}, name::AbstractString, dimension::Int64) where P<:FieldProblem
+function Problem(::Type{P}, name::AbstractString, dimension::Int) where P<:FieldProblem
     parent_field_name = "none"
     elements = []
     dofmap = Dict()
@@ -418,7 +418,7 @@ function (problem::Problem)(field_name::String, time::Float64)
     #if haskey(problem, field_name)
     #    return problem[field_name](time)
     #end
-    f = Dict{Int64, Any}()
+    f = Dict{Int, Any}()
     for element in get_elements(problem)
         haskey(element, field_name) || continue
         for (c, v) in zip(get_connectivity(element), element(field_name, time))

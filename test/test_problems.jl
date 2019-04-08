@@ -198,7 +198,7 @@ function assemble_elements!(problem::Problem{DirBC},
     name = get_parent_field_name(problem)
     dim = get_unknown_field_dimension(problem)
 
-    data = Dict{Int64,Float64}()
+    data = Dict{Int,Float64}()
     for element in elements
         for i=1:dim
             haskey(element, "$name $dim") || continue

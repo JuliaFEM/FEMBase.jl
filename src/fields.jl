@@ -28,7 +28,7 @@ function ==(x::F, y::F) where F<:AbstractField
     return ==(x.data, y.data)
 end
 
-function getindex(f::F, i::Int64) where F<:AbstractField
+function getindex(f::F, i::Int) where F<:AbstractField
     return getindex(f.data, i)
 end
 
@@ -59,7 +59,7 @@ mutable struct DCTI{T} <: AbstractField
     data :: T
 end
 
-function getindex(field::DCTI, ::Int64)
+function getindex(field::DCTI, ::Int)
     return field.data
 end
 
@@ -212,10 +212,10 @@ end
 Discrete, variable, time invariant dictionary field.
 """
 mutable struct DVTId{T} <: AbstractField
-    data :: Dict{Int64, T}
+    data :: Dict{Int, T}
 end
 
-function update_field!(field::DVTId{T}, data::Dict{Int64, T}) where T
+function update_field!(field::DVTId{T}, data::Dict{Int, T}) where T
     merge!(field.data, data)
 end
 
@@ -225,10 +225,10 @@ end
 Discrete, variable, time variant dictionary field.
 """
 mutable struct DVTVd{T} <: AbstractField
-    data :: Vector{Pair{Float64,Dict{Int64,T}}}
+    data :: Vector{Pair{Float64,Dict{Int,T}}}
 end
 
-function DVTVd(data::Pair{Float64,Dict{Int64,T}}...) where T
+function DVTVd(data::Pair{Float64,Dict{Int,T}}...) where T
     return DVTVd(collect(data))
 end
 
@@ -254,7 +254,7 @@ function interpolate_field(field::DVTVd{T}, time) where T
     end
 end
 
-function update_field!(f::DVTVd, data::Pair{Float64,Dict{Int64,T}}) where T
+function update_field!(f::DVTVd, data::Pair{Float64,Dict{Int,T}}) where T
     if isapprox(last(f.data).first, data.first)
         f.data[end] = data
     else
@@ -286,19 +286,19 @@ function new_field(data::Function)
     return CVTV(data)
 end
 
-function new_field(data::Pair{Int64, T}...) where T
+function new_field(data::Pair{Int, T}...) where T
     return DVTId(Dict(data))
 end
 
-function new_field(data::Pair{Float64, NTuple{N, Pair{Int64, T}}}...) where {N,T}
+function new_field(data::Pair{Float64, NTuple{N, Pair{Int, T}}}...) where {N,T}
     return DVTVd(collect(t => Dict(d) for (t, d) in data))
 end
 
-function new_field(data::Dict{Int64,T}) where T
+function new_field(data::Dict{Int,T}) where T
     return DVTId(data)
 end
 
-function new_field(data::Pair{Float64, Dict{Int64, T}}...) where T
+function new_field(data::Pair{Float64, Dict{Int, T}}...) where T
     return DVTVd(collect(data))
 end
 

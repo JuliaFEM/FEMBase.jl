@@ -5,7 +5,7 @@ using FEMBase, Test, SparseArrays
 import FEMBase: solve!, can_solve
 
 mutable struct LSSolver1 <: AbstractLinearSystemSolver
-    a :: Int64
+    a :: Int
 end
 
 mutable struct LSSolver2 <: AbstractLinearSystemSolver
