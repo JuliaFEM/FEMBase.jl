@@ -11,9 +11,9 @@ Shape functions, also known as basis functions, interpolation polynomials and
 so on. Typically unknown field variable is interpolated from element nodal
 values using continuous functions. That is, 
 
-\begin{equation}
+```math
 u(\xi,t) = \sum_{i} N(\xi,t) u_{i}[t]
-\end{equation}
+```math
 
 Standard Lagrange shape functions are implemented.
 
@@ -102,16 +102,16 @@ Without knowing anything about the shape of the real domain (after all, basis
 is usually defined on dimensionless, reference domain), `eval_dbasis!` is
 calculating gradient with respect to dimensionless coordinates $\xi_i$, i.e.
 
-\begin{equation}
+```math
 \left(\frac{\partial\boldsymbol{N}}{\partial\boldsymbol{\xi}}\right)_{ij}=\frac{\partial N_{j}}{\partial\xi_{i}}
-\end{equation}
+```
 
 Usually this is not wanted, but instead gradient of basis functions is
 calculated with respect to natural coordinates $X_i$,
 
-\begin{equation}
+```math
 \left(\frac{\partial\boldsymbol{N}}{\partial\boldsymbol{X}}\right)_{ij}=\frac{\partial N_{j}}{\partial X_{i}}
-\end{equation}
+```
 
 Without going into the mathematical details, to transform partial derivatives
 from reference element to natural coordinates, inverse of Jacobian matrix is
@@ -144,9 +144,9 @@ J = jacobian(B, X2, xi)
 One can use Jacobian to calculate
 [surface integral](https://en.wikipedia.org/wiki/Surface_integral):
 
-\begin{equation}
+```math
 \iint_{S}f\,\mathrm{d}\Sigma=\iint_{T}f\left(\boldsymbol{x}\left(s,t\right)\right)\left\Vert \frac{\partial\boldsymbol{x}}{\partial s}\times\frac{\partial\boldsymbol{x}}{\partial t}\right\Vert \,\mathrm{d}s\mathrm{d}t
-\end{equation}
+```
 
 ```@repl FEMBase
 4*norm(cross(J[1,:], J[2,:])), sqrt(2) # area of manifold

@@ -20,9 +20,9 @@ time invariant. From this pondering we can think that there exists four kind of
 Discrete, in this context, means that field is defined in point-wise in
 $1 \ldots n$ locations, from where it is then interpolated to whole domain
 using some interpolation polynomials, i.e.
-\begin{equation}
-    u(\xi, t) = \sum_{i} u_i[t] N_{i}(\xi,t),
-\end{equation}
+```math
+u(\xi, t) = \sum_{i} u_i[t] N_{i}(\xi,t),
+```math
 where
     $N_{i}(\xi, t)$
 is the basis function or interpolation polymial corresponding to $i$^{th}
@@ -87,9 +87,9 @@ $\partial u/\partial t\neq 0$. Here, `=>` syntax is used. New values can be
 added to field using function [`update!`](@ref). If there already exists a
 value for that particular time, it will be overridden. It is assumed that
 content of field in time direction is monotonically increasing, i.e.
-\begin{equation}
-    t_{i-1} < t_i < t_{i+1}.
-\end{equation}
+```math
+t_{i-1} < t_i < t_{i+1}.
+```
 
 For the sake of clarity let's also mention that `update!` works for time
 invariant fields as well if content needs to be updated.
