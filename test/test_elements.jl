@@ -113,7 +113,7 @@ end
 
 @testset "inside of linear element" begin
     el = Element(Quad4, [1, 2, 3, 4])
-    X = Dict{Int64, Vector{Float64}}(
+    X = Dict(
         1 => [0.0, 0.0],
         2 => [1.0, 0.0],
         3 => [1.0, 1.0],
@@ -129,7 +129,7 @@ end
 
 @testset "inside of quadratic element" begin
     el = Element(Tri6, [1, 2, 3, 4, 5, 6])
-    X = Dict{Int64, Vector{Float64}}(
+    X = Dict(
         1 => [0.0, 0.0],
         2 => [1.0, 0.0],
         3 => [0.0, 1.0],

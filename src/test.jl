@@ -107,7 +107,7 @@ function FEMBase.assemble_elements!(problem::Problem{Dirichlet},
     name = get_parent_field_name(problem)
     dim = get_unknown_field_dimension(problem)
 
-    data = Dict{Int64,Float64}()
+    data = Dict{Int,Float64}()
     for element in elements
         for i=1:dim
             haskey(element, "$name $i") || continue
@@ -215,8 +215,8 @@ function read_mtx(data::IO; dim=0)
         end
     end
     seekstart(data)
-    I = Int64[]
-    J = Int64[]
+    I = Int[]
+    J = Int[]
     V = Float64[]
     for ln in eachline(data)
         i,idof,j,jdof,value = map(Meta.parse, split(ln, ','))

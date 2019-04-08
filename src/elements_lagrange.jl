@@ -19,7 +19,7 @@ function get_integration_order(::Poi1)
     return 1
 end
 
-function get_integration_points(::Poi1, ::Int64)
+function get_integration_points(::Poi1, ::Int)
     return [ (1.0, (0.0, )) ]
 end
 
