@@ -5,7 +5,7 @@ mutable struct Element{E<:FEMBasis.AbstractBasis}
     id :: Int
     connectivity :: Vector{Int}
     integration_points :: Vector{IP}
-    fields :: Dict{String, AbstractField}
+    dfields :: Dict{String, AbstractField}
     properties :: E
 end
 
@@ -58,32 +58,6 @@ function Element(::Type{T}, connectivity::Vector{Int}) where T<:FEMBasis.Abstrac
     return Element(T, (connectivity...,))
 end
 
-"""
-    length(element)
-
-Return the length of basis (number of nodes).
-"""
-function length(element::Element)
-    return length(element.properties)
-end
-
-"""
-    size(element)
-
-Return the size of basis (dim, nnodes).
-"""
-function size(element::Element)
-    return size(element.properties)
-end
-
-function getindex(element::Element, field_name::String)
-    return element.fields[field_name]
-end
-
-function setindex!(element::Element, data::T, field_name) where T<:AbstractField
-    element.fields[field_name] = data
-end
-
 function get_element_type(::Element{E}) where E
     return E
 end
@@ -120,31 +94,6 @@ function group_by_element_type(elements::Vector{Element})
         results[element_type] = convert(Vector{element_type}, subset)
     end
     return results
-end
-
-function setindex!(element::Element, data::Function, field_name)
-    if hasmethod(data, Tuple{Element, Vector, Float64})
-        # create enclosure to pass element as argument
-        element.fields[field_name] = field((ip,time) -> data(element,ip,time))
-    else
-        element.fields[field_name] = field(data)
-    end
-end
-
-function setindex!(element::Element, data, field_name)
-    element.fields[field_name] = field(data)
-end
-
-#""" Return a Field object from element.
-#Examples
-#--------
-#>>> element = Element(Seg2, [1, 2])
-#>>> data = Dict(1 => 1.0, 2 => 2.0)
-#>>> update!(element, "my field", data)
-#>>> element("my field")
-#"""
-function (element::Element)(field_name::String)
-    return element[field_name]
 end
 
 """
@@ -276,10 +225,6 @@ function interpolate_field(::Element, field::CVTV, ip, time)
     return field(ip, time)
 end
 
-function size(element::Element, dim)
-    return size(element)[dim]
-end
-
 function update!(::Element, field::F, data) where F<:AbstractField
     update!(field, data)
 end
@@ -363,11 +308,6 @@ function update!(elements, field_name, data)
     for element in elements
         update!(element, field_name, data)
     end
-end
-
-""" Check existence of field. """
-function haskey(element::Element, field_name)
-    return haskey(element.fields, field_name)
 end
 
 function get_integration_points(element::Element{E}) where E
