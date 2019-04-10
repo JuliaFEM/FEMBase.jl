@@ -1,12 +1,14 @@
 # This file is a part of JuliaFEM.
 # License is MIT: see https://github.com/JuliaFEM/FEMBase.jl/blob/master/LICENSE
 
-mutable struct Element{E<:FEMBasis.AbstractBasis}
+abstract type AbstractElement{T<:FEMBasis.AbstractBasis} end
+
+mutable struct Element{T} <: AbstractElement{T}
     id :: Int
     connectivity :: Vector{Int}
     integration_points :: Vector{IP}
-    dfields :: Dict{String, AbstractField}
-    properties :: E
+    fields :: Dict{String, AbstractField}
+    properties :: T
 end
 
 """
@@ -58,15 +60,15 @@ function Element(::Type{T}, connectivity::Vector{Int}) where T<:FEMBasis.Abstrac
     return Element(T, (connectivity...,))
 end
 
-function get_element_type(::Element{E}) where E
+function get_element_type(::AbstractElement{E}) where E
     return E
 end
 
-function get_element_id(element::Element{E}) where E
+function get_element_id(element::AbstractElement{E}) where E
     return element.id
 end
 
-function is_element_type(::Element{E}, element_type) where E
+function is_element_type(::AbstractElement{E}, element_type) where E
     return E === element_type
 end
 
@@ -74,18 +76,18 @@ function filter_by_element_type(element_type, elements)
     return Iterators.filter(element -> is_element_type(element, element_type), elements)
 end
 
-function get_connectivity(element::Element)
+function get_connectivity(element::AbstractElement)
     return element.connectivity
 end
 
 """
-    group_by_element_type(elements::Vector{Element})
+    group_by_element_type(elements)
 
 Given a vector of elements, group elements by element type to several vectors.
 Returns a dictionary, where key is the element type and value is a vector
 containing all elements of type `element_type`.
 """
-function group_by_element_type(elements::Vector{Element})
+function group_by_element_type(elements)
     results = Dict{DataType, Any}()
     basis_types = map(element -> typeof(element.properties), elements)
     for basis in unique(basis_types)
@@ -116,7 +118,7 @@ interpolate(element, "my field", 0.5)
 
 ```
 """
-function interpolate(element::Element, field_name::String, time::Float64)
+function interpolate(element::AbstractElement, field_name::String, time::Float64)
     field = element[field_name]
     result = interpolate(field, time)
     if isa(result, Dict)
@@ -127,14 +129,14 @@ function interpolate(element::Element, field_name::String, time::Float64)
     end
 end
 
-function get_basis(element::Element{B}, ip, ::Any) where B
+function get_basis(element::AbstractElement{B}, ip, ::Any) where B
     T = typeof(first(ip))
     N = zeros(T, 1, length(element))
     FEMBasis.eval_basis!(B, N, tuple(ip...))
     return N
 end
 
-function get_dbasis(element::Element{B}, ip, ::Any) where B
+function get_dbasis(element::AbstractElement{B}, ip, ::Any) where B
     T = typeof(first(ip))
     dN = zeros(T, size(element)...)
     FEMBasis.eval_dbasis!(B, dN, tuple(ip...))
@@ -197,23 +199,23 @@ function (element::Element)(field_name::String, ip, time::Float64, ::Type{Val{:G
     return grad(element.properties, u, X, ip)
 end
 
-function interpolate(element::Element, field_name, ip, time)
+function interpolate(element::AbstractElement, field_name, ip, time)
     field = element[field_name]
     return interpolate_field(element, field, ip, time)
 end
 
-function interpolate_field(::Element, field::T, ::Any, time) where T<:Union{DCTI,DCTV}
+function interpolate_field(::AbstractElement, field::T, ::Any, time) where T<:Union{DCTI,DCTV}
     return interpolate_field(field, time)
 end
 
-function interpolate_field(element::Element, field::T, ip, time) where T<:Union{DVTV,DVTI}
+function interpolate_field(element::AbstractElement, field::T, ip, time) where T<:Union{DVTV,DVTI}
     data = interpolate_field(field, time)
     basis = get_basis(element, ip, time)
     N = length(basis)
     return sum(data[i]*basis[i] for i=1:N)
 end
 
-function interpolate_field(element::Element, field::T, ip, time) where T<:Union{DVTVd,DVTId}
+function interpolate_field(element::AbstractElement, field::T, ip, time) where T<:Union{DVTVd,DVTId}
     data = interpolate_field(field, time)
     basis = element(ip, time)
     N = length(element)
@@ -221,21 +223,21 @@ function interpolate_field(element::Element, field::T, ip, time) where T<:Union{
     return sum(data[c[i]]*basis[i] for i=1:N)
 end
 
-function interpolate_field(::Element, field::CVTV, ip, time)
+function interpolate_field(::AbstractElement, field::CVTV, ip, time)
     return field(ip, time)
 end
 
-function update!(::Element, field::F, data) where F<:AbstractField
+function update!(::AbstractElement, field::F, data) where F<:AbstractField
     update!(field, data)
 end
 
-function update!(element::Element, field::F, data::Dict{T,V}) where {F<:DVTI,T,V}
+function update!(element::AbstractElement, field::F, data::Dict{T,V}) where {F<:DVTI,T,V}
     connectivity = get_connectivity(element)
     picked_data = ((data[nid] for nid in connectivity)...,)
     update!(field, picked_data)
 end
 
-function update!(element::Element, field::F,
+function update!(element::AbstractElement, field::F,
                  data::Pair{Float64, Dict{T,V}}) where {F<:DVTV,T,V}
     time, data2 = data
     connectivity = get_connectivity(element)
@@ -243,7 +245,7 @@ function update!(element::Element, field::F,
     update!(field, time => picked_data)
 end
 
-function update!(element::Element, field_name, data)
+function update!(element::AbstractElement, field_name, data)
     if haskey(element.fields, field_name)
         update!(element, element.fields[field_name], data)
     else
@@ -251,11 +253,11 @@ function update!(element::Element, field_name, data)
     end
 end
 
-function update!(element::Element, field_name, field_::F) where F<:AbstractField
+function update!(element::AbstractElement, field_name, field_::F) where F<:AbstractField
     element.fields[field_name] = field_
 end
 
-function update!(element::Element, field_name, data::Function)
+function update!(element::AbstractElement, field_name, data::Function)
     if hasmethod(data, Tuple{Element, Any, Any})
         element.fields[field_name] = field((ip, time) -> data(element, ip, time))
     else
@@ -310,7 +312,7 @@ function update!(elements, field_name, data)
     end
 end
 
-function get_integration_points(element::Element{E}) where E
+function get_integration_points(element::AbstractElement{E}) where E
     # first time initialize default integration points
     if length(element.integration_points) == 0
         ips = get_integration_points(element.properties)
@@ -322,13 +324,13 @@ end
 """ This is a special case, temporarily change order
 of integration scheme mainly for mass matrix.
 """
-function get_integration_points(element::Element{E}, change_order::Int) where E
+function get_integration_points(element::AbstractElement{E}, change_order::Int) where E
     ips = get_integration_points(element.properties, Val{change_order})
     return [IP(i, w, xi) for (i, (w, xi)) in enumerate(ips)]
 end
 
 """ Find inverse isoparametric mapping of element. """
-function get_local_coordinates(element::Element, X::Vector, time::Float64; max_iterations=10, tolerance=1.0e-6)
+function get_local_coordinates(element::AbstractElement, X::Vector, time::Float64; max_iterations=10, tolerance=1.0e-6)
     haskey(element, "geometry") || error("element geometry not defined, cannot calculate inverse isoparametric mapping")
     dim = size(element, 1)
     dim == length(X) || error("manifolds not supported.")
@@ -345,7 +347,7 @@ function get_local_coordinates(element::Element, X::Vector, time::Float64; max_i
 end
 
 """ Test is X inside element. """
-function inside(element::Element{E}, X, time) where E
+function inside(element::AbstractElement{E}, X, time) where E
     xi = get_local_coordinates(element, X, time)
     return inside(E, xi)
 end
@@ -362,7 +364,7 @@ function (element::Element)(field_name::String, ip, time::Float64)
     return interpolate(element, field_name, ip, time)
 end
 
-function element_info!(bi::FEMBasis.BasisInfo{E,T}, element::Element{E}, ip, time) where {E,T}
+function element_info!(bi::FEMBasis.BasisInfo{E,T}, element::AbstractElement{E}, ip, time) where {E,T}
     X = interpolate(element, "geometry", time)
     eval_basis!(bi, X, ip)
     return bi.J, bi.detJ, bi.N, bi.grad
