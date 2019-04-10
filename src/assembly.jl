@@ -23,7 +23,7 @@ Assemble elements for problem.
 This should be overridden with own `assemble_elements!`-implementation.
 """
 function assemble_elements!(problem::Problem, assembly::Assembly,
-                      elements::Vector{Element{E}}, time) where E
+                            elements::Vector{T}, time) where T<:AbstractElement{E} where E
     elements2 = convert(Vector{Element}, elements)
     assemble!(assembly, problem, elements2, time)
 end
@@ -87,7 +87,7 @@ function assemble_mass_matrix!(problem::Problem, time::Float64)
     return nothing
 end
 
-function assemble_mass_matrix!(problem::Problem, elements::Vector{Element{Basis}}, time) where Basis
+function assemble_mass_matrix!(problem::Problem, elements::Vector{E}, time) where E<:AbstractElement{Basis} where Basis
     nnodes = length(first(elements))
     dim = get_unknown_field_dimension(problem)
     M = zeros(nnodes, nnodes)
@@ -124,7 +124,7 @@ end
 Assemble Tet10 mass matrices using special method. If Tet10 has constant metric
 if can be integrated analytically to gain performance.
 """
-function assemble_mass_matrix!(problem::Problem, elements::Vector{Element{FEMBasis.Tet10}}, time)
+function assemble_mass_matrix!(problem::Problem, elements::Vector{E}, time) where E<:AbstractElement{FEMBasis.Tet10}
     nnodes = length(Tet10)
     dim = get_unknown_field_dimension(problem)
     M = zeros(nnodes, nnodes)
@@ -144,7 +144,7 @@ function assemble_mass_matrix!(problem::Problem, elements::Vector{Element{FEMBas
         -6 -4 -6 -4 16 16  8 16 32 16
         -6 -6 -4 -4  8 16 16 16 16 32]
 
-    function is_CM(::Element{FEMBasis.Tet10}, X; rtol=1.0e-6)
+    function is_CM(::AbstractElement{FEMBasis.Tet10}, X; rtol=1.0e-6)
         isapprox(X[5],  1/2*(X[1]+X[2]); rtol=rtol) || return false
         isapprox(X[6],  1/2*(X[2]+X[3]); rtol=rtol) || return false
         isapprox(X[7],  1/2*(X[3]+X[1]); rtol=rtol) || return false

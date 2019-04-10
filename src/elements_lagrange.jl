@@ -3,15 +3,15 @@
 
 struct Poi1 <: FEMBasis.AbstractBasis end
 
-function get_basis(::Element{Poi1}, ::Any, ::Any)
+function get_basis(::E, ::Any, ::Any) where E<:AbstractElement{Poi1}
     return [1]
 end
 
-function get_dbasis(::Element{Poi1}, ::Any, ::Any)
+function get_dbasis(::E, ::Any, ::Any) where E<:AbstractElement{Poi1}
     return [0]
 end
 
-function (::Element{Poi1})(::Any, ::Float64, ::Type{Val{:detJ}})
+function (::Element{Poi1})(::Any, ::Float64, ::Type{Val{:detJ}}) 
     return 1.0
 end
 
@@ -47,7 +47,7 @@ function inside(::Union{Type{FEMBasis.Tri3}, Type{FEMBasis.Tri6}, Type{FEMBasis.
     return all(xi .>= 0.0) && (sum(xi) <= 1.0)
 end
 
-function get_reference_coordinates(::Element{B}) where B
+function get_reference_coordinates(::E) where E<:AbstractElement{B} where B
     return get_reference_element_coordinates(B)
 end
 

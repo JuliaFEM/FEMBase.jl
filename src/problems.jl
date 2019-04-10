@@ -240,7 +240,7 @@ of the problem (Elasticity, Dirichlet, etc.), `element_name` is the name of a
 constructed element (see Element(element_type, connectivity_vector)) and `time`
 is the starting time of the initializing process.
 """
-function initialize!(problem::Problem, element::Element, time::Float64)
+function initialize!(problem::Problem, element::AbstractElement, time::Float64)
     field_name = get_unknown_field_name(problem)
     field_dim = get_unknown_field_dimension(problem)
     nnodes = length(element)
@@ -469,7 +469,7 @@ where `nid` is node id and `dim` is the dimension of problem. This formula
 arranges dofs so that first comes all dofs of node 1, then node 2 and so on:
 (u11, u12, u13, u21, u22, u23, ..., un1, un2, un3) for 3 dofs/node setting.
 """
-function get_gdofs(problem::Problem, element::Element)
+function get_gdofs(problem::Problem, element::AbstractElement)
     if haskey(problem.dofmap, element)
         return problem.dofmap[element]
     end

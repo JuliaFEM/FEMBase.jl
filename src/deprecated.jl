@@ -6,7 +6,7 @@
 
 Return the length of basis (number of nodes).
 """
-function length(element::Element)
+function length(element::AbstractElement)
     return length(element.properties)
 end
 
@@ -15,20 +15,20 @@ end
 
 Return the size of basis (dim, nnodes).
 """
-function size(element::Element)
+function size(element::AbstractElement)
     return size(element.properties)
 end
 
-function getindex(element::Element, field_name::String)
+function getindex(element::AbstractElement, field_name::String)
     return element.fields[field_name]
 end
 
-function setindex!(element::Element, data::T, field_name) where T<:AbstractField
+function setindex!(element::AbstractElement, data::T, field_name) where T<:AbstractField
     element.fields[field_name] = data
 end
 
-function setindex!(element::Element, data::Function, field_name)
-    if hasmethod(data, Tuple{Element, Vector, Float64})
+function setindex!(element::AbstractElement, data::Function, field_name)
+    if hasmethod(data, Tuple{AbstractElement, Vector, Float64})
         # create enclosure to pass element as argument
         element.fields[field_name] = field((ip,time) -> data(element,ip,time))
     else
@@ -36,7 +36,7 @@ function setindex!(element::Element, data::Function, field_name)
     end
 end
 
-function setindex!(element::Element, data, field_name)
+function setindex!(element::AbstractElement, data, field_name)
     element.fields[field_name] = field(data)
 end
 
@@ -52,12 +52,12 @@ function (element::Element)(field_name::String)
     return element[field_name]
 end
 
-function size(element::Element, dim)
+function size(element::AbstractElement, dim)
     return size(element)[dim]
 end
 
 """ Check existence of field. """
-function haskey(element::Element, field_name)
+function haskey(element::AbstractElement, field_name)
     return haskey(element.fields, field_name)
 end
 
