@@ -233,8 +233,8 @@ function DVTVd(data::Pair{Float64,Dict{Int,T}}...) where T
 end
 
 function interpolate_field(field::DVTVd{T}, time) where T
-    time < first(field.data).first && return first(field.data).second
-    time > last(field.data).first && return last(field.data).second
+    time >= last(field.data).first && return last(field.data).second
+    time <= first(field.data).first && return first(field.data).second
     for i=reverse(1:length(field))
         isapprox(field.data[i].first, time) && return field.data[i].second
     end
