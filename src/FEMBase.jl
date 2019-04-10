@@ -79,4 +79,6 @@ using FEMBasis
 export Poi1, Seg2, Seg3, Tri3, Tri6, Tri7, Quad4, Quad8, Quad9,
        Tet4, Tet10, Pyr5, Wedge6, Wedge15, Hex8, Hex20, Hex27
 
+include("deprecated.jl")
+
 end

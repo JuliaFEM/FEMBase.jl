@@ -15,25 +15,6 @@ function assemble_prehook!(::Problem, ::T) where T<:Number end
 
 function assemble_posthook!(::Problem, ::T) where T<:Number end
 
-# will be deprecated
-function assemble!(::Assembly, ::Problem{P}, ::Element, ::Any) where P
-    @warn("One must define assemble! function for problem of type $P. " *
-          "Not doing anything.")
-    return nothing
-end
-
-# will be deprecated
-function assemble!(assembly::Assembly, problem::Problem{P},
-                   elements::Vector{Element}, time) where P
-    @warn("This is default assemble! function. Decreased performance can be " *
-          "expected without preallocation of memory. One should implement " *
-          "`assemble_elements!(problem, assembly, elements, time)` function.")
-    for element in elements
-        assemble!(assembly, problem, element, time)
-    end
-    return nothing
-end
-
 """
     assemble_elements!(problem, assembly, elements, time)
 

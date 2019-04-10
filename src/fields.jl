@@ -374,7 +374,3 @@ function interpolate(a, b)
     @assert length(a) <= length(b)
     return sum(a[i]*b[i] for i=1:length(a))
 end
-
-function update!(field::AbstractField, data)
-    update_field!(field, data)
-end
