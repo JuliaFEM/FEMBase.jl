@@ -36,8 +36,8 @@ function interpolate_field(field::AbstractField, ::Any)
     return field.data
 end
 
-function update_field!(field, data)
-    field.data = data
+function update_field!(field::AbstractField, data)
+   field.data = data
 end
 
 """

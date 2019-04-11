@@ -20,7 +20,7 @@ function size(element::AbstractElement)
 end
 
 function getindex(element::AbstractElement, field_name::String)
-    return element.fields[field_name]
+    return get_field(element, Symbol(field_name))
 end
 
 function setindex!(element::AbstractElement, data::T, field_name) where T<:AbstractField
@@ -37,7 +37,15 @@ function setindex!(element::AbstractElement, data::Function, field_name)
 end
 
 function setindex!(element::AbstractElement, data, field_name)
-    element.fields[field_name] = field(data)
+    element.dfields[field_name] = field(data)
+end
+
+function setindex!(fieldset::Dict{Symbol, AbstractField}, field_data, field_name::String)
+    setindex!(fieldset, field_data, Symbol(field_name))
+end
+
+function has_field(element, field_name::String)
+    return has_field(element, Symbol(field_name))
 end
 
 #""" Return a Field object from element.
@@ -58,7 +66,7 @@ end
 
 """ Check existence of field. """
 function haskey(element::AbstractElement, field_name)
-    return haskey(element.fields, field_name)
+    return has_field(element, field_name)
 end
 
 # will be deprecated
@@ -80,7 +88,48 @@ function assemble!(assembly::Assembly, problem::Problem{P},
     return nothing
 end
 
-# generally a bad idea to have functions like update! not explicitly giving targe?
+# generally a bad idea to have functions like update! and interpolate, which
+# are not explicitly giving targe?
+
+function update!(element::AbstractElement, field_name, field_data)
+    update_field!(element, field_name, field_data)
+end
+
 function update!(field::AbstractField, data)
     update_field!(field, data)
 end
+
+function update!(element::AbstractElement, field_name::String, field_data)
+    update_field!(element, Symbol(field_name), field_data)
+end
+
+function update!(elements::Vector{Element}, field_name::String, field_data)
+    update_field!(elements, Symbol(field_name), field_data)
+end
+
+function update!(elements::Vector{Element{T}}, field_name::String, field_data) where T
+    update_field!(convert(Vector{Element}, elements), field_name, field_data)
+end
+
+function interpolate(element::AbstractElement, field_name::String, time)
+    interpolate_field(element, Symbol(field_name), time)
+end
+
+function interpolate(element::AbstractElement, field_name::String, ip, time)
+    interpolate(element, Symbol(field_name), ip, time)
+end
+
+# fields is now dfields
+function Base.getproperty(element::Element, sym::Symbol)
+    if sym == :fields
+        return getfield(element, :dfields)
+    else
+        return getfield(element, sym)
+    end
+end
+
+# getindex, when someone asks key element.fields["f"] => element.fields[:f]
+function Base.getindex(fieldset::Dict{Symbol,AbstractField}, field_name::String)
+    return getindex(fieldset, Symbol(field_name))
+end
+
