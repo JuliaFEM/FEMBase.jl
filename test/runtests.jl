@@ -15,4 +15,5 @@ using FEMBase, Test, LinearAlgebra, SparseArrays, Statistics
     @testset "test_test" begin include("test_test.jl") end
     @testset "test_types" begin include("test_types.jl") end
     @testset "test get integration points" begin include("test_get_integration_points.jl") end
+    @testset "test element fields" begin include("test_elements_fields.jl") end
 end
