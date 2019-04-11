@@ -32,7 +32,7 @@ function getindex(f::F, i::Int) where F<:AbstractField
     return getindex(f.data, i)
 end
 
-function interpolate_field(field, ::Any)
+function interpolate_field(field::AbstractField, ::Any)
     return field.data
 end
 
