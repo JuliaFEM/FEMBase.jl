@@ -7,7 +7,7 @@ mutable struct Element{T} <: AbstractElement{T}
     id :: Int
     connectivity :: Vector{Int}
     integration_points :: Vector{IP}
-    fields :: Dict{String, AbstractField}
+    dfields :: Dict{Symbol, AbstractField}
     properties :: T
 end
 
@@ -98,6 +98,127 @@ function group_by_element_type(elements)
     return results
 end
 
+### dfields - dynamically defined fields
+
+# This is the "old" field system, where fields are defined to dictionary.
+# It is known that this approach is having a performance issue caused by
+# type instability.
+
+function has_dfield(element::AbstractElement, field_name)
+    return haskey(element.dfields, field_name)
+end
+
+function get_dfield(element::AbstractElement, field_name)
+    return getindex(element.dfields, field_name)
+end
+
+function create_dfield!(element::AbstractElement, field_name, field_::AbstractField)
+    T = typeof(field_)
+    if has_dfield(element, field_name)
+        @debug("Replacing the content of a field $field_name with a new field of type $T.")
+    else
+        @debug("Creating a new dfield $field_name of type $T")
+    end
+    element.dfields[field_name] = field_
+    return
+end
+
+function create_dfield!(element::AbstractElement, field_name, field_data)
+    create_dfield!(element, field_name, field(field_data))
+end
+
+function update_dfield!(element::AbstractElement, field_name, field_data)
+    if has_dfield(element, field_name)
+        field = get_dfield(element, field_name)
+        @debug("Update $field_name with data $field_data")
+        update_field!(field, field_data)
+    else
+        create_dfield!(element, field_name, field_data)
+    end
+end
+
+# A helper function to pick element data from dictionary
+function pick_data_(element, field_data)
+    connectivity = get_connectivity(element)
+    N = length(connectivity)
+    picked_data = ntuple(i -> getindex(field_data, connectivity[i]), N)
+    return picked_data
+end
+
+function update_dfield!(element::AbstractElement, field_name, (time, field_data)::Pair{Float64, Dict{Int,V}}) where V
+    update_dfield!(element, field_name, time => pick_data_(element, field_data))
+end
+
+function update_dfield!(element::AbstractElement, field_name, field_data::Dict{Int,V}) where V
+    update_dfield!(element, field_name, pick_data_(element, field_data))
+end
+
+function update_dfield!(element::AbstractElement, field_name, field_data::Function)
+    if hasmethod(field_data, Tuple{Element, Any, Any})
+        element.dfields[field_name] = field((ip, time) -> field_data(element, ip, time))
+    else
+        element.dfields[field_name] = field(field_data)
+    end
+end
+
+function interpolate_dfield(element::AbstractElement, field_name, time)
+    field = get_dfield(element, field_name)
+    return interpolate(field, time)
+end
+
+### dfield & sfield -- common routines
+
+function has_field(element, field_name)
+    return has_dfield(element, field_name)
+end
+
+function get_field(element, field_name)
+    return get_dfield(element, field_name)
+end
+
+function update_field!(element::AbstractElement, field_name, field_data)
+    update_dfield!(element, field_name, field_data)
+end
+
+function interpolate_field(element::AbstractElement, field_name, time)
+    interpolate_dfield(element, field_name, time)
+end
+
+function interpolate(element::AbstractElement, field_name, time)
+    return interpolate_field(element, field_name, time)
+end
+
+#function update_field!(element::AbstractElement, field_name, field_data::Dict)
+#    update_dfield!(element, field_name, field_data)
+#end
+
+function update_field!(elements::Vector{Element}, field_name, field_data)
+    for element in elements
+        update_field!(element, field_name, field_data)
+    end
+end
+
+# Update fields when given a dictionary or time => dictionary:
+# pick data from dictionary diven by the connectivity information of element
+#=
+function update_field!(element::AbstractElement, field::F,
+                       data::Dict{T,V}) where {F<:DVTI,T,V}
+    connectivity = get_connectivity(element)
+    N = length(connectivity)
+    picked_data = ntuple(i -> data[connectivity[i]], N)
+    update_field!(field, picked_data)
+end
+
+function update_field!(element::AbstractElement, field::F,
+                       ddata::Pair{Float64, Dict{T,V}}) where {F<:DVTV,T,V}
+    time, data = ddata
+    connectivity = get_connectivity(element)
+    N = length(connectivity)
+    picked_data = ntuple(i -> data[connectivity[i]], N)
+    update_field!(field, time => picked_data)
+end
+=#
+
 """
     interpolate(element, field_name, time)
 
@@ -128,6 +249,91 @@ function interpolate(element::AbstractElement, field_name::String, time::Float64
         return result
     end
 end
+
+function info_update_field(elements, field_name, data)
+    nelements = length(elements)
+    @info("Updating field `$field_name` for $nelements elements.")
+end
+
+function info_update_field(elements, field_name, data::Float64)
+    nelements = length(elements)
+    @info("Updating field `$field_name` => $data for $nelements elements.")
+end
+
+"""
+    update!(elements, field_name, data)
+
+Given a list of elements, field name and data, update field to elements. Data
+is passed directly to the `field`-function.
+
+# Examples
+
+Create two elements with topology `Seg2`, one is connecting to nodes (1, 2) and
+the other is connecting to (2, 3). Some examples of updating fields:
+
+```julia
+elements = [Element(Seg2, [1, 2]), Element(Seg2, [2, 3])]
+X = Dict(1 => 0.0, 2 => 1.0, 3 => 2.0)
+u = Dict(1 => 0.0, 2 => 0.0, 3 => 0.0)
+update!(elements, "geometry", X)
+update!(elements, "displacement", 0.0 => u)
+update!(elements, "youngs modulus", 210.0e9)
+update!(elements, "time-dependent force", 0.0 => 0.0)
+update!(elements, "time-dependent force", 1.0 => 100.0)
+```
+
+When using dictionaries in definition of fields, key of dictionary corresponds
+to node id, that is, updating field `geometry` in the example above is updating
+values `(0.0, 1.0)` for the first elements and values `(1.0, 2.0)` to the second
+element. For time dependent field, syntax `time => data` is used. If field is
+initialized without time-dependency, it cannot be changed to be time-dependent
+afterwards. If unsure, it's better to initialize field with time dependency.
+
+"""
+function update!(elements, field_name, data)
+    info_update_field(elements, field_name, data)
+    for element in elements
+        update!(element, field_name, data)
+    end
+end
+
+
+## Interpolate fields in spatial direction
+
+const ConstantField = Union{DCTI, DCTV}
+const VariableFields = Union{DVTV, DVTI}
+const DictionaryFields = Union{DVTVd, DVTId}
+
+function interpolate_field(::AbstractElement, field::ConstantField, ip, time)
+    return interpolate_field(field, time)
+end
+
+function interpolate_field(element::AbstractElement, field::VariableFields, ip, time)
+    data = interpolate_field(field, time)
+    basis = get_basis(element, ip, time)
+    N = length(basis)
+    return sum(data[i]*basis[i] for i=1:N)
+end
+
+function interpolate_field(element::AbstractElement, field::DictionaryFields, ip, time)
+    data = interpolate_field(field, time)
+    basis = element(ip, time)
+    N = length(element)
+    c = get_connectivity(element)
+    return sum(data[c[i]]*basis[i] for i=1:N)
+end
+
+function interpolate_field(::AbstractElement, field::CVTV, ip, time)
+    return field(ip, time)
+end
+
+function interpolate(element::AbstractElement, field_name, ip, time)
+    field = get_field(element, field_name)
+    interpolate_field(element, field, ip, time)
+end
+
+
+## Other stuff
 
 function get_basis(element::AbstractElement{B}, ip, ::Any) where B
     T = typeof(first(ip))
@@ -199,118 +405,6 @@ function (element::Element)(field_name::String, ip, time::Float64, ::Type{Val{:G
     return grad(element.properties, u, X, ip)
 end
 
-function interpolate(element::AbstractElement, field_name, ip, time)
-    field = element[field_name]
-    return interpolate_field(element, field, ip, time)
-end
-
-function interpolate_field(::AbstractElement, field::T, ::Any, time) where T<:Union{DCTI,DCTV}
-    return interpolate_field(field, time)
-end
-
-function interpolate_field(element::AbstractElement, field::T, ip, time) where T<:Union{DVTV,DVTI}
-    data = interpolate_field(field, time)
-    basis = get_basis(element, ip, time)
-    N = length(basis)
-    return sum(data[i]*basis[i] for i=1:N)
-end
-
-function interpolate_field(element::AbstractElement, field::T, ip, time) where T<:Union{DVTVd,DVTId}
-    data = interpolate_field(field, time)
-    basis = element(ip, time)
-    N = length(element)
-    c = get_connectivity(element)
-    return sum(data[c[i]]*basis[i] for i=1:N)
-end
-
-function interpolate_field(::AbstractElement, field::CVTV, ip, time)
-    return field(ip, time)
-end
-
-function update!(::AbstractElement, field::F, data) where F<:AbstractField
-    update!(field, data)
-end
-
-function update!(element::AbstractElement, field::F, data::Dict{T,V}) where {F<:DVTI,T,V}
-    connectivity = get_connectivity(element)
-    picked_data = ((data[nid] for nid in connectivity)...,)
-    update!(field, picked_data)
-end
-
-function update!(element::AbstractElement, field::F,
-                 data::Pair{Float64, Dict{T,V}}) where {F<:DVTV,T,V}
-    time, data2 = data
-    connectivity = get_connectivity(element)
-    picked_data = ((data2[nid] for nid in connectivity)...,)
-    update!(field, time => picked_data)
-end
-
-function update!(element::AbstractElement, field_name, data)
-    if haskey(element.fields, field_name)
-        update!(element, element.fields[field_name], data)
-    else
-        element.fields[field_name] = field(data)
-    end
-end
-
-function update!(element::AbstractElement, field_name, field_::F) where F<:AbstractField
-    element.fields[field_name] = field_
-end
-
-function update!(element::AbstractElement, field_name, data::Function)
-    if hasmethod(data, Tuple{Element, Any, Any})
-        element.fields[field_name] = field((ip, time) -> data(element, ip, time))
-    else
-        element.fields[field_name] = field(data)
-    end
-end
-
-function info_update_field(elements, field_name, data)
-    nelements = length(elements)
-    @info("Updating field `$field_name` for $nelements elements.")
-end
-
-function info_update_field(elements, field_name, data::Float64)
-    nelements = length(elements)
-    @info("Updating field `$field_name` => $data for $nelements elements.")
-end
-
-"""
-    update!(elements, field_name, data)
-
-Given a list of elements, field name and data, update field to elements. Data
-is passed directly to the `field`-function.
-
-# Examples
-
-Create two elements with topology `Seg2`, one is connecting to nodes (1, 2) and
-the other is connecting to (2, 3). Some examples of updating fields:
-
-```julia
-elements = [Element(Seg2, [1, 2]), Element(Seg2, [2, 3])]
-X = Dict(1 => 0.0, 2 => 1.0, 3 => 2.0)
-u = Dict(1 => 0.0, 2 => 0.0, 3 => 0.0)
-update!(elements, "geometry", X)
-update!(elements, "displacement", 0.0 => u)
-update!(elements, "youngs modulus", 210.0e9)
-update!(elements, "time-dependent force", 0.0 => 0.0)
-update!(elements, "time-dependent force", 1.0 => 100.0)
-```
-
-When using dictionaries in definition of fields, key of dictionary corresponds
-to node id, that is, updating field `geometry` in the example above is updating
-values `(0.0, 1.0)` for the first elements and values `(1.0, 2.0)` to the second
-element. For time dependent field, syntax `time => data` is used. If field is
-initialized without time-dependency, it cannot be changed to be time-dependent
-afterwards. If unsure, it's better to initialize field with time dependency.
-
-"""
-function update!(elements, field_name, data)
-    info_update_field(elements, field_name, data)
-    for element in elements
-        update!(element, field_name, data)
-    end
-end
 
 function get_integration_points(element::AbstractElement{E}) where E
     # first time initialize default integration points
