@@ -80,14 +80,19 @@ end
     @test isapprox(el([0.0, 0.0], 0.0, 2), expected)
 end
 
+## Grouping of elements
+
+# Element can be divided to groups by element type using command
+# `group_by_element_type`:
+
 @testset "group elements" begin
-    e1 = Element(Seg2, [1, 2])
-    e2 = Element(Quad4, [1, 2, 3, 4])
+    e1 = Element(Seg2, (1, 2))
+    e2 = Element(Quad4, (1, 2, 3, 4))
     elements = [e1, e2]
-    r = group_by_element_type(elements)
-    @test length(r) == 2
-    @test first(r[Element{Seg2}]) == e1
-    @test first(r[Element{Quad4}]) == e2
+    elgroups = group_by_element_type(elements)
+    @test length(elgroups) == 2
+    @test first(elgroups[typeof(e1)]) == e1
+    @test first(elgroups[typeof(e2)]) == e2
     @test get_element_type(e1) == Seg2
     e1.id = 1
     @test get_element_id(e1) == 1
