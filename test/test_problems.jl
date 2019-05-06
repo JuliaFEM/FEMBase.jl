@@ -138,8 +138,8 @@ end
 
 function assemble_elements!(problem::Problem{P1},
                             assembly::Assembly,
-                            elements::Vector{Element{E}},
-                            time::Float64) where E
+                            elements::Vector{Element{M,E}},
+                            time::Float64) where {M,E}
 
     @debug "assemble_elements!" eltype=E
     bi = BasisInfo(E)
@@ -192,8 +192,8 @@ end
 
 function assemble_elements!(problem::Problem{DirBC},
                             assembly::Assembly,
-                            elements::Vector{Element{E}},
-                            time::Float64) where E
+                            elements::Vector{Element{M,E}},
+                            time::Float64) where {M,E}
 
     name = get_parent_field_name(problem)
     dim = get_unknown_field_dimension(problem)

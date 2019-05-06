@@ -87,7 +87,7 @@ function assemble_mass_matrix!(problem::Problem, time::Float64)
     return nothing
 end
 
-function assemble_mass_matrix!(problem::Problem, elements::Vector{E}, time) where E<:AbstractElement{Basis} where Basis
+function assemble_mass_matrix!(problem::Problem, elements::Vector{E}, time) where E<:AbstractElement{M_,B} where {M_,B}
     nnodes = length(first(elements))
     dim = get_unknown_field_dimension(problem)
     M = zeros(nnodes, nnodes)
@@ -100,7 +100,7 @@ function assemble_mass_matrix!(problem::Problem, elements::Vector{E}, time) wher
             detJ = element(ip, time, Val{:detJ})
             rho = element("density", ip, time)
             w = ip.weight*rho*detJ
-            eval_basis!(Basis, N, ip)
+            eval_basis!(B, N, ip)
             N = element(ip, time)
             mul!(NtN, transpose(N), N)
             rmul!(NtN, w)
@@ -124,7 +124,7 @@ end
 Assemble Tet10 mass matrices using special method. If Tet10 has constant metric
 if can be integrated analytically to gain performance.
 """
-function assemble_mass_matrix!(problem::Problem, elements::Vector{E}, time) where E<:AbstractElement{FEMBasis.Tet10}
+function assemble_mass_matrix!(problem::Problem, elements::Vector{E}, time) where E<:AbstractElement{M_, FEMBasis.Tet10} where M_
     nnodes = length(Tet10)
     dim = get_unknown_field_dimension(problem)
     M = zeros(nnodes, nnodes)
@@ -144,7 +144,7 @@ function assemble_mass_matrix!(problem::Problem, elements::Vector{E}, time) wher
         -6 -4 -6 -4 16 16  8 16 32 16
         -6 -6 -4 -4  8 16 16 16 16 32]
 
-    function is_CM(::AbstractElement{FEMBasis.Tet10}, X; rtol=1.0e-6)
+    function is_CM(::AbstractElement{M, FEMBasis.Tet10}, X; rtol=1.0e-6) where M
         isapprox(X[5],  1/2*(X[1]+X[2]); rtol=rtol) || return false
         isapprox(X[6],  1/2*(X[2]+X[3]); rtol=rtol) || return false
         isapprox(X[7],  1/2*(X[3]+X[1]); rtol=rtol) || return false

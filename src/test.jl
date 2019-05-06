@@ -33,8 +33,8 @@ end
 
 function FEMBase.assemble_elements!(problem::Problem{Poisson},
                                     assembly::Assembly,
-                                    elements::Vector{Element{E}},
-                                    time::Float64) where E
+                                    elements::Vector{Element{M,E}},
+                                    time::Float64) where {M,E}
 
     bi = FEMBasis.BasisInfo(E)
     ndofs = length(bi)
@@ -64,8 +64,8 @@ end
 
 function FEMBase.assemble_elements!(problem::Problem{Poisson},
                                     assembly::Assembly,
-                                    elements::Vector{Element{E}},
-                                    time::Float64) where E<:Union{FEMBasis.Seg2,FEMBasis.Seg3}
+                                    elements::Vector{Element{M,E}},
+                                    time::Float64) where {M,E<:Union{FEMBasis.Seg2,FEMBasis.Seg3}}
 
     bi = FEMBasis.BasisInfo(E)
     ndofs = length(bi)
@@ -101,8 +101,8 @@ struct Dirichlet <: BoundaryProblem end
 
 function FEMBase.assemble_elements!(problem::Problem{Dirichlet},
                                     assembly::Assembly,
-                                    elements::Vector{Element{E}},
-                                    time::Float64) where E
+                                    elements::Vector{Element{M,E}},
+                                    time::Float64) where {M,E}
 
     name = get_parent_field_name(problem)
     dim = get_unknown_field_dimension(problem)

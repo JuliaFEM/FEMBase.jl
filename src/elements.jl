@@ -1,14 +1,38 @@
 # This file is a part of JuliaFEM.
 # License is MIT: see https://github.com/JuliaFEM/FEMBase.jl/blob/master/LICENSE
 
-abstract type AbstractElement{T<:FEMBasis.AbstractBasis} end
+"""
+    AbstractFieldSet{N<:Int}
 
-mutable struct Element{T} <: AbstractElement{T}
+Abstract supertype for all field sets, where `N` is the length of the discrete
+fields (typically is the number of the nodes in element).
+"""
+abstract type AbstractFieldSet{N} end
+
+"""
+    EmptyFieldSet{N} <: AbstractFieldSet{N}
+
+Empty field set used as a default for all elements.
+"""
+struct EmptyFieldSet{N} <: AbstractFieldSet{N}
+end
+
+const DefaultFieldSet = EmptyFieldSet
+
+"""
+    AbstractElement{M<:AbstractFieldSet, B<:AbstractBasis}
+
+Abstract supertype for all elements.
+"""
+abstract type AbstractElement{M<:AbstractFieldSet, B<:FEMBasis.AbstractBasis} end
+
+mutable struct Element{M,B} <: AbstractElement{M,B}
     id :: Int
     connectivity :: Vector{Int}
     integration_points :: Vector{IP}
     dfields :: Dict{Symbol, AbstractField}
-    properties :: T
+    sfields :: M
+    properties :: B
 end
 
 """
@@ -48,11 +72,17 @@ element = Element(Tri3, (1, 2, 3))
 ```
 """
 function Element(::Type{T}, connectivity::NTuple{N, Int}) where {N, T<:FEMBasis.AbstractBasis}
+    return Element(T, DefaultFieldSet, connectivity)
+end
+
+function Element(::Type{T}, ::Type{M}, connectivity::NTuple{N, Int}) where {N, M<:AbstractFieldSet, T<:FEMBasis.AbstractBasis}
     element_id = -1
     topology = T()
-    integration_points = []
-    fields = Dict()
-    element = Element{T}(element_id, collect(connectivity), integration_points, fields, topology)
+    integration_points = Point{IntegrationPoint}[]
+    dfields = Dict{Symbol,AbstractField}()
+    sfields = M{N}()
+    element = Element(element_id, collect(connectivity), integration_points,
+                      dfields, sfields, topology)
     return element
 end
 
@@ -60,16 +90,16 @@ function Element(::Type{T}, connectivity::Vector{Int}) where T<:FEMBasis.Abstrac
     return Element(T, (connectivity...,))
 end
 
-function get_element_type(::AbstractElement{E}) where E
-    return E
-end
-
-function get_element_id(element::AbstractElement{E}) where E
+function get_element_id(element::AbstractElement)
     return element.id
 end
 
-function is_element_type(::AbstractElement{E}, element_type) where E
-    return E === element_type
+function get_element_type(::AbstractElement{M,T}) where {M,T}
+    return T
+end
+
+function is_element_type(::AbstractElement{M,T}, element_type) where {M,T}
+    return T === element_type
 end
 
 function filter_by_element_type(element_type, elements)
@@ -88,14 +118,13 @@ Returns a dictionary, where key is the element type and value is a vector
 containing all elements of type `element_type`.
 """
 function group_by_element_type(elements)
-    results = Dict{DataType, Any}()
-    basis_types = map(element -> typeof(element.properties), elements)
-    for basis in unique(basis_types)
-        element_type = Element{basis}
-        subset = filter(element -> isa(element, element_type), elements)
-        results[element_type] = convert(Vector{element_type}, subset)
+    eltypes = map(T -> typeof(T), elements)
+    elgroups = Dict(T => T[] for T in eltypes)
+    for element in elements
+        T = typeof(element)
+        push!(elgroups[T], element)
     end
-    return results
+    return elgroups
 end
 
 ### dfields - dynamically defined fields
@@ -104,15 +133,15 @@ end
 # It is known that this approach is having a performance issue caused by
 # type instability.
 
-function has_dfield(element::AbstractElement, field_name)
+function has_dfield(element, field_name)
     return haskey(element.dfields, field_name)
 end
 
-function get_dfield(element::AbstractElement, field_name)
+function get_dfield(element, field_name)
     return getindex(element.dfields, field_name)
 end
 
-function create_dfield!(element::AbstractElement, field_name, field_::AbstractField)
+function create_dfield!(element, field_name, field_::AbstractField)
     T = typeof(field_)
     if has_dfield(element, field_name)
         @debug("Replacing the content of a field $field_name with a new field of type $T.")
@@ -123,11 +152,11 @@ function create_dfield!(element::AbstractElement, field_name, field_::AbstractFi
     return
 end
 
-function create_dfield!(element::AbstractElement, field_name, field_data)
+function create_dfield!(element, field_name, field_data)
     create_dfield!(element, field_name, field(field_data))
 end
 
-function update_dfield!(element::AbstractElement, field_name, field_data)
+function update_dfield!(element, field_name, field_data)
     if has_dfield(element, field_name)
         field = get_dfield(element, field_name)
         @debug("Update $field_name with data $field_data")
@@ -145,15 +174,15 @@ function pick_data_(element, field_data)
     return picked_data
 end
 
-function update_dfield!(element::AbstractElement, field_name, (time, field_data)::Pair{Float64, Dict{Int,V}}) where V
+function update_dfield!(element, field_name, (time, field_data)::Pair{Float64, Dict{Int,V}}) where V
     update_dfield!(element, field_name, time => pick_data_(element, field_data))
 end
 
-function update_dfield!(element::AbstractElement, field_name, field_data::Dict{Int,V}) where V
+function update_dfield!(element, field_name, field_data::Dict{Int,V}) where V
     update_dfield!(element, field_name, pick_data_(element, field_data))
 end
 
-function update_dfield!(element::AbstractElement, field_name, field_data::Function)
+function update_dfield!(element, field_name, field_data::Function)
     if hasmethod(field_data, Tuple{Element, Any, Any})
         element.dfields[field_name] = field((ip, time) -> field_data(element, ip, time))
     else
@@ -161,36 +190,69 @@ function update_dfield!(element::AbstractElement, field_name, field_data::Functi
     end
 end
 
-function interpolate_dfield(element::AbstractElement, field_name, time)
+function interpolate_dfield(element, field_name, time)
     field = get_dfield(element, field_name)
+    return interpolate(field, time)
+end
+
+### sfields statically defined fields
+
+# A new-style field system, where fields are defined in sfields <: AbstractFieldSet
+# during the initialization of element.
+
+function has_sfield(element, field_name)
+    return isdefined(element.sfields, field_name)
+end
+
+function get_sfield(element, field_name)
+    return getfield(element.sfields, field_name)
+end
+
+function update_sfield!(element, field_name, field_data)
+    field = get_sfield(element, field_name)
+    update!(field, field_data)
+end
+
+function interpolate_sfield(element, field_name, time)
+    field = get_sfield(element, field_name)
     return interpolate(field, time)
 end
 
 ### dfield & sfield -- common routines
 
 function has_field(element, field_name)
-    return has_dfield(element, field_name)
+    return has_sfield(element, field_name) || has_dfield(element, field_name)
 end
 
 function get_field(element, field_name)
-    return get_dfield(element, field_name)
+    if has_sfield(element, field_name)
+        return get_sfield(element, field_name)
+    else
+        return get_dfield(element, field_name)
+    end
 end
 
-function update_field!(element::AbstractElement, field_name, field_data)
-    update_dfield!(element, field_name, field_data)
+function update_field!(element, field_name, field_data)
+    if has_sfield(element, field_name)
+        update_sfield!(element, field_name, field_data)
+    else
+        update_dfield!(element, field_name, field_data)
+    end
 end
 
-function interpolate_field(element::AbstractElement, field_name, time)
-    interpolate_dfield(element, field_name, time)
+function interpolate_field(element, field_name::Symbol, time)
+    if has_sfield(element, field_name)
+        return interpolate_sfield(element, field_name, time)
+    elseif has_dfield(element, field_name)
+        return interpolate_dfield(element, field_name, time)
+    else
+        error("Cannot interpolate from field $field_name: no such field.")
+    end
 end
 
 function interpolate(element::AbstractElement, field_name, time)
     return interpolate_field(element, field_name, time)
 end
-
-#function update_field!(element::AbstractElement, field_name, field_data::Dict)
-#    update_dfield!(element, field_name, field_data)
-#end
 
 function update_field!(elements::Vector{Element}, field_name, field_data)
     for element in elements
@@ -335,14 +397,14 @@ end
 
 ## Other stuff
 
-function get_basis(element::AbstractElement{B}, ip, ::Any) where B
+function get_basis(element::AbstractElement{M,B}, ip, ::Any) where {M,B}
     T = typeof(first(ip))
     N = zeros(T, 1, length(element))
     FEMBasis.eval_basis!(B, N, tuple(ip...))
     return N
 end
 
-function get_dbasis(element::AbstractElement{B}, ip, ::Any) where B
+function get_dbasis(element::AbstractElement{M,B}, ip, ::Any) where {M,B}
     T = typeof(first(ip))
     dN = zeros(T, size(element)...)
     FEMBasis.eval_dbasis!(B, dN, tuple(ip...))
@@ -441,9 +503,9 @@ function get_local_coordinates(element::AbstractElement, X::Vector, time::Float6
 end
 
 """ Test is X inside element. """
-function inside(element::AbstractElement{E}, X, time) where E
+function inside(element::AbstractElement{M,B}, X, time) where {M,B}
     xi = get_local_coordinates(element, X, time)
-    return inside(E, xi)
+    return inside(B, xi)
 end
 
 ## Convenience functions
@@ -458,7 +520,7 @@ function (element::Element)(field_name::String, ip, time::Float64)
     return interpolate(element, field_name, ip, time)
 end
 
-function element_info!(bi::FEMBasis.BasisInfo{E,T}, element::AbstractElement{E}, ip, time) where {E,T}
+function element_info!(bi::FEMBasis.BasisInfo{T}, element::AbstractElement{M,T}, ip, time) where {M,T}
     X = interpolate(element, "geometry", time)
     eval_basis!(bi, X, ip)
     return bi.J, bi.detJ, bi.N, bi.grad
