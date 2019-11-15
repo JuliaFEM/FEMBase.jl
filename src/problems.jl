@@ -57,6 +57,7 @@ function Assembly()
 end
 
 function empty!(assembly::Assembly)
+    empty!(assembly.M)
     empty!(assembly.K)
     empty!(assembly.Kg)
     empty!(assembly.f)
@@ -69,7 +70,8 @@ function empty!(assembly::Assembly)
 end
 
 function isempty(assembly::Assembly)
-    T = isempty(assembly.K)
+    T = isempty(assembly.M)
+    T &= isempty(assembly.K)
     T &= isempty(assembly.Kg)
     T &= isempty(assembly.f)
     T &= isempty(assembly.fg)
