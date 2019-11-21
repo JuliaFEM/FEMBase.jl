@@ -30,5 +30,3 @@ makedocs(modules=[FEMBase],
          sitename = "FEMBase.jl",
          authors = "Jukka Aho",
          pages = PAGES)
-
-include("deploy.jl")
