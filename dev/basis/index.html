@@ -156,9 +156,9 @@ julia&gt; grad!(bi, gradu, u)
        );
 ERROR: MethodError: no method matching differentiate(::Char, ::Symbol)
 Closest candidates are:
-  differentiate(!Matched::Expr, ::Any) at /home/travis/.julia/packages/Calculus/2qBLt/src/differentiate.jl:16
-  differentiate(!Matched::Calculus.SymbolParameter{:^}, ::Any, !Matched::Any) at /home/travis/.julia/packages/Calculus/2qBLt/src/differentiate.jl:27
-  differentiate(!Matched::Calculus.SymbolParameter{:+}, ::Any, !Matched::Any) at /home/travis/.julia/packages/Calculus/2qBLt/src/differentiate.jl:41
+  differentiate(!Matched::Expr, ::Any) at /home/travis/.julia/packages/Calculus/mbqhh/src/differentiate.jl:16
+  differentiate(!Matched::Calculus.SymbolParameter{:^}, ::Any, !Matched::Any) at /home/travis/.julia/packages/Calculus/mbqhh/src/differentiate.jl:27
+  differentiate(!Matched::Calculus.SymbolParameter{:+}, ::Any, !Matched::Any) at /home/travis/.julia/packages/Calculus/mbqhh/src/differentiate.jl:41
   ...
 
 julia&gt; eval(code)
@@ -200,10 +200,7 @@ julia&gt; grad(B, u, X, xi)
        );
 
 julia&gt; eval(code)
-ERROR: MethodError: no method matching eval(::Expr)
-You may have intended to import Base.eval
-Closest candidates are:
-  eval(!Matched::Module, !Matched::Any) at boot.jl:319</code></pre><p>Again, we should have 1.0 in corresponding nodal point or it&#39;s derivative, according to that order we have <span>$u(0), u&#39;(0), u(1), u&#39;(1)$</span>, so</p><pre><code class="language-julia-repl">julia&gt; B = C1Hermite()
+ERROR: UndefVarError: FEMBasis not defined</code></pre><p>Again, we should have 1.0 in corresponding nodal point or it&#39;s derivative, according to that order we have <span>$u(0), u&#39;(0), u(1), u&#39;(1)$</span>, so</p><pre><code class="language-julia-repl">julia&gt; B = C1Hermite()
 ERROR: UndefVarError: C1Hermite not defined
 
 julia&gt; N = zeros(1, 4)
