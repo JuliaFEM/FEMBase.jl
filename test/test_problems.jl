@@ -104,7 +104,7 @@ end
     as = get_assembly(p3)
     e1 = Element(Seg2, [1, 2])
     e2 = Element(Seg2, [2, 3])
-    e3 = Element(Seg2, Int[])
+    e3 = Element(Seg2, [0, 0])
     update!(e1, "f", [1.0, 1.0])
     update!(e2, "f", [2.0, 2.0])
     push!(p3, e1)
@@ -259,6 +259,4 @@ end
     @test get_gdofs(problem, element) == [1, 2, 3, 4]
     set_gdofs!(problem, element, [2, 3, 4, 5])
     @test get_gdofs(problem, element) == [2, 3, 4, 5]
-    element2 = Element(Seg2, Int[])
-    @test_throws ErrorException get_gdofs(problem, element2)
 end
