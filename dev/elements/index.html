@@ -7,24 +7,22 @@ m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
 ga('create', 'UA-83590644-1', 'auto');
 ga('send', 'pageview');
 </script><link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css" rel="stylesheet" type="text/css"/><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link href="../assets/documenter.css" rel="stylesheet" type="text/css"/></head><body><nav class="toc"><h1>FEMBase.jl</h1><select id="version-selector" onChange="window.location.href=this.value" style="visibility: hidden"></select><form class="search" id="search-form" action="../search/"><input id="search-query" name="q" type="text" placeholder="Search docs"/></form><ul><li><a class="toctext" href="../">Home</a></li><li><span class="toctext">Developing JuliaFEM</span><ul><li><a class="toctext" href="../mesh/">Mesh</a></li><li><a class="toctext" href="../fields/">Fields</a></li><li><a class="toctext" href="../basis/">Basis functions</a></li><li><a class="toctext" href="../integration/">Integration</a></li><li class="current"><a class="toctext" href>Elements</a><ul class="internal"><li><a class="toctext" href="#Using-analytical-fields-1">Using analytical fields</a></li><li><a class="toctext" href="#Creating-fields-depending-from-other-fields-1">Creating fields depending from other fields</a></li></ul></li><li><a class="toctext" href="../problems/">Problems</a></li><li><a class="toctext" href="../solvers/">Analyses and solvers</a></li><li><a class="toctext" href="../postprocessing/">Postprocessing</a></li><li><a class="toctext" href="../results/">Results</a></li><li><a class="toctext" href="../materials/">Materials</a></li><li><a class="toctext" href="../testing/">Testing extensions</a></li></ul></li><li><span class="toctext">Library</span><ul><li><a class="toctext" href="../api/">API Documentation</a></li></ul></li></ul></nav><article id="docs"><header><nav><ul><li>Developing JuliaFEM</li><li><a href>Elements</a></li></ul><a class="edit-page" href="https://github.com/JuliaFEM/FEMBase.jl/blob/master/docs/src/elements.md"><span class="fa"></span> Edit on GitHub</a></nav><hr/><div id="topbar"><span>Elements</span><a class="fa fa-bars" href="#"></a></div></header><h1><a class="nav-anchor" id="Elements-1" href="#Elements-1">Elements</a></h1><p>In JuliaFEM, elements can be considered as &quot;containers&quot;, combining fields and basis functions described above. Among that, element has information about topology (connectivity) and numerical integration rule. These fundamentals forms a finite element, the backbone of finite element method.</p><div></div><p>New elements are constructed by passing basis type (e.g. Seg2, Quad4, Tet10, ...) to <code>Element</code> and list of id numbers to where element is topologically connected.</p><pre><code class="language-julia-repl">julia&gt; el = Element(Quad4, [1, 2, 3, 4])
-Element{Quad4}(-1, [1, 2, 3, 4], FEMBase.Point{IntegrationPoint}[], Dict{String,AbstractField}(), Quad4())</code></pre><p>Setting fields to element is done using a command <code>update!</code>, which either creates a new field if field with that name does not already exist, or updates the old one. Typically, at least field called <code>geometry</code> needs to be defined to element as it&#39;s used to calculate Jacobian of element. Fields can be discrete, continuous, time invariant or variant, variable or constant, or anything else that is subclassed from <code>AbstractField</code>.</p><pre><code class="language-julia-repl">julia&gt; X = Dict(1 =&gt; [0.0,0.0], 2=&gt;[1.0,0.0], 3=&gt;[1.0,1.0], 4=&gt;[0.0,1.0])
+Element{FEMBase.EmptyFieldSet{4},Quad4}(-1, [1, 2, 3, 4], FEMBase.Point{IntegrationPoint}[], Dict{Symbol,AbstractField}(), FEMBase.EmptyFieldSet{4}(), Quad4())</code></pre><p>Setting fields to element is done using a command <code>update!</code>, which either creates a new field if field with that name does not already exist, or updates the old one. Typically, at least field called <code>geometry</code> needs to be defined to element as it&#39;s used to calculate Jacobian of element. Fields can be discrete, continuous, time invariant or variant, variable or constant, or anything else that is subclassed from <code>AbstractField</code>.</p><pre><code class="language-julia-repl">julia&gt; X = Dict(1 =&gt; [0.0,0.0], 2=&gt;[1.0,0.0], 3=&gt;[1.0,1.0], 4=&gt;[0.0,1.0])
 Dict{Int64,Array{Float64,1}} with 4 entries:
   4 =&gt; [0.0, 1.0]
   2 =&gt; [1.0, 0.0]
   3 =&gt; [1.0, 1.0]
   1 =&gt; [0.0, 0.0]
 
-julia&gt; update!(el, &quot;geometry&quot;, X)
-DVTId{Array{Float64,1}}(Dict(4=&gt;[0.0, 1.0],2=&gt;[1.0, 0.0],3=&gt;[1.0, 1.0],1=&gt;[0.0, 0.0]))</code></pre><p>Internally, fields are stored in a <code>Dict</code>:</p><pre><code class="language-julia-repl">julia&gt; el.fields
-Dict{String,AbstractField} with 1 entry:
-  &quot;geometry&quot; =&gt; DVTId{Array{Float64,1}}(Dict(4=&gt;[0.0, 1.0],2=&gt;[1.0, 0.0],3=&gt;[1.…</code></pre><p>The command <code>update!</code> is automatically inspecting field type based in input. For example, to define temporal field varying spatially:</p><pre><code class="language-julia-repl">julia&gt; u0 = ([0.0,0.0], [0.0,0.0], [0.0,0.0], [0.0,0.0])
+julia&gt; update!(el, &quot;geometry&quot;, X)</code></pre><p>Internally, fields are stored in a <code>Dict</code>:</p><pre><code class="language-julia-repl">julia&gt; el.fields
+Dict{Symbol,AbstractField} with 1 entry:
+  :geometry =&gt; DVTI{4,Array{Float64,1}}(([0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0…</code></pre><p>The command <code>update!</code> is automatically inspecting field type based in input. For example, to define temporal field varying spatially:</p><pre><code class="language-julia-repl">julia&gt; u0 = ([0.0,0.0], [0.0,0.0], [0.0,0.0], [0.0,0.0])
 ([0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0])
 
 julia&gt; u1 = ([0.0,0.0], [0.0,0.0], [0.5,0.0], [0.0,0.0])
 ([0.0, 0.0], [0.0, 0.0], [0.5, 0.0], [0.0, 0.0])
 
 julia&gt; update!(el, &quot;displacement&quot;, 0.0 =&gt; u0)
-DVTV{4,Array{Float64,1}}(Pair{Float64,NTuple{4,Array{Float64,1}}}[0.0=&gt;([0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0])])
 
 julia&gt; update!(el, &quot;displacement&quot;, 1.0 =&gt; u1)
 2-element Array{Pair{Float64,NTuple{4,Array{Float64,1}}},1}:
@@ -32,9 +30,9 @@ julia&gt; update!(el, &quot;displacement&quot;, 1.0 =&gt; u1)
  1.0 =&gt; ([0.0, 0.0], [0.0, 0.0], [0.5, 0.0], [0.0, 0.0])
 
 julia&gt; el.fields
-Dict{String,AbstractField} with 2 entries:
-  &quot;geometry&quot;     =&gt; DVTId{Array{Float64,1}}(Dict(4=&gt;[0.0, 1.0],2=&gt;[1.0, 0.0],3=…
-  &quot;displacement&quot; =&gt; DVTV{4,Array{Float64,1}}(Pair{Float64,NTuple{4,Array{Float6…</code></pre><p>Interpolating of fields can be done using syntax <code>Element(field_name, xi, time)</code>. For example, position of material particle <span>$X$</span> in initial configuration and deformed configuration in the middle of the element at time <span>$t=1$</span> can be found as</p><pre><code class="language-julia-repl">julia&gt; xi = (0.0, 0.0)
+Dict{Symbol,AbstractField} with 2 entries:
+  :geometry     =&gt; DVTI{4,Array{Float64,1}}(([0.0, 0.0], [1.0, 0.0], [1.0, 1.0]…
+  :displacement =&gt; DVTV{4,Array{Float64,1}}(Pair{Float64,NTuple{4,Array{Float64…</code></pre><p>Interpolating of fields can be done using syntax <code>Element(field_name, xi, time)</code>. For example, position of material particle <span>$X$</span> in initial configuration and deformed configuration in the middle of the element at time <span>$t=1$</span> can be found as</p><pre><code class="language-julia-repl">julia&gt; xi = (0.0, 0.0)
 (0.0, 0.0)
 
 julia&gt; time = 1.0
@@ -70,7 +68,6 @@ julia&gt; el(xi, time, Val{:Grad})
  0.0   0.0
 
 julia&gt; update!(el, &quot;temperature&quot;, (1.0, 2.0, 3.0, 4.0))
-DVTI{4,Float64}((1.0, 2.0, 3.0, 4.0))
 
 julia&gt; gradT = el(&quot;temperature&quot;, xi, time, Val{:Grad})
 1×2 LinearAlgebra.Adjoint{Float64,Array{Float64,1}}:

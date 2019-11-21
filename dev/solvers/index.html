@@ -153,10 +153,10 @@ add_elements!(bc, [bel1])
 analysis = Analysis(Static, &quot;static analysis of test problem&quot;)
 add_problems!(analysis, [problem, bc])
 run!(analysis)</code></pre><p>After analysis is ready, temperature is updated to elements:</p><pre><code class="language-julia-repl">julia&gt; el1(&quot;temperature&quot;, 0.0)
-ERROR: KeyError: key &quot;temperature&quot; not found
+ERROR: KeyError: key :temperature not found
 
 julia&gt; el2(&quot;temperature&quot;, 0.0)
-ERROR: KeyError: key &quot;temperature&quot; not found
+ERROR: KeyError: key :temperature not found
 
 julia&gt; el3(&quot;temperature&quot;, 0.0)
-ERROR: KeyError: key &quot;temperature&quot; not found</code></pre><footer><hr/><a class="previous" href="../problems/"><span class="direction">Previous</span><span class="title">Problems</span></a><a class="next" href="../postprocessing/"><span class="direction">Next</span><span class="title">Postprocessing</span></a></footer></article></body></html>
+ERROR: KeyError: key :temperature not found</code></pre><footer><hr/><a class="previous" href="../problems/"><span class="direction">Previous</span><span class="title">Problems</span></a><a class="next" href="../postprocessing/"><span class="direction">Next</span><span class="title">Postprocessing</span></a></footer></article></body></html>
