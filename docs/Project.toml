@@ -1,3 +1,4 @@
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+FEMBase = "fbcbbc08-f1bf-5204-9233-b69f5d396135"
 Literate = "98b081ad-f1c9-55d3-8b20-4c87d4299306"
