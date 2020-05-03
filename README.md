@@ -5,6 +5,7 @@
 [![Stable docs][docs-stable-img]][docs-stable-url]
 [![Latest docs][docs-latest-img]][docs-latest-url]
 
+![somebody](docs/src/figs/somebody.svg)
 
 Package author: Jukka Aho (@ahojukka5, ahojukka5@gmail.com)
 
