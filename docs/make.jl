@@ -19,7 +19,7 @@ DEVELOPER_GUIDE = [
 LIBRARY = ["api.md"]
 
 PAGES = [
-         "Home" => "index.md",
+         "Introduction" => "index.md",
          "Developing JuliaFEM" => DEVELOPER_GUIDE,
          "Library" => LIBRARY
         ]
