@@ -2,6 +2,9 @@
 # License is MIT: see https://github.com/JuliaFEM/FEMBase.jl/blob/master/LICENSE
 
 using Documenter, FEMBase
+using Literate
+
+Literate.markdown("test/test_fields.jl", "docs/src"; name="fields", documenter=false)
 
 DEVELOPER_GUIDE = [
           "mesh.md",
@@ -21,7 +24,8 @@ LIBRARY = ["api.md"]
 PAGES = [
          "Introduction" => "index.md",
          "Developing JuliaFEM" => DEVELOPER_GUIDE,
-         "Library" => LIBRARY
+         "Library" => LIBRARY,
+         "Fields" => "fields.md",
         ]
 
 makedocs(modules=[FEMBase],
