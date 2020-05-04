@@ -4,7 +4,7 @@
 using Documenter, FEMBase
 using Literate
 
-Literate.markdown("test/test_fields.jl", "docs/src"; name="fields", documenter=false)
+Literate.markdown("test/test_fields.jl", "docs/src"; name="fields", documenter=true)
 
 DEVELOPER_GUIDE = [
           "mesh.md",
@@ -23,8 +23,8 @@ LIBRARY = ["api.md"]
 
 PAGES = [
          "Introduction" => "index.md",
-         "Developing JuliaFEM" => DEVELOPER_GUIDE,
-         "Library" => LIBRARY,
+        #  "Developing JuliaFEM" => DEVELOPER_GUIDE,
+        #  "Library" => LIBRARY,
          "Fields" => "fields.md",
         ]
 
