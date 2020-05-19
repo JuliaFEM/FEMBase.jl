@@ -339,25 +339,38 @@ function get_global_solution(problem::Problem, assembly::Assembly)
     end
 end
 
+"""
+    get_element_solution(problem, assembly, element)
+
+Return the global solution (u, la) at `element`s nodes.
+"""
+function get_element_solution(problem::Problem{P}, assembly::Assembly, element::Element) where P<:FieldProblem
+    u = assembly.u[get_gdofs(problem,element)]
+    la = assembly.la[get_gdofs(problem,element)]
+    field_dim = get_unknown_field_dimension(problem)
+    nnodes = div(length(u),field_dim)
+    un  = [(idx = (i-1)*field_dim;  u[idx+1:idx+field_dim]) for i in 1:nnodes]
+    lan = [(idx = (i-1)*field_dim; la[idx+1:idx+field_dim]) for i in 1:nnodes]
+    return un, lan
+end
+
 function update!(problem::Problem{P}, assembly::Assembly, elements::Vector{Element}, time::Float64) where P<:FieldProblem
-    u, la = get_global_solution(problem, assembly)
     field_name = get_unknown_field_name(problem)
     # update solution u for elements
     for element in elements
-        connectivity = get_connectivity(element)
-        update!(element, field_name, time => tuple(u[connectivity]...))
+        u, la = get_element_solution(problem,assembly,element)
+        update!(element, field_name, time => tuple(u...))
     end
 end
 
 function update!(problem::Problem{P}, assembly::Assembly, elements::Vector{Element}, time::Float64) where P<:BoundaryProblem
-    u, la = get_global_solution(problem, assembly)
     parent_field_name = get_parent_field_name(problem) # displacement
     field_name = get_unknown_field_name(problem) # lambda
     # update solution and lagrange multipliers for boundary elements
     for element in elements
-        connectivity = get_connectivity(element)
-        update!(element, parent_field_name, time => tuple(u[connectivity]...))
-        update!(element, field_name, time => tuple(la[connectivity]...))
+        u, la = get_element_solution(problem,assembly,element)
+        update!(element, parent_field_name, time => tuple(u...))
+        update!(element, field_name, time => tuple(la...))
     end
 end
 
